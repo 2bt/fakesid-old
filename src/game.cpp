@@ -211,6 +211,9 @@ struct Edit {
 
     int instrument = 1;
     int effect     = 2;
+
+    enum View { SONG, TRACK };
+    View view = SONG;
 } m_edit;
 
 
@@ -261,7 +264,8 @@ bool init() {
 
     // default tune
     m_tune.tempo = 5;
-    m_tune.table.emplace_back(Tune::Block{ 1, 0, 0, 0 });
+    m_tune.table.resize(8);
+    m_tune.table[0] = { 1, 0, 0, 0 };
     Track& track = m_tune.tracks[1];
     track.rows[0] = { 0, 0, 37 };
     track.rows[2] = { 0, 0, -1 };
@@ -285,12 +289,32 @@ void free() {
 }
 
 
-void track_view() {
-    gfx::font(FONT_DEFAULT);
+void song_view() {
+    if (gui::button("track view")) m_edit.view = Edit::TRACK;
 
-    if (gui::button("save")) save_tune("tune");
-    gui::same_line();
-    if (gui::button("load")) load_tune("tune");
+    gfx::font(FONT_MONO);
+    for (int i = 0; i < 16; ++i) {
+        gui::min_item_size({ 0, 62 });
+        gui::text("%02X", i);
+
+        if (i >= m_tune.table.size()) continue;
+        Tune::Block& block = m_tune.table[i];
+
+        for (int c = 0; c < CHANNEL_COUNT; ++c) {
+
+            gui::same_line();
+
+            char str[3] = "..";
+            if (block[c] > 0) sprintf(str, "%02X", block[c]);
+            gui::min_item_size({ 0, 62 });
+            gui::button(str);
+        }
+    }
+}
+
+
+void track_view() {
+    if (gui::button("song view")) m_edit.view = Edit::SONG;
 
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
     enum { COLS = 17 };
@@ -379,7 +403,20 @@ void draw() {
     gfx::font(FONT_MONO);
     gui::text("%d", tick++);
 
-    track_view();
+    gfx::font(FONT_DEFAULT);
+    gui::min_item_size({ 200, 0 });
+    if (gui::button("save")) save_tune("tune");
+    gui::same_line();
+    gui::min_item_size({ 200, 0 });
+    if (gui::button("load")) load_tune("tune");
+    gui::same_line();
+    gui::min_item_size({ 260, 0 });
+
+
+    switch (m_edit.view) {
+    case Edit::SONG:  song_view(); break;
+    case Edit::TRACK: track_view(); break;
+    }
 
 
     gfx::present();
