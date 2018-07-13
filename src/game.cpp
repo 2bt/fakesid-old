@@ -207,7 +207,10 @@ void audio_callback(void* userdata, Uint8* stream, int len) {
 
 struct Edit {
     int clavier_offset = 48;
-    int page = 0;
+    int track_page     = 0;
+
+    int instrument = 1;
+    int effect     = 2;
 } m_edit;
 
 
@@ -232,6 +235,8 @@ bool save_tune(char const* name) {
     SDL_RWclose(file);
     return true;
 }
+
+
 bool load_tune(char const* name) {
     if (!m_pref_path) return false;
     static std::array<char, 1024> path;
@@ -280,7 +285,7 @@ void free() {
 }
 
 
-void track_edit() {
+void track_view() {
     gfx::font(FONT_DEFAULT);
 
     if (gui::button("save")) save_tune("tune");
@@ -296,23 +301,57 @@ void track_edit() {
 
     gfx::font(FONT_MONO);
     for (int i = 0; i < PAGE_LENGTH; ++i) {
-        int row_nr = m_edit.page * PAGE_LENGTH + i;
+        int row_nr = m_edit.track_page * PAGE_LENGTH + i;
+        bool highlight = row_nr == player_row;
         Track::Row& row = track.rows[row_nr];
 
-        gui::button("-");
-        gui::same_line();
-        gui::button("-");
-        gui::same_line();
+        char str[4] = ".";
 
-        gui::note(row.note, row_nr == player_row);
+        // instrument
+        if (row.instrument > 0) str[0] = '0' - 1  + row.instrument;
+        gui::min_item_size({ 0, 62 });
+        if (gui::button(str, highlight)) {
+            if (row.instrument > 0) row.instrument = 0;
+            else row.instrument = m_edit.instrument;
+        }
+
+        // effect
+        str[0] = '.';
+        if (row.effect > 0) str[0] = '0' - 1  + row.effect;
         gui::same_line();
-        gui::clavier(row.note, m_edit.clavier_offset, row_nr == player_row);
+        gui::min_item_size({ 0, 62 });
+        if (gui::button(str, highlight)) {
+            if (row.effect > 0) row.effect = 0;
+            else row.effect = m_edit.effect;
+        }
+
+
+        // note
+        str[0] = str[1] = str[2] = '.';
+        if (row.note > 0) {
+            str[0] = "CCDDEFFGGAAB"[(row.note - 1) % 12];
+            str[1] = "-#-#--#-#-#-"[(row.note - 1) % 12];
+            str[2] = '0' + (row.note - 1) / 12;
+        }
+        if (row.note == -1) {
+            str[0] = str[1] = str[2] = '=';
+        }
+        gui::min_item_size({ 0, 62 });
+        gui::same_line();
+        if (gui::button(str, highlight)) {
+            if (row.note == 0) row.note = -1;
+            else row.note = 0;
+        }
+
+        // clavier
+        gui::same_line();
+        gui::clavier(row.note, m_edit.clavier_offset, highlight);
     }
 
     gfx::font(FONT_DEFAULT);
 
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
-    gui::drag_int("track", m_edit.page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
+    gui::drag_int("track", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
 
     if (gui::button("play")) m_player.play();
     gui::same_line();
@@ -340,7 +379,7 @@ void draw() {
     gfx::font(FONT_MONO);
     gui::text("%d", tick++);
 
-    track_edit();
+    track_view();
 
 
     gfx::present();

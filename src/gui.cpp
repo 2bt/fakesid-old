@@ -47,24 +47,36 @@ struct Box {
 };
 
 
-Vec                    m_c_min;
-Vec                    m_c_max;
-Vec                    m_min_item_size = { 0, 0 };
-bool                   m_same_line;
-void*                  m_id;
-void*                  m_active_item;
+Vec         m_c_min;
+Vec         m_c_max;
+Vec         m_min_item_size = {0, 0};
+bool        m_same_line;
+void const* m_id;
+void const* m_current_item;
+void const* m_active_item;
 std::array<char, 1024> m_text_buffer;
 
 
-void set_active_item(void* addr) {
+
+void set_current_item(void const* addr) {
     if (m_id) {
-        m_active_item = m_id;
+        m_current_item = m_id;
         m_id = nullptr;
     }
     else {
-        m_active_item = addr;
+        m_current_item = addr;
     }
-};
+}
+
+
+void set_active_item() {
+    m_active_item = m_current_item;
+}
+
+
+bool is_active_item() {
+    return m_current_item == m_active_item;
+}
 
 
 Box item_box(Vec const& size) {
@@ -142,14 +154,18 @@ void text(char const* fmt, ...) {
 }
 
 
-bool button(char const* label) {
+bool button(char const* label, bool highlight) {
     Vec s = gfx::text_size(label);
     Box box = item_box(s + Vec(30, 10));
     bool clicked = false;
-    SDL_Color color = color::normal;
+    SDL_Color color;
     if (m_active_item == nullptr && box.touched()) {
         color = color::active;
         if (input::just_released()) clicked = true;
+    }
+    else {
+        color = color::normal;
+        if (highlight) color = color::mix(color, color::highlight, 0.25);
     }
     gfx::color(color);
     gfx::rectangle(box.pos, box.size, 2);
@@ -160,6 +176,7 @@ bool button(char const* label) {
 
 
 bool drag_int(char const* label, int& value, int min, int max, int page) {
+    set_current_item(label);
     print_to_text_buffer(label, value);
     Vec s = gfx::text_size(m_text_buffer.data());
 
@@ -169,10 +186,10 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
 
     SDL_Color color = color::drag_normal;
     if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
-        set_active_item(&value);
+        set_active_item();
     }
     int old_value = value;
-    if (m_active_item == &value) {
+    if (is_active_item()) {
         color = color::drag_active;
         int x = input::touch(0).pos.x - box.pos.x;
 		int v = min + (x - handle_w * (page - 1) / (2 * page)) * (max - min) / (box.size.x - handle_w);
@@ -192,47 +209,13 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
 }
 
 
-void note(int& n, bool highlight) {
-    char str[4] = "...";
-    if (n > 0) {
-        str[0] = "CCDDEFFGGAAB"[(n - 1) % 12];
-        str[1] = "-#-#--#-#-#-"[(n - 1) % 12];
-        str[2] = '0' + (n - 1) / 12;
-    }
-    if (n == -1) {
-        str[0] = str[1] = str[2] = '=';
-    }
-    Vec s = gfx::text_size(str);
-    Box box = item_box({ 110, 62 });
-
-    SDL_Color color;
-    if (m_active_item == nullptr && box.touched()) {
-        color = color::active;
-        if (input::just_released()) {
-            if (n == 0) n = -1;
-            else n = 0;
-        }
-    }
-    else {
-        color = color::normal;
-        if (highlight) color = color::mix(color, color::highlight, 0.25);
-    }
-
-
-    gfx::color(color);
-
-    gfx::rectangle(box.pos, box.size, 2);
-    gfx::color({ 255, 255, 255, 255 });
-    gfx::print(box.pos + box.size / 2 - s / 2, str);
-}
-
-
 void clavier(int& n, int offset, bool highlight) {
+    set_current_item(&n);
     int w = gfx::screensize().x - PADDING - m_c_max.x;
     Box box = item_box({ w, 62 });
 
     if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
-        set_active_item(&n);
+        set_active_item();
     }
 
     enum { COLS = 17 };
@@ -246,7 +229,7 @@ void clavier(int& n, int offset, bool highlight) {
             { x1 - x0 - PADDING, box.size.y },
         };
         bool touch = b.contains({ input::touch(0).pos.x, b.pos.y });
-        if (m_active_item == &n && touch) {
+        if (is_active_item() && touch) {
             if (input::just_pressed()) {
                 if (n == nn) n = 0;
                 else if (n == 0) n = nn;
@@ -256,7 +239,7 @@ void clavier(int& n, int offset, bool highlight) {
         SDL_Color color = color::make(0x333333);
         if ((i + offset) % 12 == 0) color = color::make(0x444444);
         if ((1 << (i + offset) % 12) & 0b010101001010) color = color::make(0x222222);
-        if (m_active_item == &n) color = color::mix(color, color::active, 0.2);
+        if (is_active_item()) color = color::mix(color, color::active, 0.2);
         else if (highlight) color = color::mix(color, color::highlight, 0.1);
         gfx::color(color);
         gfx::rectangle( b.pos, b.size, 0);
