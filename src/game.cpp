@@ -296,7 +296,7 @@ void draw() {
 
         gfx::font(FONT_DEFAULT);
         gui::min_item_size({ 260, 0 });
-        if (gui::button("play")) player::play();
+        if (gui::button("play", player::is_playing())) player::play();
         gui::same_line();
         gui::min_item_size({ 260, 0 });
         if (gui::button("pause")) player::pause();
