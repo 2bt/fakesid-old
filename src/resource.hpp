@@ -20,10 +20,10 @@ enum FontID {
 
 
 struct FontSpec {
-    TextureID            texture;
-    int                  width;
-    int                  height;
-    std::array<int, 128> spacing;
+    TextureID           texture;
+    int                 width;
+    int                 height;
+    std::array<int, 96> spacing;
 };
 
 

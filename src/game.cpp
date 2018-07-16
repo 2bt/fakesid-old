@@ -296,13 +296,14 @@ void draw() {
 
         gfx::font(FONT_DEFAULT);
         gui::min_item_size({ 260, 0 });
-        if (gui::button("play", player::is_playing())) player::play();
+        if (gui::button("\x11")) player::stop();
         gui::same_line();
         gui::min_item_size({ 260, 0 });
-        if (gui::button("pause")) player::pause();
-        gui::same_line();
-        gui::min_item_size({ 260, 0 });
-        if (gui::button("stop")) player::stop();
+        bool is_playing = player::is_playing();
+        if (gui::button("\x10\x12", is_playing)) {
+            if (is_playing) player::pause();
+            else player::play();
+        }
     }
 
 
