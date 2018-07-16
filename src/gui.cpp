@@ -117,6 +117,9 @@ void print_to_text_buffer(const char* fmt, ...) {
 } // namespace
 
 
+Vec cursor() { return m_c_max; }
+
+
 void id(void* addr) {
     m_id = addr;
 }
@@ -133,8 +136,8 @@ void min_item_size(Vec const& s) {
 
 
 void begin_frame() {
-    m_c_min = { 0, 0, };
-    m_c_max = { 0, 0, };
+    m_c_min = { 0, 0 };
+    m_c_max = { 0, 0 };
     m_same_line = false;
     if (input::touch(0).state == input::Touch::RELEASED) {
         m_active_item = nullptr;
@@ -212,13 +215,13 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
 void clavier(int& n, int offset, bool highlight) {
     set_current_item(&n);
     int w = gfx::screensize().x - PADDING - m_c_max.x;
-    Box box = item_box({ w, 62 });
+    Box box = item_box({ w, 65 });
 
     if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
         set_active_item();
     }
 
-    enum { COLS = 17 };
+    enum { COLS = 21 };
 
     int x0 = 0;
     for (int i = 0; i < COLS; ++i) {

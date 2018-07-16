@@ -1,9 +1,8 @@
-#include <cstdio>
-#include <cmath>
-#include <cstdint>
-#include <array>
 #include "game.hpp"
 #include "input.hpp"
+#include <cstdio>
+#include <cstdint>
+#include <array>
 
 
 int main(int argc, char** args) {

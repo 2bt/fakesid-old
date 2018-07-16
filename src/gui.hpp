@@ -2,6 +2,7 @@
 
 namespace gui {
     enum { PADDING = 2 };
+    Vec  cursor();
     void begin_frame();
     void id(void* addr);
     void same_line();
