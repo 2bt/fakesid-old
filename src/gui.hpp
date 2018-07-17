@@ -9,6 +9,8 @@ namespace gui {
     void min_item_size(Vec const& s);
     void text(char const* fmt, ...);
     bool button(char const* label, bool highlight = false);
+    bool hold();
+    void block_touch();
     bool drag_int(char const* label, int& value, int min, int max, int page = 1);
     void note(int& n, bool highlight);
     void clavier(int& n, int offset, bool highlight);

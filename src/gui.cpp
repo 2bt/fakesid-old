@@ -41,15 +41,18 @@ struct Box {
     }
 
     bool touched() const {
-        input::Touch const& t = input::touch(0);
-        return t.state != input::Touch::RELEASED && contains(t.pos);
+        return !input::released() && contains(input::touch(0).pos);
     }
 };
 
 
-Vec         m_c_min;
-Vec         m_c_max;
+Vec         m_cursor_min;
+Vec         m_cursor_max;
 Vec         m_min_item_size = {0, 0};
+Vec         m_touch_pos;
+Vec         m_prev_touch_pos;
+int         m_hold_count;
+bool        m_hold;
 bool        m_same_line;
 void const* m_id;
 void const* m_current_item;
@@ -86,16 +89,16 @@ Box item_box(Vec const& size) {
 
     if (m_same_line) {
         m_same_line = false;
-        box.pos = Vec(m_c_max.x, m_c_min.y) + Vec(PADDING);
-        if (m_c_max.y - m_c_min.y - PADDING > box.size.y) {
-            box.pos.y += (m_c_max.y - m_c_min.y - PADDING - box.size.y) / 2;
+        box.pos = Vec(m_cursor_max.x, m_cursor_min.y) + Vec(PADDING);
+        if (m_cursor_max.y - m_cursor_min.y - PADDING > box.size.y) {
+            box.pos.y += (m_cursor_max.y - m_cursor_min.y - PADDING - box.size.y) / 2;
         }
-        m_c_max = glm::max(m_c_max, box.pos + box.size);
+        m_cursor_max = glm::max(m_cursor_max, box.pos + box.size);
     }
     else {
-        box.pos = Vec(m_c_min.x, m_c_max.y) + Vec(PADDING);
-        m_c_min.y = m_c_max.y;
-        m_c_max = box.pos + box.size;
+        box.pos = Vec(m_cursor_min.x, m_cursor_max.y) + Vec(PADDING);
+        m_cursor_min.y = m_cursor_max.y;
+        m_cursor_max = box.pos + box.size;
     }
     return box;
 }
@@ -117,7 +120,7 @@ void print_to_text_buffer(const char* fmt, ...) {
 } // namespace
 
 
-Vec cursor() { return m_c_max; }
+Vec cursor() { return m_cursor_max; }
 
 
 void id(void* addr) {
@@ -136,11 +139,14 @@ void min_item_size(Vec const& s) {
 
 
 void begin_frame() {
-    m_c_min = { 0, 0 };
-    m_c_max = { 0, 0 };
+    m_prev_touch_pos = m_touch_pos;
+    m_touch_pos = input::touch(0).pos;
+    m_cursor_min = { 0, 0 };
+    m_cursor_max = { 0, 0 };
     m_same_line = false;
-    if (input::touch(0).state == input::Touch::RELEASED) {
+    if (input::released()) {
         m_active_item = nullptr;
+        m_hold_count = 0;
     }
 }
 
@@ -158,12 +164,17 @@ void text(char const* fmt, ...) {
 
 
 bool button(char const* label, bool highlight) {
+    m_hold = false;
     Vec s = gfx::text_size(label);
     Box box = item_box(s + Vec(30, 10));
-    bool clicked = false;
     SDL_Color color;
+    bool clicked = false;
     if (m_active_item == nullptr && box.touched()) {
         color = color::active;
+        if (box.contains(m_prev_touch_pos)) {
+            if (++m_hold_count > 30) m_hold = true;
+        }
+        else m_hold_count = 0;
         if (input::just_released()) clicked = true;
     }
     else {
@@ -175,6 +186,14 @@ bool button(char const* label, bool highlight) {
     gfx::color(color::make(0xffffff));
     gfx::print(box.pos + box.size / 2 - s / 2, label);
     return clicked;
+}
+
+
+bool hold() { return m_hold; }
+
+
+void block_touch() {
+    m_active_item = (void const*) -1;
 }
 
 
@@ -194,7 +213,7 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
     int old_value = value;
     if (is_active_item()) {
         color = color::drag_active;
-        int x = input::touch(0).pos.x - box.pos.x;
+        int x = m_touch_pos.x - box.pos.x;
 		int v = min + (x - handle_w * (page - 1) / (2 * page)) * (max - min) / (box.size.x - handle_w);
 		value = glm::clamp(v, min, max);
     }
@@ -214,7 +233,7 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
 
 void clavier(int& n, int offset, bool highlight) {
     set_current_item(&n);
-    int w = gfx::screensize().x - PADDING - m_c_max.x;
+    int w = gfx::screensize().x - PADDING - m_cursor_max.x;
     Box box = item_box({ w, 65 });
 
     if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
@@ -231,7 +250,7 @@ void clavier(int& n, int offset, bool highlight) {
             { box.pos.x + x0, box.pos.y },
             { x1 - x0 - PADDING, box.size.y },
         };
-        bool touch = b.contains({ input::touch(0).pos.x, b.pos.y });
+        bool touch = b.contains({ m_touch_pos.x, b.pos.y });
         if (is_active_item() && touch) {
             if (input::just_pressed()) {
                 if (n == nn) n = 0;

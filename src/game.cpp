@@ -105,9 +105,25 @@ bool track_select() {
 
 void song_view() {
 
-    Tune& tune = player::tune();
-
     gfx::font(FONT_MONO);
+
+    // mute buttons
+    gui::min_item_size({ 88, 65 });
+    gui::text("");
+    for (int c = 0; c < CHANNEL_COUNT; ++c) {
+
+        gui::same_line();
+
+        gui::min_item_size({ 88, 65 });
+        char str[2] = { char('0' + c) };
+        bool a = player::is_channel_active(c);
+        if (gui::button(str, a)) {
+            player::set_channel_active(c, !a);
+        }
+    }
+
+
+    Tune& tune = player::tune();
     for (int i = 0; i < 16; ++i) {
         gui::min_item_size({ 88, 65 });
         gui::text("%02X", i);
@@ -121,11 +137,16 @@ void song_view() {
 
             char str[3] = "..";
             if (block[c] > 0) sprintf(str, "%02X", block[c]);
-            gui::min_item_size({ 0, 65 });
+            gui::min_item_size({ 88, 65 });
             if (gui::button(str)) {
                 m_edit.track_select.active = true;
                 m_edit.track_select.value = &block[c];
                 m_edit.track_select.allow_nil = true;
+            }
+            if (block[c] > 0 && gui::hold()) {
+                m_edit.track = block[c];
+                m_view = track_view;
+                gui::block_touch();
             }
         }
     }
@@ -267,6 +288,7 @@ void free() {
 
 void draw() {
     gfx::clear();
+    gui::begin_frame();
 
 //    {
 //        SDL_SetRenderDrawColor(gfx::renderer(), 0, 100, 200, 50);
@@ -276,11 +298,11 @@ void draw() {
 //    }
 
 
-    gui::begin_frame();
-    static int tick = 0;
-    gfx::font(FONT_SMALL);
-    gui::text("%63d", tick++);
-    gui::begin_frame();
+//    static int tick = 0;
+//    gfx::font(FONT_SMALL);
+//    gui::text("%63d", tick++);
+//    gui::begin_frame();
+
 
 
     if (!track_select()) {
@@ -295,10 +317,10 @@ void draw() {
         m_view();
 
         gfx::font(FONT_DEFAULT);
-        gui::min_item_size({ 260, 0 });
+        gui::min_item_size({ 260, 65 });
         if (gui::button("\x11")) player::stop();
         gui::same_line();
-        gui::min_item_size({ 260, 0 });
+        gui::min_item_size({ 260, 65 });
         bool is_playing = player::is_playing();
         if (gui::button("\x10\x12", is_playing)) {
             if (is_playing) player::pause();

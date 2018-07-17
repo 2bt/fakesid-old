@@ -7,6 +7,8 @@ namespace {
 
 
 struct Channel {
+    bool active = true;
+
     enum State { OFF, RELEASE, ATTACK, HOLD };
     enum Wave { PULSE, SAW, TRIANGLE, NOISE };
 
@@ -78,6 +80,7 @@ void mix(short* buffer, int length) {
         float sample = 0;
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
             Channel& chan = m_channels[c];
+            if (!chan.active) continue;
 
             switch (chan.state) {
             case Channel::OFF: continue;
@@ -174,6 +177,14 @@ int row() { return m_row; }
 
 
 bool is_playing() { return m_playing; }
+
+
+bool is_channel_active(int c) { return m_channels[c].active; }
+
+
+void set_channel_active(int c, bool a) {
+    m_channels[c].active = a;
+}
 
 
 Tune& tune() { return m_tune; }

@@ -31,4 +31,7 @@ namespace input {
     inline bool just_released() {
         return touch(0).state == Touch::JUST_RELEASED;
     }
+    inline bool released() {
+        return touch(0).state == Touch::RELEASED;
+    }
 }
