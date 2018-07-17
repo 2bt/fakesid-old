@@ -60,6 +60,9 @@ struct Edit {
     int instrument     = 1;
     int effect         = 2;
 
+    // song view
+    int block          = 0;
+
     struct TrackSelect {
         bool active;
         bool allow_nil;
@@ -77,6 +80,12 @@ void (*m_view)(void);
 
 bool track_select() {
     if (!m_edit.track_select.active) return false;
+
+    gfx::font(FONT_DEFAULT);
+    gui::min_item_size({ 260, 65 });
+    if (gui::button("cancel")) {
+        m_edit.track_select.active = false;
+    }
 
     gfx::font(FONT_SMALL);
     int track_nr = *m_edit.track_select.value;
@@ -108,8 +117,10 @@ void song_view() {
     gfx::font(FONT_MONO);
 
     // mute buttons
-    gui::min_item_size({ 88, 65 });
-    gui::text("");
+    gui::padding({ 88, 65 });
+    gui::same_line();
+    gui::padding({ 5, 0 });
+    gui::same_line();
     for (int c = 0; c < CHANNEL_COUNT; ++c) {
 
         gui::same_line();
@@ -122,14 +133,30 @@ void song_view() {
         }
     }
 
+    gui::padding({ 0, 5 });
 
     Tune& tune = player::tune();
-    for (int i = 0; i < 16; ++i) {
-        gui::min_item_size({ 88, 65 });
-        gui::text("%02X", i);
+    auto& table = tune.table;
 
-        if (i >= tune.table.size()) continue;
-        Tune::Block& block = tune.table[i];
+    int block_nr = player::block();
+    for (int i = 0; i < 16; ++i) {
+        bool highlight = i == block_nr;
+
+        char str[3];
+        sprintf(str, "%02X", i);
+        gui::min_item_size({ 88, 65 });
+        if (highlight) gui::highlight();
+        if (gui::button(str, i == m_edit.block)) {
+            m_edit.block = i;
+        }
+        if (i >= table.size()) {
+            continue;
+        }
+        gui::same_line();
+        gui::padding({ 5, 0 });
+
+
+        Tune::Block& block = table[i];
 
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
 
@@ -138,6 +165,7 @@ void song_view() {
             char str[3] = "..";
             if (block[c] > 0) sprintf(str, "%02X", block[c]);
             gui::min_item_size({ 88, 65 });
+            if (highlight) gui::highlight();
             if (gui::button(str)) {
                 m_edit.track_select.active = true;
                 m_edit.track_select.value = &block[c];
@@ -151,8 +179,26 @@ void song_view() {
         }
     }
 
+    gui::padding({ 0, 5 });
 
     gfx::font(FONT_DEFAULT);
+
+    gui::min_item_size({ 260, 65 });
+    if (gui::button("delete")) {
+        if (m_edit.block < table.size()) {
+            table.erase(table.begin() + m_edit.block);
+        }
+    }
+    gui::same_line();
+    gui::min_item_size({ 260, 65 });
+    if (gui::button("add")) {
+        if (m_edit.block <= table.size()) {
+            table.insert(table.begin() + m_edit.block, { 0, 0, 0, 0 });
+        }
+    }
+
+    gui::padding({ 0, 5 });
+
     gui::min_item_size({ 260, 65 });
     if (gui::button("save")) save_tune("tune");
     gui::same_line();
@@ -187,11 +233,14 @@ void track_view() {
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
     gui::drag_int("page", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
 
+    gui::padding({ 0, 5 });
+
     // clavier slider
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
     enum { COLS = 21 };
     gui::drag_int("clavier", m_edit.clavier_offset, 0, 96 - COLS, COLS);
 
+    gui::padding({ 0, 5 });
 
     int player_row = player::row();
     assert(m_edit.track > 0);
@@ -208,7 +257,8 @@ void track_view() {
         // instrument
         if (row.instrument > 0) str[0] = '0' - 1  + row.instrument;
         gui::min_item_size({ 0, 65 });
-        if (gui::button(str, highlight)) {
+        if (highlight) gui::highlight();
+        if (gui::button(str)) {
             if (row.instrument > 0) row.instrument = 0;
             else row.instrument = m_edit.instrument;
         }
@@ -218,7 +268,8 @@ void track_view() {
         if (row.effect > 0) str[0] = '0' - 1  + row.effect;
         gui::same_line();
         gui::min_item_size({ 0, 65 });
-        if (gui::button(str, highlight)) {
+        if (highlight) gui::highlight();
+        if (gui::button(str)) {
             if (row.effect > 0) row.effect = 0;
             else row.effect = m_edit.effect;
         }
@@ -236,7 +287,8 @@ void track_view() {
         }
         gui::min_item_size({ 0, 65 });
         gui::same_line();
-        if (gui::button(str, highlight)) {
+        if (highlight) gui::highlight();
+        if (gui::button(str)) {
             if (row.note == 0) row.note = -1;
             else row.note = 0;
         }
@@ -314,7 +366,11 @@ void draw() {
         gui::min_item_size({ 260, 65 });
         if (gui::button("track view", m_view == track_view)) m_view = track_view;
 
+        gui::padding({ 0, 5 });
+
         m_view();
+
+        gui::padding({ 0, 5 });
 
         gfx::font(FONT_DEFAULT);
         gui::min_item_size({ 260, 65 });

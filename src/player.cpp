@@ -69,6 +69,9 @@ void tick() {
         m_frame = 0;
         if (++m_row >= TRACK_LENGTH) {
             m_row = 0;
+            if (++m_block >= m_tune.table.size()) {
+                m_block = 0;
+            }
         }
     }
 }
@@ -168,12 +171,16 @@ void pause() {
 
 void stop() {
     pause();
+    m_block = 0;
     m_row = 0;
     m_frame = 0;
 }
 
 
 int row() { return m_row; }
+
+
+int block() { return m_block; }
 
 
 bool is_playing() { return m_playing; }

@@ -43,6 +43,7 @@ namespace player {
     void  stop();
     bool  is_playing();
     int   row();
+    int   block();
     bool  is_channel_active(int c);
     void  set_channel_active(int c, bool a);
     Tune& tune();

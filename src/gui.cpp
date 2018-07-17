@@ -19,16 +19,17 @@ namespace color {
             uint8_t(a.a * w + b.a * x),
         };
     }
-    const SDL_Color normal = make(0x666666, 200);
-    const SDL_Color active = make(0x996666, 200);
+    const SDL_Color button_normal = make(0x555555, 255);
+    const SDL_Color button_hover  = make(0x995555, 255);
+    const SDL_Color button_active = make(0xaa5555, 255);
 
-    const SDL_Color drag_normal = make(0x666666, 80);
-    const SDL_Color drag_active = make(0x996666, 80);
-    const SDL_Color drag_handle = make(0xcc6666, 200);
+    const SDL_Color drag          = make(0x222222, 255);
+    const SDL_Color handle_normal = make(0x885555, 255);
+    const SDL_Color handle_active = make(0xaa5555, 255);
 
-    const SDL_Color highlight = make(0xffff00, 200);
+    const SDL_Color highlight     = make(0xbbbbbb, 255);
 
-    const SDL_Color note      = make(0xcc6666, 200);
+    const SDL_Color note          = make(0xcc5555, 255);
 }
 
 
@@ -53,32 +54,19 @@ Vec         m_touch_pos;
 Vec         m_prev_touch_pos;
 int         m_hold_count;
 bool        m_hold;
+bool        m_highlight;
 bool        m_same_line;
 void const* m_id;
-void const* m_current_item;
 void const* m_active_item;
 std::array<char, 1024> m_text_buffer;
 
 
-
-void set_current_item(void const* addr) {
+void const* get_id(void const* addr) {
     if (m_id) {
-        m_current_item = m_id;
+        addr = m_id;
         m_id = nullptr;
-    }
-    else {
-        m_current_item = addr;
-    }
-}
-
-
-void set_active_item() {
-    m_active_item = m_current_item;
-}
-
-
-bool is_active_item() {
-    return m_current_item == m_active_item;
+   }
+   return addr;
 }
 
 
@@ -123,6 +111,9 @@ void print_to_text_buffer(const char* fmt, ...) {
 Vec cursor() { return m_cursor_max; }
 
 
+void cursor(Vec c) { m_cursor_max = c; }
+
+
 void id(void* addr) {
     m_id = addr;
 }
@@ -151,6 +142,11 @@ void begin_frame() {
 }
 
 
+void padding(Vec const& size) {
+    item_box(size);
+}
+
+
 void text(char const* fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -163,14 +159,17 @@ void text(char const* fmt, ...) {
 }
 
 
-bool button(char const* label, bool highlight) {
+void highlight() { m_highlight = true; }
+
+
+bool button(char const* label, bool active) {
     m_hold = false;
     Vec s = gfx::text_size(label);
     Box box = item_box(s + Vec(30, 10));
-    SDL_Color color;
+    SDL_Color color = color::button_normal;
     bool clicked = false;
     if (m_active_item == nullptr && box.touched()) {
-        color = color::active;
+        color = color::button_hover;
         if (box.contains(m_prev_touch_pos)) {
             if (++m_hold_count > 30) m_hold = true;
         }
@@ -178,8 +177,11 @@ bool button(char const* label, bool highlight) {
         if (input::just_released()) clicked = true;
     }
     else {
-        color = color::normal;
-        if (highlight) color = color::mix(color, color::highlight, 0.25);
+        if (active) color = color::button_active;
+        else if (m_highlight) {
+            color = color::mix(color, color::highlight, 0.25);
+            m_highlight = false;
+        }
     }
     gfx::color(color);
     gfx::rectangle(box.pos, box.size, 2);
@@ -198,7 +200,7 @@ void block_touch() {
 
 
 bool drag_int(char const* label, int& value, int min, int max, int page) {
-    set_current_item(label);
+    void const* id = get_id(label);
     print_to_text_buffer(label, value);
     Vec s = gfx::text_size(m_text_buffer.data());
 
@@ -206,22 +208,20 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
 	int handle_w = box.size.x * page / (max - min + page);
 	int handle_x = (value - min) * (box.size.x - handle_w)  / (max - min);
 
-    SDL_Color color = color::drag_normal;
     if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
-        set_active_item();
+        m_active_item = id;
     }
     int old_value = value;
-    if (is_active_item()) {
-        color = color::drag_active;
+    if (m_active_item == id) {
         int x = m_touch_pos.x - box.pos.x;
 		int v = min + (x - handle_w * (page - 1) / (2 * page)) * (max - min) / (box.size.x - handle_w);
 		value = glm::clamp(v, min, max);
     }
 
-    gfx::color(color);
+    gfx::color(color::drag);
     gfx::rectangle(box.pos, box.size, 0);
 
-    gfx::color(color::drag_handle);
+    gfx::color(m_active_item == id ? color::handle_active : color::handle_normal);
     gfx::rectangle(box.pos + Vec(handle_x, 0), { handle_w, box.size.y }, 0);
 
     gfx::color(color::make(0xffffff));
@@ -232,12 +232,12 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
 
 
 void clavier(int& n, int offset, bool highlight) {
-    set_current_item(&n);
+    void const* id = get_id(&n);
     int w = gfx::screensize().x - PADDING - m_cursor_max.x;
     Box box = item_box({ w, 65 });
 
     if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
-        set_active_item();
+        m_active_item = id;
     }
 
     enum { COLS = 21 };
@@ -251,7 +251,7 @@ void clavier(int& n, int offset, bool highlight) {
             { x1 - x0 - PADDING, box.size.y },
         };
         bool touch = b.contains({ m_touch_pos.x, b.pos.y });
-        if (is_active_item() && touch) {
+        if (m_active_item == id && touch) {
             if (input::just_pressed()) {
                 if (n == nn) n = 0;
                 else if (n == 0) n = nn;
@@ -261,7 +261,7 @@ void clavier(int& n, int offset, bool highlight) {
         SDL_Color color = color::make(0x333333);
         if ((i + offset) % 12 == 0) color = color::make(0x444444);
         if ((1 << (i + offset) % 12) & 0b010101001010) color = color::make(0x222222);
-        if (is_active_item()) color = color::mix(color, color::active, 0.2);
+        if (m_active_item == id) color = color::mix(color, color::handle_active, 0.2);
         else if (highlight) color = color::mix(color, color::highlight, 0.1);
         gfx::color(color);
         gfx::rectangle( b.pos, b.size, 0);
