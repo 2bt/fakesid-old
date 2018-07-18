@@ -312,8 +312,7 @@ bool init() {
     // default tune
     Tune& t = player::tune();
     t.tempo = 5;
-    t.table.resize(8);
-    t.table[0] = { 1, 0, 0, 0 };
+    t.table.emplace_back(Tune::Block{ 1, 0, 0, 0 });
     Track& track = t.tracks[0];
     track.rows[0] = { 0, 0, 37 };
     track.rows[2] = { 0, 0, -1 };
