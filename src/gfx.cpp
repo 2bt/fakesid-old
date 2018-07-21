@@ -19,7 +19,11 @@ SDL_Renderer* renderer() { return m_renderer; }
 SDL_Window*   window() { return m_window; }
 Vec const&    screensize() { return m_screensize; }
 void font(FontID font) { m_font = font; }
-void resize(Vec const& s) { m_screensize = s; }
+void resize(Vec const& s) {
+#ifdef __ANDROID__
+    m_screensize = s;
+#endif
+}
 void present() { SDL_RenderPresent(m_renderer); }
 
 
@@ -65,8 +69,15 @@ void free() {
 
 
 void clear() {
+#ifdef __ANDROID__
     SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
     SDL_RenderClear(m_renderer);
+#else
+    SDL_SetRenderDrawColor(m_renderer, 40, 40, 40, 255);
+    SDL_RenderClear(m_renderer);
+    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+    SDL_RenderFillRect(m_renderer, nullptr);
+#endif
 }
 
 
