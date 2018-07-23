@@ -1,3 +1,4 @@
+#pragma once
 #include "gfx.hpp"
 
 namespace gui {
