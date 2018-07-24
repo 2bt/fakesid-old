@@ -77,6 +77,7 @@ struct Edit {
 
 void song_view();
 void track_view();
+void instrument_view();
 void (*m_view)(void);
 
 
@@ -121,7 +122,7 @@ void song_view() {
     // mute buttons
     gui::padding({ 88, 65 });
     gui::same_line();
-    gui::padding({ 5, 0 });
+    gui::separator();
     gui::same_line();
     for (int c = 0; c < CHANNEL_COUNT; ++c) {
 
@@ -135,7 +136,8 @@ void song_view() {
         }
     }
 
-    gui::padding({ 0, 5 });
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
+    gui::separator();
 
     Tune& tune = player::tune();
     auto& table = tune.table;
@@ -151,11 +153,15 @@ void song_view() {
         if (gui::button(str, i == m_edit.block)) {
             m_edit.block = i;
         }
-        if (i >= table.size()) {
-            continue;
+        if (gui::hold()) {
+            player::block(i);
         }
         gui::same_line();
-        gui::padding({ 5, 0 });
+        gui::separator();
+        if (i >= table.size()) {
+            gui::padding({});
+            continue;
+        }
 
 
         Tune::Block& block = table[i];
@@ -181,7 +187,8 @@ void song_view() {
         }
     }
 
-    gui::padding({ 0, 5 });
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
+    gui::separator();
 
     gfx::font(FONT_DEFAULT);
 
@@ -198,8 +205,6 @@ void song_view() {
             table.insert(table.begin() + m_edit.block, { 0, 0, 0, 0 });
         }
     }
-
-    gui::padding({ 0, 5 });
 
     gui::min_item_size({ 260, 65 });
     if (gui::button("save")) save_tune("tune");
@@ -235,14 +240,13 @@ void track_view() {
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
     gui::drag_int("page", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
 
-    gui::padding({ 0, 5 });
-
     // clavier slider
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
     enum { COLS = 21 };
     gui::drag_int("clavier", m_edit.clavier_offset, 0, 96 - COLS, COLS);
 
-    gui::padding({ 0, 5 });
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
+    gui::separator();
 
     int player_row = player::row();
     assert(m_edit.track > 0);
@@ -279,19 +283,19 @@ void track_view() {
 
         // note
         str[0] = str[1] = str[2] = '.';
-        if (row.note > 0) {
+        if (row.note == 255) {
+            str[0] = str[1] = str[2] = '=';
+        }
+        else if (row.note > 0) {
             str[0] = "CCDDEFFGGAAB"[(row.note - 1) % 12];
             str[1] = "-#-#--#-#-#-"[(row.note - 1) % 12];
             str[2] = '0' + (row.note - 1) / 12;
-        }
-        if (row.note == -1) {
-            str[0] = str[1] = str[2] = '=';
         }
         gui::min_item_size({ 0, 65 });
         gui::same_line();
         if (highlight) gui::highlight();
         if (gui::button(str)) {
-            if (row.note == 0) row.note = -1;
+            if (row.note == 0) row.note = 255;
             else row.note = 0;
         }
 
@@ -301,6 +305,11 @@ void track_view() {
     }
 
     gfx::font(FONT_DEFAULT);
+}
+
+
+void instrument_view() {
+
 }
 
 
@@ -319,9 +328,9 @@ bool init() {
     t.table.emplace_back(Tune::Block{ 1, 0, 0, 0 });
     Track& track = t.tracks[0];
     track.rows[0] = { 0, 0, 37 };
-    track.rows[2] = { 0, 0, -1 };
+    track.rows[2] = { 0, 0, 255 };
     track.rows[4] = { 0, 0, 49 };
-    track.rows[6] = { 0, 0, -1 };
+    track.rows[6] = { 0, 0, 255 };
 
     // try to load last tune
 //    load_tune("tune");
@@ -364,17 +373,23 @@ void draw() {
     if (!track_select()) {
         gfx::font(FONT_DEFAULT);
 
-        gui::min_item_size({ 260, 65 });
-        if (gui::button("song view", m_view == song_view)) m_view = song_view;
-        gui::same_line();
-        gui::min_item_size({ 260, 65 });
-        if (gui::button("track view", m_view == track_view)) m_view = track_view;
 
-        gui::padding({ 0, 5 });
+        gui::min_item_size({ 65, 65 });
+        if (gui::button("S", m_view == song_view)) m_view = song_view;
+        gui::same_line();
+        gui::min_item_size({ 65, 65 });
+        if (gui::button("T", m_view == track_view)) m_view = track_view;
+        gui::same_line();
+        gui::min_item_size({ 65, 65 });
+        if (gui::button("I", m_view == instrument_view)) m_view = instrument_view;
+
+
+        gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
+        gui::separator();
 
         m_view();
 
-        gui::padding({ 0, 5 });
+        gui::padding({ 0, gfx::screensize().y - gui::cursor().y - gui::PADDING * 3 - 65 });
 
         gfx::font(FONT_DEFAULT);
         gui::min_item_size({ 260, 65 });

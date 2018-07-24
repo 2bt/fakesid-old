@@ -27,6 +27,8 @@ namespace color {
     const SDL_Color handle_normal = make(0x885555, 255);
     const SDL_Color handle_active = make(0xaa5555, 255);
 
+    const SDL_Color separator     = make(0x222222, 255);
+
     const SDL_Color highlight     = make(0xbbbbbb, 255);
 
     const SDL_Color note          = make(0xcc5555, 255);
@@ -146,6 +148,20 @@ void padding(Vec const& size) {
     item_box(size);
 }
 
+void separator() {
+    enum { WIDTH = 6 };
+    gfx::color(color::separator);
+	if (m_same_line) {
+		Box box = item_box({ WIDTH, m_cursor_max.y - m_cursor_min.y - PADDING });
+		m_same_line = true;
+        gfx::rectangle(box.pos + Vec(0, -PADDING), box.size + Vec(0, PADDING * 2), 0);
+    }
+	else {
+		Box box = item_box({ m_cursor_max.x - m_cursor_min.x - PADDING, WIDTH });
+        gfx::rectangle(box.pos + Vec(-PADDING, 0), box.size + Vec(PADDING * 2, 0), 0);
+	}
+}
+
 
 void text(char const* fmt, ...) {
     va_list args;
@@ -178,11 +194,9 @@ bool button(char const* label, bool active) {
     }
     else {
         if (active) color = color::button_active;
-        else if (m_highlight) {
-            color = color::mix(color, color::highlight, 0.25);
-            m_highlight = false;
-        }
+        else if (m_highlight) color = color::mix(color, color::highlight, 0.25);
     }
+    m_highlight = false;
     gfx::color(color);
     gfx::rectangle(box.pos, box.size, 2);
     gfx::color(color::make(0xffffff));
@@ -231,7 +245,7 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
 }
 
 
-void clavier(int& n, int offset, bool highlight) {
+void clavier(uint8_t& n, int offset, bool highlight) {
     void const* id = get_id(&n);
     int w = gfx::screensize().x - PADDING - m_cursor_max.x;
     Box box = item_box({ w, 65 });
@@ -248,9 +262,10 @@ void clavier(int& n, int offset, bool highlight) {
         int nn = i + 1 + offset;
         Box b = {
             { box.pos.x + x0, box.pos.y },
-            { x1 - x0 - PADDING, box.size.y },
+            { x1 - x0, box.size.y },
         };
         bool touch = b.contains({ m_touch_pos.x, b.pos.y });
+        b.size.x -= PADDING;
         if (m_active_item == id && touch) {
             if (input::just_pressed()) {
                 if (n == nn) n = 0;

@@ -18,24 +18,24 @@ constexpr std::array<int, 16> release_speeds = {
 
 
 enum State { RELEASE, ATTACK, DECAY, SUSTAIN };
-enum Wave { TRI = 1, SAW = 2, PULSE = 4, NOISE = 8 };
 
 
 struct Channel {
     bool active = true;
-    // voice stuff
-    State    state;
-    int      level;
-    uint8_t  adsr[4] = {0, 8, 8, 3};
-    uint32_t phase;
+
+    State    state      = RELEASE;
+    uint8_t  adsr[4]    = {0, 8, 8, 3};
+    uint8_t  wave       = SAW;
+    uint32_t pulsewidth = 0x8000000;
     uint32_t freq;
+
+    // internal things
+    int      level = 0;
+    uint32_t phase;
     uint32_t noise_phase;
     uint32_t shift = 0x7ffff8;
     uint8_t  noise;
-    int      wave  = SAW;
-    int      pulse = 0x8000000;
 };
-
 
 Tune m_tune;
 bool m_playing;
@@ -49,9 +49,11 @@ std::array<Channel, CHANNEL_COUNT> m_channels;
 void tick() {
     if (!m_playing) return;
     if (m_frame == 0) {
-        if (m_block >= m_tune.table.size()) m_block = 0;
+        int block_nr = m_block;
+        if (m_block >= m_tune.table.size()) block_nr = 0;
+        m_block = block_nr;
 
-        Tune::Block const& block = m_tune.table[m_block];
+        Tune::Block const& block = m_tune.table[block_nr];
 
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
             Channel& chan = m_channels[c];
@@ -60,13 +62,13 @@ void tick() {
             Track const& track = m_tune.tracks[track_nr - 1];
             Track::Row const& row = track.rows[m_row];
 
-            if (row.note > 0) {
+            if (row.note == 255) {
+                chan.state = RELEASE;
+            }
+            else if (row.note > 0) {
                 // new note
                 chan.state = ATTACK;
                 chan.freq  = exp2f((row.note - 58) / 12.0f) * (1 << 28) * 440 / MIXRATE;
-            }
-            else if (row.note == -1) {
-                chan.state = RELEASE;
             }
         }
     }
@@ -126,7 +128,7 @@ void mix(short* buffer, int length) {
 
             uint8_t tri   = ((chan.phase < 0x8000000 ? chan.phase : ~chan.phase) >> 19) & 0xff;
             uint8_t saw   = (chan.phase >> 20) & 0xff;
-            uint8_t pulse = ((chan.phase > chan.pulse) - 1) & 0xff;
+            uint8_t pulse = ((chan.phase > chan.pulsewidth) - 1) & 0xff;
             if (chan.noise_phase != chan.phase >> 23) {
                 chan.noise_phase = chan.phase >> 23;
                 uint32_t s = chan.shift;
@@ -179,7 +181,10 @@ void play() {
 
 void pause() {
     m_playing = false;
-    for (Channel& chan : m_channels) chan.state = RELEASE;
+    for (Channel& chan : m_channels) {
+        chan.state = RELEASE;
+        chan.level = 0;
+    }
 }
 
 
@@ -191,23 +196,12 @@ void stop() {
 }
 
 
-int row() { return m_row; }
-
-
-int block() { return m_block; }
-
-
-bool is_playing() { return m_playing; }
-
-
-bool is_channel_active(int c) { return m_channels[c].active; }
-
-
-void set_channel_active(int c, bool a) {
-    m_channels[c].active = a;
-}
-
-
+int   row() { return m_row; }
+int   block() { return m_block; }
+void  block(int b) { m_block = b; }
+bool  is_playing() { return m_playing; }
+bool  is_channel_active(int c) { return m_channels[c].active; }
+void  set_channel_active(int c, bool a) { m_channels[c].active = a; }
 Tune& tune() { return m_tune; }
 
 

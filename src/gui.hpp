@@ -10,11 +10,12 @@ namespace gui {
     void same_line();
     void min_item_size(Vec const& s);
     void padding(Vec const& size);
+    void separator();
     void text(char const* fmt, ...);
     void highlight();
     bool button(char const* label, bool active = false);
     bool hold();
     void block_touch();
     bool drag_int(char const* label, int& value, int min, int max, int page = 1);
-    void clavier(int& n, int offset, bool highlight);
+    void clavier(uint8_t& n, int offset, bool highlight);
 }

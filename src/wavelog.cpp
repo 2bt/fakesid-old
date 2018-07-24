@@ -1,6 +1,4 @@
-#include <sndfile.h>
 #include "wavelog.hpp"
-
 
 namespace wavelog {
 
@@ -8,9 +6,11 @@ namespace wavelog {
 
 bool init(int mixrate) { return true; }
 void write(short const* buffer, int len) {}
-bool free() {}
+void free() {}
 
 #else
+
+#include <sndfile.h>
 
 namespace {
 
@@ -31,7 +31,7 @@ void write(short const* buffer, int len) {
 }
 
 
-bool free() {
+void free() {
     sf_close(m_log);
 }
 
