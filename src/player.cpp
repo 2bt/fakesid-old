@@ -6,26 +6,34 @@ namespace player {
 namespace {
 
 
+constexpr std::array<int, 16> attack_speeds = {
+    168867, 47495, 24124, 15998, 10200, 6908, 5692, 4855,
+    3877, 1555, 777, 486, 389, 129, 77, 48,
+};
+
+constexpr std::array<int, 16> release_speeds = {
+    42660, 15468, 7857, 5210, 3322, 2250, 1853, 1581,
+    1262, 506, 253, 158, 126, 42, 25, 15,
+};
+
+
+enum State { RELEASE, ATTACK, DECAY, SUSTAIN };
+enum Wave { TRI = 1, SAW = 2, PULSE = 4, NOISE = 8 };
+
+
 struct Channel {
     bool active = true;
-
-    enum State { OFF, RELEASE, ATTACK, HOLD };
-    enum Wave { PULSE, SAW, TRIANGLE, NOISE };
-
     // voice stuff
     State    state;
-    float    level;
-    float    phase;
-    float    speed;
-    uint32_t shift;
-
-    Wave     wave = PULSE;
-    float    pulsewidth = 0.5;
-
-    float attack  = 0.01;
-    float decay   = 0.9999;
-    float sustain = 0.7;
-    float release = 0.99;
+    int      level;
+    uint8_t  adsr[4] = {0, 8, 8, 3};
+    uint32_t phase;
+    uint32_t freq;
+    uint32_t noise_phase;
+    uint32_t shift = 0x7ffff8;
+    uint8_t  noise;
+    int      wave  = SAW;
+    int      pulse = 0x8000000;
 };
 
 
@@ -41,6 +49,8 @@ std::array<Channel, CHANNEL_COUNT> m_channels;
 void tick() {
     if (!m_playing) return;
     if (m_frame == 0) {
+        if (m_block >= m_tune.table.size()) m_block = 0;
+
         Tune::Block const& block = m_tune.table[m_block];
 
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
@@ -52,12 +62,11 @@ void tick() {
 
             if (row.note > 0) {
                 // new note
-                float pitch = row.note;
-                chan.speed = exp2f((pitch - 57) / 12) * 440 / MIXRATE;
-                chan.state = Channel::ATTACK;
+                chan.state = ATTACK;
+                chan.freq  = exp2f((row.note - 58) / 12.0f) * (1 << 28) * 440 / MIXRATE;
             }
             else if (row.note == -1) {
-                chan.state = Channel::RELEASE;
+                chan.state = RELEASE;
             }
         }
     }
@@ -80,64 +89,69 @@ void tick() {
 void mix(short* buffer, int length) {
     for (int i = 0; i < length; ++i) {
 
-        float sample = 0;
+        int sample = 0;
+
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
             Channel& chan = m_channels[c];
             if (!chan.active) continue;
 
+            int sustain = chan.adsr[2] * 0x111111;
+
             switch (chan.state) {
-            case Channel::OFF: continue;
-            case Channel::ATTACK:
-                chan.level += chan.attack;
-                if (chan.level > 1) chan.state = Channel::HOLD;
-                break;
-            case Channel::HOLD: chan.level = chan.sustain + (chan.level - chan.sustain) * chan.decay; break;
-            case Channel::RELEASE:
-            default: chan.level *= chan.release; break;
-            }
-
-            chan.phase += chan.speed;
-            if (chan.wave != Channel::NOISE) chan.phase -= (int) chan.phase;
-
-            float amp = 0;
-
-            switch (chan.wave) {
-            case Channel::PULSE:
-                amp = chan.phase < chan.pulsewidth ? -1 : 1;
-                break;
-            case Channel::TRIANGLE:
-                amp = chan.phase < chan.pulsewidth ?
-                    2 / chan.pulsewidth * chan.phase - 1 :
-                    2 / (chan.pulsewidth - 1) * (chan.phase - chan.pulsewidth) + 1;
-                break;
-            case Channel::NOISE: {
-                uint32_t s = chan.shift;
-                uint32_t b;
-                while (chan.phase > 0.1) {
-                    chan.phase -= 0.1;
-                    b = ((s >> 22) ^ (s >> 17)) & 1;
-                    s = ((s << 1) & 0x7fffff) + b;
+            case ATTACK:
+                chan.level += attack_speeds[chan.adsr[0]];
+                if (chan.level >= 0xffffff) {
+                    chan.level = 0xffffff;
+                    chan.state = DECAY;
                 }
-                chan.shift = s;
-                amp = (
-                        ((s & 0x400000) >> 11) |
-                        ((s & 0x100000) >> 10) |
-                        ((s & 0x010000) >> 7) |
-                        ((s & 0x002000) >> 5) |
-                        ((s & 0x000800) >> 4) |
-                        ((s & 0x000080) >> 1) |
-                        ((s & 0x000010) << 1) |
-                        ((s & 0x000004) << 2)) * (2.0 / (1<<12)) - 1;
+                break;
+            case DECAY:
+                chan.level -= release_speeds[chan.adsr[1]];
+                if (chan.level <= sustain) {
+                    chan.level = sustain;
+                    chan.state = SUSTAIN;
+                }
+                break;
+            case SUSTAIN:
+                if (chan.level != sustain) chan.state = ATTACK;
+                break;
+            case RELEASE:
+                chan.level -= release_speeds[chan.adsr[3]];
+                if (chan.level < 0) chan.level = 0;
                 break;
             }
-            default: break;
-            }
 
-            amp *= chan.level;
-            sample += amp;
+            chan.phase += chan.freq;
+            chan.phase &= 0xfffffff;
+
+            uint8_t tri   = ((chan.phase < 0x8000000 ? chan.phase : ~chan.phase) >> 19) & 0xff;
+            uint8_t saw   = (chan.phase >> 20) & 0xff;
+            uint8_t pulse = ((chan.phase > chan.pulse) - 1) & 0xff;
+            if (chan.noise_phase != chan.phase >> 23) {
+                chan.noise_phase = chan.phase >> 23;
+                uint32_t s = chan.shift;
+                chan.shift = s = (s << 1) | (((s >> 22) ^ (s >> 17)) & 1);
+                chan.noise = ((s & 0x400000) >> 11) |
+                             ((s & 0x100000) >> 10) |
+                             ((s & 0x010000) >>  7) |
+                             ((s & 0x002000) >>  5) |
+                             ((s & 0x000800) >>  4) |
+                             ((s & 0x000080) >>  1) |
+                             ((s & 0x000010) <<  1) |
+                             ((s & 0x000004) <<  2);
+            }
+            uint8_t noise = chan.noise;
+
+            uint8_t out = 0xff;
+            if (chan.wave & TRI)   out &= tri;
+            if (chan.wave & SAW)   out &= saw;
+            if (chan.wave & PULSE) out &= pulse;
+            if (chan.wave & NOISE) out &= noise;
+
+            sample += ((out - 0x80) * chan.level) >> 18;
         }
 
-        buffer[i] = std::max(-32768, std::min<int>(sample * 6000, 32767));
+        buffer[i] = std::max(-32768, std::min<int>(sample, 32767));
     }
 }
 
@@ -165,7 +179,7 @@ void play() {
 
 void pause() {
     m_playing = false;
-    for (Channel& chan : m_channels) chan.state = Channel::OFF;
+    for (Channel& chan : m_channels) chan.state = RELEASE;
 }
 
 

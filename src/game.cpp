@@ -1,6 +1,7 @@
 #include "game.hpp"
 #include "gui.hpp"
 #include "player.hpp"
+#include "wavelog.hpp"
 
 
 namespace game {
@@ -49,6 +50,7 @@ bool load_tune(char const* name) {
 
 void audio_callback(void* userdata, Uint8* stream, int len) {
     player::fill_buffer((short*) stream, len / 2);
+    wavelog::write((short*) stream, len / 2);
 }
 
 
@@ -185,7 +187,7 @@ void song_view() {
 
     gui::min_item_size({ 260, 65 });
     if (gui::button("delete")) {
-        if (m_edit.block < table.size()) {
+        if (m_edit.block < table.size() && table.size() > 1) {
             table.erase(table.begin() + m_edit.block);
         }
     }
@@ -309,6 +311,8 @@ bool init() {
     m_pref_path = SDL_GetPrefPath("sdl", "rausch");
     if (!m_pref_path) return false;
 
+    wavelog::init(MIXRATE);
+
     // default tune
     Tune& t = player::tune();
     t.tempo = 5;
@@ -334,6 +338,7 @@ bool init() {
 void free() {
 //    save_tune("tune");
     SDL_free(m_pref_path);
+    wavelog::free();
 }
 
 

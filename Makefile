@@ -1,5 +1,5 @@
 CF = -Wall --std=c++14 -Og -g -I/usr/include/glm -I/usr/include/SDL2
-LF = -Wall --std=c++14 -lSDL2 -lSDL2_image -lSDL2_mixer
+LF = -Wall --std=c++14 -lSDL2 -lSDL2_image -lSDL2_mixer -lsndfile
 
 CXX = g++
 SRC = $(wildcard src/*.cpp)
