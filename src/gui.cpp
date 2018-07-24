@@ -116,7 +116,7 @@ Vec cursor() { return m_cursor_max; }
 void cursor(Vec c) { m_cursor_max = c; }
 
 
-void id(void* addr) {
+void id(void const* addr) {
     m_id = addr;
 }
 

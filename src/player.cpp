@@ -50,7 +50,7 @@ void tick() {
     if (!m_playing) return;
     if (m_frame == 0) {
         int block_nr = m_block;
-        if (m_block >= m_tune.table.size()) block_nr = 0;
+        if (m_block >= (int) m_tune.table.size()) block_nr = 0;
         m_block = block_nr;
 
         Tune::Block const& block = m_tune.table[block_nr];
@@ -80,7 +80,7 @@ void tick() {
         m_frame = 0;
         if (++m_row >= TRACK_LENGTH) {
             m_row = 0;
-            if (++m_block >= m_tune.table.size()) {
+            if (++m_block >= (int) m_tune.table.size()) {
                 m_block = 0;
             }
         }

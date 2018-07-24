@@ -6,7 +6,7 @@ namespace gui {
     Vec  cursor();
     void cursor(Vec c);
     void begin_frame();
-    void id(void* addr);
+    void id(void const* addr);
     void same_line();
     void min_item_size(Vec const& s);
     void padding(Vec const& size);

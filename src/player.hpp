@@ -9,6 +9,8 @@ enum {
     CHANNEL_COUNT     = 4,
     TRACK_LENGTH      = 32,
     TRACK_COUNT       = 255,
+    INSTRUMENT_COUNT  = 46,
+
     PAGE_LENGTH       = 16,
 };
 
@@ -39,7 +41,7 @@ enum Operations {
     INC_PULSEWIDTH,
 };
 
-struct Intrument {
+struct Instrument {
     struct Row {
         uint8_t flags;
         uint8_t operaton;
@@ -56,11 +58,11 @@ struct Intrument {
 
 
 struct Tune {
-    int tempo; // 4 to F
-    int swing; // 0 to 4
+    uint8_t tempo; // 4 to F
+    uint8_t swing; // 0 to 4
 
-    std::array<Track, TRACK_COUNT> tracks;
-
+    std::array<Track, TRACK_COUNT>           tracks;
+    std::array<Instrument, INSTRUMENT_COUNT> instruments;
 
     using Block = std::array<int, CHANNEL_COUNT>;
     std::vector<Block> table;
