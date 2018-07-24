@@ -347,23 +347,20 @@ void instrument_view() {
     columns(2, [&instrument](int i, int w) {
         if (i) gui::same_line();
         gui::min_item_size({ w, 65 });
-        gui::id("ad" + i);
-        int v;
-        v = i == 0 ? instrument.ad >> 4 : instrument.ad & 0x0f;
+        gui::id(&instrument.adsr[i]);
+        int v = instrument.adsr[i];
         if (gui::drag_int("%X", v, 0, 15)) {
-            if (i == 0) instrument.ad = (instrument.ad & 0x0f) | (v << 4);
-            else        instrument.ad = (instrument.ad & 0xf0) | v;
+            instrument.adsr[i] = v;
         }
     });
     columns(2, [&instrument](int i, int w) {
         if (i) gui::same_line();
+        i += 2;
         gui::min_item_size({ w, 65 });
-        gui::id("sr" + i);
-        int v;
-        v = i == 0 ? instrument.sr >> 4 : instrument.sr & 0x0f;
+        gui::id(&instrument.adsr[i]);
+        int v = instrument.adsr[i];
         if (gui::drag_int("%X", v, 0, 15)) {
-            if (i == 0) instrument.sr = (instrument.sr & 0x0f) | (v << 4);
-            else        instrument.sr = (instrument.sr & 0xf0) | v;
+            instrument.adsr[i] = v;
         }
     });
 
@@ -383,6 +380,9 @@ void instrument_view() {
         gui::same_line();
         gui::separator();
         if (i >= (int) rows.size()) {
+            gui::padding({ 425, 0 });
+            gui::same_line();
+            gui::separator();
             gui::padding({});
             continue;
         }
@@ -436,7 +436,7 @@ void instrument_view() {
     }
     gui::same_line();
     gui::min_item_size({ 260, 65 });
-    if (gui::button("add")) {
+    if (gui::button("add") && rows.size() < 16) {
         rows.insert(rows.begin() + instrument.loop, {{}});
     }
 
@@ -460,17 +460,16 @@ bool init() {
         { 1, 0, 0, 0 }
     };
     Track& track = t.tracks[0];
-    track.rows[0] = { 0, 0, 37 };
+    track.rows[0] = { 1, 0, 37 };
     track.rows[2] = { 0, 0, 255 };
-    track.rows[4] = { 0, 0, 49 };
-    track.rows[6] = { 0, 0, 255 };
+    track.rows[4] = { 1, 0, 49 };
+    track.rows[14] = { 0, 0, 255 };
 
     Instrument& i = t.instruments[0];
-    i.ad = 0x08;
-    i.sr = 0x83;
+    i.adsr = { 1, 8, 8, 8 };
     i.rows = {
-        { NOISE | GATE, SET_PULSEWIDTH, 0x80 },
-        { PULSE | GATE, INC_PULSEWIDTH, 0x01 },
+        { NOISE | GATE, SET_PULSEWIDTH, 0x8 },
+        { PULSE | GATE, INC_PULSEWIDTH, 0x1 },
     };
     i.loop = 1;
 
@@ -526,19 +525,18 @@ void draw() {
         // stop and play
         gui::padding({ 0, gfx::screensize().y - gui::cursor().y - gui::PADDING * 3 - 88 });
         gfx::font(FONT_DEFAULT);
-        columns(2, [](int i, int w) {
+        bool is_playing = player::is_playing();
+        columns(2, [is_playing](int i, int w) {
             if (i) gui::same_line();
             gui::min_item_size({ w, 88 });
             switch (i) {
             case 0:
                 if (gui::button("\x11")) player::stop();
                 break;
-            case 1: {
-                    bool is_playing = player::is_playing();
-                    if (gui::button("\x10\x12", is_playing)) {
-                        if (is_playing) player::pause();
-                        else player::play();
-                    }
+            case 1:
+                if (gui::button("\x10\x12", is_playing)) {
+                    if (is_playing) player::pause();
+                    else player::play();
                 }
                 break;
             }

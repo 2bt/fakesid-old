@@ -48,12 +48,10 @@ struct Instrument {
         uint8_t value;
     };
 
-    uint8_t          ad;
-    uint8_t          sr;
-    uint8_t          silence;
-
-    std::vector<Row> rows;
-    uint8_t          loop;
+    std::array<uint8_t, 4> adsr;
+    uint8_t                silence;
+    std::vector<Row>       rows;
+    uint8_t                loop;
 };
 
 

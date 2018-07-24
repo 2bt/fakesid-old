@@ -23,18 +23,27 @@ enum State { RELEASE, ATTACK, DECAY, SUSTAIN };
 struct Channel {
     bool active = true;
 
-    State    state      = RELEASE;
-    uint8_t  adsr[4]    = {0, 8, 8, 3};
-    uint8_t  wave       = SAW;
-    uint32_t pulsewidth = 0x8000000;
+    int               note;
+    bool              gate;
+    Instrument const* inst;
+    int               inst_row;
+    // TODO
+    //int               inst_pw  = 0;
+
+
+    State    state;
+    int      adsr[4];
+    int      flags;
+    uint32_t pulsewidth;
     uint32_t freq;
 
+
     // internal things
-    int      level = 0;
+    int      level;
     uint32_t phase;
     uint32_t noise_phase;
     uint32_t shift = 0x7ffff8;
-    uint8_t  noise;
+    int      noise;
 };
 
 Tune m_tune;
@@ -48,6 +57,8 @@ std::array<Channel, CHANNEL_COUNT> m_channels;
 
 void tick() {
     if (!m_playing) return;
+
+    // row_update
     if (m_frame == 0) {
         int block_nr = m_block;
         if (m_block >= (int) m_tune.table.size()) block_nr = 0;
@@ -62,16 +73,50 @@ void tick() {
             Track const& track = m_tune.tracks[track_nr - 1];
             Track::Row const& row = track.rows[m_row];
 
-            if (row.note == 255) {
+            if (row.instrument > 0) {
+                Instrument const& inst = m_tune.instruments[row.instrument - 1];
+                chan.inst = &inst;
+                chan.adsr[0] = attack_speeds[inst.adsr[0]];
+                chan.adsr[1] = release_speeds[inst.adsr[1]];
+                chan.adsr[2] = inst.adsr[2] * 0x111111;
+                chan.adsr[3] = release_speeds[inst.adsr[3]];
+                chan.inst_row = 0;
+                chan.gate = true;
+
+                // cause envelop reset
+                // XXX: do we want that?
                 chan.state = RELEASE;
             }
+
+            if (row.note == 255) {
+                chan.gate = false;
+//                chan.state = RELEASE;
+            }
             else if (row.note > 0) {
-                // new note
-                chan.state = ATTACK;
-                chan.freq  = exp2f((row.note - 58) / 12.0f) * (1 << 28) * 440 / MIXRATE;
+                chan.note = row.note;
+                // TODO: move to frame update; add effect
+                chan.freq = exp2f((chan.note - 58) / 12.0f) * (1 << 28) * 440 / MIXRATE;
             }
         }
     }
+
+    // frame update
+    for (int c = 0; c < CHANNEL_COUNT; ++c) {
+        Channel& chan = m_channels[c];
+        if (chan.inst && !chan.inst->rows.empty()) {
+            Instrument const& inst = *chan.inst;
+            if (chan.inst_row >= (int) inst.rows.size()) chan.inst_row = inst.loop;
+            Instrument::Row const& row = inst.rows[chan.inst_row++];
+            chan.flags = row.flags;
+            if (row.operaton == SET_PULSEWIDTH) {
+                chan.pulsewidth = row.value * 0x1000000;
+            }
+            if (row.operaton == INC_PULSEWIDTH) {
+                chan.pulsewidth = (chan.pulsewidth + row.value * 0x80000) & 0xfffffff;
+            }
+        }
+    }
+
 
     int frames_per_row = m_tune.tempo;
     if (m_row % 2 == 0) frames_per_row += m_tune.swing;
@@ -97,28 +142,30 @@ void mix(short* buffer, int length) {
             Channel& chan = m_channels[c];
             if (!chan.active) continue;
 
-            int sustain = chan.adsr[2] * 0x111111;
+            bool gate = chan.gate && (chan.flags & GATE);
+            if (gate && chan.state == RELEASE) chan.state = ATTACK;
+            if (!gate) chan.state = RELEASE;
 
             switch (chan.state) {
             case ATTACK:
-                chan.level += attack_speeds[chan.adsr[0]];
+                chan.level += chan.adsr[0];
                 if (chan.level >= 0xffffff) {
                     chan.level = 0xffffff;
                     chan.state = DECAY;
                 }
                 break;
             case DECAY:
-                chan.level -= release_speeds[chan.adsr[1]];
-                if (chan.level <= sustain) {
-                    chan.level = sustain;
+                chan.level -= chan.adsr[1];
+                if (chan.level <= chan.adsr[2]) {
+                    chan.level = chan.adsr[2];
                     chan.state = SUSTAIN;
                 }
                 break;
             case SUSTAIN:
-                if (chan.level != sustain) chan.state = ATTACK;
+                if (chan.level != chan.adsr[2]) chan.state = ATTACK;
                 break;
             case RELEASE:
-                chan.level -= release_speeds[chan.adsr[3]];
+                chan.level -= chan.adsr[3];
                 if (chan.level < 0) chan.level = 0;
                 break;
             }
@@ -145,10 +192,10 @@ void mix(short* buffer, int length) {
             uint8_t noise = chan.noise;
 
             uint8_t out = 0xff;
-            if (chan.wave & TRI)   out &= tri;
-            if (chan.wave & SAW)   out &= saw;
-            if (chan.wave & PULSE) out &= pulse;
-            if (chan.wave & NOISE) out &= noise;
+            if (chan.flags & TRI)   out &= tri;
+            if (chan.flags & SAW)   out &= saw;
+            if (chan.flags & PULSE) out &= pulse;
+            if (chan.flags & NOISE) out &= noise;
 
             sample += ((out - 0x80) * chan.level) >> 18;
         }
@@ -182,7 +229,7 @@ void play() {
 void pause() {
     m_playing = false;
     for (Channel& chan : m_channels) {
-        chan.state = RELEASE;
+        chan.gate  = false;
         chan.level = 0;
     }
 }
