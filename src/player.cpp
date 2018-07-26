@@ -27,6 +27,9 @@ struct Channel {
     bool              gate;
     Instrument const* inst;
     int               inst_row;
+    Effect const*     effect;
+    int               effect_row;
+
     // TODO
     //int               inst_pw  = 0;
 
@@ -74,8 +77,8 @@ void tick() {
             Track::Row const& row = track.rows[m_row];
 
             if (row.instrument > 0) {
-                Instrument const& inst = m_tune.instruments[row.instrument - 1];
-                chan.inst = &inst;
+                chan.inst = &m_tune.instruments[row.instrument - 1];
+                Instrument const& inst = *chan.inst;
                 chan.adsr[0] = attack_speeds[inst.adsr[0]];
                 chan.adsr[1] = release_speeds[inst.adsr[1]];
                 chan.adsr[2] = inst.adsr[2] * 0x111111;
@@ -87,6 +90,12 @@ void tick() {
                 // XXX: do we want that?
                 chan.state = RELEASE;
             }
+
+            if (row.effect > 0) {
+                chan.effect = &m_tune.effects[row.effect - 1];
+                chan.effect_row = 0;
+            }
+
 
             if (row.note == 255) {
                 chan.gate = false;
@@ -102,6 +111,8 @@ void tick() {
     // frame update
     for (int c = 0; c < CHANNEL_COUNT; ++c) {
         Channel& chan = m_channels[c];
+
+        // instrument
         if (chan.inst && chan.inst->length > 0) {
             Instrument const& inst = *chan.inst;
             if (chan.inst_row >= inst.length) {
@@ -115,6 +126,16 @@ void tick() {
             if (row.operaton == INC_PULSEWIDTH) {
                 chan.pulsewidth = (chan.pulsewidth + row.value * 0x80000) & 0xfffffff;
             }
+        }
+
+        // effect
+        if (chan.effect && chan.effect->length > 0) {
+            Effect const& effect = *chan.effect;
+            if (chan.effect_row >= effect.length) {
+                chan.effect_row = std::min<int>(effect.loop, effect.length - 1);
+            }
+            int offset = effect.rows[chan.effect_row++] - 0x80;
+            chan.freq = exp2f((chan.note - 58 + offset * 0.25f) / 12.0f) * (1 << 28) * 440 / MIXRATE;
         }
     }
 

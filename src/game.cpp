@@ -478,11 +478,10 @@ void effect_view() {
             continue;
         }
 
-        // TODO
         int v = (effect.rows[i] >> 2) - 32;
         gui::min_item_size({ gfx::screensize().x * 4 / 5, 65 });
         gui::id(&effect.rows[i]);
-        if (gui::drag_int("%+3d", v, -16, 16)) effect.rows[i] = (effect.rows[i] & 0x03) | (v + 32 << 2);
+        if (gui::drag_int("%+3d", v, -16, 16)) effect.rows[i] = (effect.rows[i] & 0x03) | ((v + 32) << 2);
 
         v = effect.rows[i] & 0x03;
         gui::same_line();
@@ -491,7 +490,6 @@ void effect_view() {
         if (gui::drag_int("%d", v, 0, 3)) {
             effect.rows[i] = (effect.rows[i] & 0xfc) | v;
         }
-        printf("%x\n", effect.rows[i]);
     }
 
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
@@ -520,6 +518,7 @@ void effect_view() {
 bool init() {
     m_pref_path = SDL_GetPrefPath("sdl", "rausch");
     if (!m_pref_path) return false;
+
 //    m_view = song_view;
     m_view = effect_view;
 
@@ -531,9 +530,10 @@ bool init() {
         { 1, 0, 0, 0 }
     };
     Track& track = t.tracks[0];
-    track.rows[0] = { 1, 0, 37 };
+    track.rows[0] = { 1, 1, 37 };
     track.rows[2] = { 0, 0, 255 };
-    track.rows[4] = { 1, 0, 49 };
+    track.rows[4] = { 1, 1, 49 };
+    track.rows[6] = { 0, 2, 0 };
     track.rows[14] = { 0, 0, 255 };
 
     Instrument& i = t.instruments[0];
@@ -543,12 +543,19 @@ bool init() {
     i.length = 2;
     i.loop = 1;
 
-    Effect& e = t.instruments[0];
-    e.adsr = { 1, 8, 8, 8 };
-    e.rows[0] = { NOISE | GATE, SET_PULSEWIDTH, 0x8 };
-    e.rows[1] = { PULSE | GATE, INC_PULSEWIDTH, 0x1 };
-    e.length = 2;
-    e.loop = 1;
+    Effect& e = t.effects[1];
+    e.rows[0] = 0x80;
+    e.rows[1] = 0x81;
+    e.rows[2] = 0x82;
+    e.rows[3] = 0x82;
+    e.rows[4] = 0x81;
+    e.rows[5] = 0x80;
+    e.rows[6] = 0x7f;
+    e.rows[7] = 0x7e;
+    e.rows[8] = 0x7e;
+    e.rows[9] = 0x7f;
+    e.length = 10;
+    e.loop = 0;
 
     wavelog::init(MIXRATE);
 	SDL_AudioSpec spec = { MIXRATE, AUDIO_S16, 1, 0, 1024, 0, 0, audio_callback };
