@@ -245,7 +245,7 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
 }
 
 
-void clavier(uint8_t& n, int offset, bool highlight) {
+bool clavier(uint8_t& n, int offset, bool highlight) {
     void const* id = get_id(&n);
     int w = gfx::screensize().x - PADDING - m_cursor_max.x;
     Box box = item_box({ w, 65 });
@@ -255,6 +255,7 @@ void clavier(uint8_t& n, int offset, bool highlight) {
     }
 
     enum { COLS = 21 };
+    uint8_t old_n = n;
 
     int x0 = 0;
     for (int i = 0; i < COLS; ++i) {
@@ -288,6 +289,7 @@ void clavier(uint8_t& n, int offset, bool highlight) {
 
         x0 = x1;
     }
+    return n != old_n;
 }
 
 

@@ -75,10 +75,10 @@ struct Edit {
 } m_edit;
 
 
-
 void song_view();
 void track_view();
 void instrument_view();
+void effect_view();
 void (*m_view)(void);
 
 
@@ -192,9 +192,9 @@ void song_view() {
                 m_edit.track_select.allow_nil = true;
             }
             if (block[c] > 0 && gui::hold()) {
+                gui::block_touch();
                 m_edit.track = block[c];
                 m_view = track_view;
-                gui::block_touch();
             }
         }
     }
@@ -280,6 +280,11 @@ void track_view() {
             if (row.instrument > 0) row.instrument = 0;
             else row.instrument = m_edit.instrument;
         }
+        if (row.instrument > 0 && gui::hold()) {
+            gui::block_touch();
+            m_edit.instrument = row.instrument;
+            m_view = instrument_view;
+        }
 
         // effect
         str[0] = '.';
@@ -290,6 +295,11 @@ void track_view() {
         if (gui::button(str)) {
             if (row.effect > 0) row.effect = 0;
             else row.effect = m_edit.effect;
+        }
+        if (row.effect > 0 && gui::hold()) {
+            gui::block_touch();
+            m_edit.effect = row.effect;
+            m_view = effect_view;
         }
 
 
@@ -308,12 +318,17 @@ void track_view() {
         if (highlight) gui::highlight();
         if (gui::button(str)) {
             if (row.note == 0) row.note = 255;
-            else row.note = 0;
+            else {
+                row = {};
+            }
         }
 
         // clavier
         gui::same_line();
-        gui::clavier(row.note, m_edit.clavier_offset, highlight);
+        if (gui::clavier(row.note, m_edit.clavier_offset, highlight)) {
+            row.instrument = m_edit.instrument;
+            row.effect     = m_edit.effect;
+        }
     }
 
     gfx::font(FONT_DEFAULT);
@@ -425,12 +440,12 @@ void instrument_view() {
     if (gui::button("delete")) {
         if (inst.length > 0) {
             --inst.length;
-            inst.rows[inst.length] = {};
         }
     }
     gui::same_line();
     gui::min_item_size({ 260, 65 });
     if (gui::button("add") && inst.length < MAX_INSTRUMENT_LENGTH) {
+        inst.rows[inst.length] = {};
         ++inst.length;
     }
 
@@ -501,12 +516,12 @@ void effect_view() {
     if (gui::button("delete")) {
         if (effect.length > 0) {
             --effect.length;
-            effect.rows[effect.length] = {};
         }
     }
     gui::same_line();
     gui::min_item_size({ 260, 65 });
     if (gui::button("add") && effect.length < MAX_EFFECT_LENGTH) {
+        effect.rows[effect.length] = 0x80;
         ++effect.length;
     }
 }
@@ -519,8 +534,7 @@ bool init() {
     m_pref_path = SDL_GetPrefPath("sdl", "rausch");
     if (!m_pref_path) return false;
 
-//    m_view = song_view;
-    m_view = effect_view;
+    m_view = song_view;
 
 
     // default tune
@@ -543,6 +557,7 @@ bool init() {
     i.length = 2;
     i.loop = 1;
 
+    // vibrato
     Effect& e = t.effects[1];
     e.rows[0] = 0x80;
     e.rows[1] = 0x81;
@@ -571,38 +586,29 @@ void free() {
 }
 
 
+struct View {
+    char const* name;
+    void (*func)(void);
+};
+constexpr std::array<View, 4> views = {
+    View{ "song", song_view },
+    View{ "track", track_view },
+    View{ "instrument", instrument_view },
+    View{ "effect", effect_view },
+};
+
+
 void draw() {
     gfx::clear();
     gui::begin_frame();
 
-//    {
-//        SDL_SetRenderDrawColor(gfx::renderer(), 0, 100, 200, 50);
-//        auto s = gfx::screensize();
-//        SDL_Rect rect = { 5, 5, s.x - 10, s.y - 10 };
-//        SDL_RenderFillRect(gfx::renderer(), &rect);
-//    }
-
-
     if (!track_select()) {
         gfx::font(FONT_DEFAULT);
 
-        columns(4, [](int i, int w) {
+        columns(views.size(), [](int i, int w) {
             if (i) gui::same_line();
             gui::min_item_size({ w, 88 });
-            switch (i) {
-            case 0:
-                if (gui::button("song", m_view == song_view)) m_view = song_view;
-                break;
-            case 1:
-                if (gui::button("track", m_view == track_view)) m_view = track_view;
-                break;
-            case 2:
-                if (gui::button("instrument", m_view == instrument_view)) m_view = instrument_view;
-                break;
-            case 3:
-                if (gui::button("effect", m_view == effect_view)) m_view = effect_view;
-                break;
-            }
+            if (gui::button(views[i].name, m_view == views[i].func)) m_view = views[i].func;
         });
         gui::separator();
 

@@ -17,5 +17,5 @@ namespace gui {
     bool hold();
     void block_touch();
     bool drag_int(char const* label, int& value, int min, int max, int page = 1);
-    void clavier(uint8_t& n, int offset, bool highlight);
+    bool clavier(uint8_t& n, int offset, bool highlight);
 }
