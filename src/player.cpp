@@ -90,7 +90,6 @@ void tick() {
 
             if (row.note == 255) {
                 chan.gate = false;
-//                chan.state = RELEASE;
             }
             else if (row.note > 0) {
                 chan.note = row.note;
@@ -103,9 +102,11 @@ void tick() {
     // frame update
     for (int c = 0; c < CHANNEL_COUNT; ++c) {
         Channel& chan = m_channels[c];
-        if (chan.inst && !chan.inst->rows.empty()) {
+        if (chan.inst && chan.inst->length > 0) {
             Instrument const& inst = *chan.inst;
-            if (chan.inst_row >= (int) inst.rows.size()) chan.inst_row = inst.loop;
+            if (chan.inst_row >= inst.length) {
+                chan.inst_row = std::min<int>(inst.loop, inst.length - 1);
+            }
             Instrument::Row const& row = inst.rows[chan.inst_row++];
             chan.flags = row.flags;
             if (row.operaton == SET_PULSEWIDTH) {

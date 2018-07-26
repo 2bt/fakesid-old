@@ -4,14 +4,17 @@
 
 
 enum {
-    MIXRATE           = 44100,
-    SAMPLES_PER_FRAME = MIXRATE / 50,
-    CHANNEL_COUNT     = 4,
-    TRACK_LENGTH      = 32,
-    TRACK_COUNT       = 255,
-    INSTRUMENT_COUNT  = 46,
+    MIXRATE               = 44100,
+    SAMPLES_PER_FRAME     = MIXRATE / 50,
+    CHANNEL_COUNT         = 4,
+    TRACK_LENGTH          = 32,
+    TRACK_COUNT           = 255,
+    INSTRUMENT_COUNT      = 46,
+    EFFECT_COUNT          = 46,
+    MAX_INSTRUMENT_LENGTH = 16,
+    MAX_EFFECT_LENGTH     = 16,
 
-    PAGE_LENGTH       = 16,
+    PAGE_LENGTH           = 16,
 };
 
 
@@ -36,10 +39,12 @@ enum Flags {
     NOISE = 0x80,
 };
 
+
 enum Operations {
     SET_PULSEWIDTH,
     INC_PULSEWIDTH,
 };
+
 
 struct Instrument {
     struct Row {
@@ -48,10 +53,18 @@ struct Instrument {
         uint8_t value;
     };
 
-    std::array<uint8_t, 4> adsr;
-    uint8_t                silence;
-    std::vector<Row>       rows;
-    uint8_t                loop;
+    std::array<uint8_t, 4>                 adsr;
+    uint8_t                                silence;
+    uint8_t                                length;
+    uint8_t                                loop;
+    std::array<Row, MAX_INSTRUMENT_LENGTH> rows;
+};
+
+
+struct Effect {
+    uint8_t                                length;
+    uint8_t                                loop;
+    std::array<uint8_t, MAX_EFFECT_LENGTH> rows;
 };
 
 
@@ -61,10 +74,10 @@ struct Tune {
 
     std::array<Track, TRACK_COUNT>           tracks;
     std::array<Instrument, INSTRUMENT_COUNT> instruments;
+    std::array<Effect, EFFECT_COUNT>         effects;
 
     using Block = std::array<int, CHANNEL_COUNT>;
     std::vector<Block> table;
-
 };
 
 
