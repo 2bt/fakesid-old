@@ -76,6 +76,7 @@ void tick() {
             Track const& track = m_tune.tracks[track_nr - 1];
             Track::Row const& row = track.rows[m_row];
 
+            // instrument
             if (row.instrument > 0) {
                 chan.inst = &m_tune.instruments[row.instrument - 1];
                 Instrument const& inst = *chan.inst;
@@ -91,18 +92,18 @@ void tick() {
                 chan.state = RELEASE;
             }
 
+            // effect
             if (row.effect > 0) {
                 chan.effect = &m_tune.effects[row.effect - 1];
                 chan.effect_row = 0;
             }
 
-
+            // note
             if (row.note == 255) {
                 chan.gate = false;
             }
             else if (row.note > 0) {
                 chan.note = row.note;
-                // TODO: move to frame update; add effect
                 chan.freq = exp2f((chan.note - 58) / 12.0f) * (1 << 28) * 440 / MIXRATE;
             }
         }
