@@ -205,16 +205,16 @@ void song_view() {
     gfx::font(FONT_DEFAULT);
 
     gui::min_item_size({ 260, 65 });
-    if (gui::button("delete")) {
-        if (m_edit.block < (int) table.size() && table.size() > 1) {
-            table.erase(table.begin() + m_edit.block);
+    if (gui::button("add")) {
+        if (m_edit.block <= (int) table.size()) {
+            table.insert(table.begin() + m_edit.block, { 0, 0, 0, 0 });
         }
     }
     gui::same_line();
     gui::min_item_size({ 260, 65 });
-    if (gui::button("add")) {
-        if (m_edit.block <= (int) table.size()) {
-            table.insert(table.begin() + m_edit.block, { 0, 0, 0, 0 });
+    if (gui::button("delete")) {
+        if (m_edit.block < (int) table.size() && table.size() > 1) {
+            table.erase(table.begin() + m_edit.block);
         }
     }
 
@@ -401,10 +401,10 @@ void instrument_view() {
 
         // flags
         constexpr std::pair<uint8_t, char const*> flags[] = {
-            { NOISE, "N" },
-            { PULSE, "P" },
-            { SAW,   "S" },
-            { TRI,   "T" },
+            { NOISE, "\x13" },
+            { PULSE, "\x14" },
+            { SAW,   "\x15" },
+            { TRI,   "\x16" },
             { RING,  "R" },
             { SYNC,  "S" },
             { GATE,  "G" },
@@ -437,16 +437,16 @@ void instrument_view() {
     gfx::font(FONT_DEFAULT);
 
     gui::min_item_size({ 260, 65 });
+    if (gui::button("add") && inst.length < MAX_INSTRUMENT_LENGTH) {
+        inst.rows[inst.length] = { GATE, SET_PULSEWIDTH, 8 };
+        ++inst.length;
+    }
+    gui::same_line();
+    gui::min_item_size({ 260, 65 });
     if (gui::button("delete")) {
         if (inst.length > 0) {
             --inst.length;
         }
-    }
-    gui::same_line();
-    gui::min_item_size({ 260, 65 });
-    if (gui::button("add") && inst.length < MAX_INSTRUMENT_LENGTH) {
-        inst.rows[inst.length] = {};
-        ++inst.length;
     }
 
 }
@@ -513,16 +513,16 @@ void effect_view() {
     gfx::font(FONT_DEFAULT);
 
     gui::min_item_size({ 260, 65 });
+    if (gui::button("add") && effect.length < MAX_EFFECT_LENGTH) {
+        effect.rows[effect.length] = 0x80;
+        ++effect.length;
+    }
+    gui::same_line();
+    gui::min_item_size({ 260, 65 });
     if (gui::button("delete")) {
         if (effect.length > 0) {
             --effect.length;
         }
-    }
-    gui::same_line();
-    gui::min_item_size({ 260, 65 });
-    if (gui::button("add") && effect.length < MAX_EFFECT_LENGTH) {
-        effect.rows[effect.length] = 0x80;
-        ++effect.length;
     }
 }
 
