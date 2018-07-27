@@ -25,7 +25,7 @@ struct Track {
         uint8_t note;
     };
     std::array<Row, TRACK_LENGTH> rows;
-//    int length;
+//    uint8_t length;
 };
 
 

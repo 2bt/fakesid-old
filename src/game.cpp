@@ -18,12 +18,13 @@ bool save_tune(char const* name) {
     SDL_RWops* file = SDL_RWFromFile(path.data(), "wb");
     if (!file) return false;
     Tune& t = player::tune();
-    SDL_RWwrite(file, &t.tempo, sizeof(int), 1);
-    SDL_RWwrite(file, &t.swing, sizeof(int), 1);
+    SDL_WriteU8(file, t.tempo);
+    SDL_WriteU8(file, t.swing);
     SDL_RWwrite(file, t.tracks.data(), sizeof(Track), t.tracks.size());
-    int table_len = t.table.size();
-    SDL_RWwrite(file, &table_len, sizeof(int), 1);
-    SDL_RWwrite(file, t.table.data(), sizeof(Tune::Block), table_len);
+    SDL_RWwrite(file, t.instruments.data(), sizeof(Instrument), t.instruments.size());
+    SDL_RWwrite(file, t.effects.data(), sizeof(Effect), t.effects.size());
+    SDL_WriteU8(file, t.table.size());
+    SDL_RWwrite(file, t.table.data(), sizeof(Tune::Block), t.table.size());
     SDL_RWclose(file);
     return true;
 }
@@ -36,11 +37,12 @@ bool load_tune(char const* name) {
     SDL_RWops* file = SDL_RWFromFile(path.data(), "rb");
     if (!file) return false;
     Tune& t = player::tune();
-    SDL_RWread(file, &t.tempo, sizeof(int), 1);
-    SDL_RWread(file, &t.swing, sizeof(int), 1);
+    t.tempo = SDL_ReadU8(file);
+    t.swing = SDL_ReadU8(file);
     SDL_RWread(file, t.tracks.data(), sizeof(Track), t.tracks.size());
-    int table_len;
-    SDL_RWread(file, &table_len, sizeof(int), 1);
+    SDL_RWread(file, t.instruments.data(), sizeof(Instrument), t.instruments.size());
+    SDL_RWread(file, t.effects.data(), sizeof(Effect), t.effects.size());
+    uint8_t table_len = SDL_ReadU8(file);
     t.table.resize(table_len);
     SDL_RWread(file, t.table.data(), sizeof(Tune::Block), table_len);
     SDL_RWclose(file);
