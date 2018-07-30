@@ -279,8 +279,9 @@ void input_text(char* str, int len) {
     gfx::color(color);
     gfx::rectangle(box.pos, box.size, 2);
     gfx::color(color::make(0xffffff));
-//    gfx::print(box.pos + box.size / 2 - s / 2, str);
     gfx::print(box.pos + Vec(15, 5), str);
+    // cursor
+    if (m_input_text_str == str) gfx::print(box.pos + Vec(15 + s.x, 5), "_");
 }
 
 
