@@ -1,5 +1,6 @@
 #include "game.hpp"
 #include "input.hpp"
+#include "gui.hpp"
 #include <cstdio>
 #include <cstdint>
 #include <array>
@@ -15,6 +16,8 @@ int main(int argc, char** args) {
     bool running = true;
     while (running) {
         while (SDL_PollEvent(&e)) {
+            if (gfx::process_event(e)) continue;
+            if (gui::process_event(e)) continue;
 
             switch (e.type) {
             case SDL_QUIT:
@@ -23,12 +26,6 @@ int main(int argc, char** args) {
 
             case SDL_KEYDOWN:
                 if (e.key.keysym.scancode == SDL_SCANCODE_ESCAPE) running = false;
-                break;
-
-            case SDL_WINDOWEVENT:
-                if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                    gfx::resize({ e.window.data1, e.window.data2 });
-                }
                 break;
 
             case SDL_MOUSEBUTTONDOWN:

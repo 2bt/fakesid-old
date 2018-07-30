@@ -10,7 +10,7 @@ using Vec = glm::ivec2;
 namespace gfx {
     bool init();
     void free();
-    void resize(Vec const& s);
+    bool process_event(const SDL_Event& e);
     void present();
     void clear();
     void render(TextureID tex, SDL_Rect const& src, SDL_Rect const& dst, int flip=0);

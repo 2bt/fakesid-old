@@ -254,13 +254,12 @@ void track_view() {
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
     gui::drag_int("page", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
 
+    gui::separator();
+
     // clavier slider
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
     enum { COLS = 21 };
     gui::drag_int("clavier", m_edit.clavier_offset, 0, 96 - COLS, COLS);
-
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
-    gui::separator();
 
     int player_row = player::row();
     assert(m_edit.track > 0);
@@ -353,12 +352,19 @@ void instrument_view() {
     gui::same_line();
     if (gui::button("+")) m_edit.instrument = std::min<int>(INSTRUMENT_COUNT, m_edit.instrument + 1);
 
-
     Tune& tune = player::tune();
     Instrument& inst = tune.instruments[m_edit.instrument - 1];
 
+    // name
+    gfx::font(FONT_DEFAULT);
+    gui::same_line();
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
+    gui::input_text(inst.name.data(), inst.name.size() - 1);
+
+    gui::separator();
 
     // adsr
+    gfx::font(FONT_MONO);
     columns(2, [&inst](int i, int w) {
         if (i) gui::same_line();
         gui::min_item_size({ w, 65 });
@@ -471,16 +477,20 @@ void effect_view() {
     if (gui::button("+")) m_edit.effect = std::min<int>(EFFECT_COUNT, m_edit.effect + 1);
 
 
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
-    gui::separator();
-
-
     Tune& tune = player::tune();
     Effect& effect = tune.effects[m_edit.effect - 1];
 
+    // name
+    gfx::font(FONT_DEFAULT);
+    gui::same_line();
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
+    gui::input_text(effect.name.data(), effect.name.size() - 1);
+
+    gui::separator();
 
 
     // rows
+    gfx::font(FONT_MONO);
     for (int i = 0; i < MAX_EFFECT_LENGTH; ++i) {
 
         char str[3];
@@ -637,7 +647,6 @@ void draw() {
         });
 
     }
-
 
     gfx::present();
 }

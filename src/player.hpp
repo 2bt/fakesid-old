@@ -13,6 +13,7 @@ enum {
     EFFECT_COUNT          = 46,
     MAX_INSTRUMENT_LENGTH = 16,
     MAX_EFFECT_LENGTH     = 16,
+    MAX_NAME_LENGTH       = 32,
 
     PAGE_LENGTH           = 16,
 };
@@ -52,7 +53,7 @@ struct Instrument {
         uint8_t operaton;
         uint8_t value;
     };
-
+    std::array<char, MAX_NAME_LENGTH>      name;
     std::array<uint8_t, 4>                 adsr;
     uint8_t                                silence;
     uint8_t                                length;
@@ -62,6 +63,7 @@ struct Instrument {
 
 
 struct Effect {
+    std::array<char, MAX_NAME_LENGTH>      name;
     uint8_t                                length;
     uint8_t                                loop;
     std::array<uint8_t, MAX_EFFECT_LENGTH> rows;

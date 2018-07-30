@@ -3,6 +3,7 @@
 
 namespace gui {
     enum { PADDING = 2 };
+    bool process_event(const SDL_Event& e);
     Vec  cursor();
     void cursor(Vec c);
     void begin_frame();
@@ -16,6 +17,7 @@ namespace gui {
     bool button(char const* label, bool active = false);
     bool hold();
     void block_touch();
+    void input_text(char* str, int len);
     bool drag_int(char const* label, int& value, int min, int max, int page = 1);
     bool clavier(uint8_t& n, int offset, bool highlight);
 }

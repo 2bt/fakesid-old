@@ -20,14 +20,18 @@ namespace color {
         };
     }
     const SDL_Color button_normal = make(0x555555, 255);
-    const SDL_Color button_hover  = make(0x995555, 255);
+    const SDL_Color button_hover  = make(0x885555, 255);
     const SDL_Color button_active = make(0xaa5555, 255);
+
+    const SDL_Color input_text_normal = make(0x222222, 255);
+    const SDL_Color input_text_hover  = make(0x885555, 255);
+    const SDL_Color input_text_active = make(0xaa5555, 255);
 
     const SDL_Color drag          = make(0x222222, 255);
     const SDL_Color handle_normal = make(0x885555, 255);
     const SDL_Color handle_active = make(0xaa5555, 255);
 
-    const SDL_Color separator     = make(0x222222, 255);
+    const SDL_Color separator     = make(0x111111, 255);
 
     const SDL_Color highlight     = make(0xbbbbbb, 255);
 
@@ -60,6 +64,10 @@ bool        m_highlight;
 bool        m_same_line;
 void const* m_id;
 void const* m_active_item;
+char*       m_input_text_str = nullptr;
+int         m_input_text_len;
+int         m_input_text_pos;
+
 std::array<char, 1024> m_text_buffer;
 
 
@@ -141,6 +149,10 @@ void begin_frame() {
         m_active_item = nullptr;
         m_hold_count = 0;
     }
+    if (input::just_pressed() && m_input_text_str) {
+        m_input_text_str = nullptr;
+        SDL_StopTextInput();
+    }
 }
 
 
@@ -213,8 +225,66 @@ void block_touch() {
 }
 
 
+bool process_event(const SDL_Event& e) {
+    switch (e.type) {
+    case SDL_KEYDOWN:
+        if (!m_input_text_str) return false;
+        switch (e.key.keysym.scancode) {
+        case SDL_SCANCODE_RETURN:
+            SDL_StopTextInput();
+            m_input_text_str = nullptr;
+            break;
+        case SDL_SCANCODE_BACKSPACE:
+            if (m_input_text_pos > 0) {
+                m_input_text_str[--m_input_text_pos] = '\0';
+            }
+            break;
+        default:
+            break;
+        }
+        return true;
+    case SDL_TEXTINPUT:
+        if (m_input_text_str) {
+            char c = e.text.text[0];
+            if (c >= 32 && c < 127 && m_input_text_pos < m_input_text_len) {
+                m_input_text_str[m_input_text_pos++] = c;
+            }
+        }
+        return true;
+    default:
+        return false;
+    }
+}
+
+
+void input_text(char* str, int len) {
+    Vec s = gfx::text_size(str);
+    Box box = item_box(s + Vec(30, 10));
+
+    SDL_Color color = color::input_text_normal;
+    if (m_active_item == nullptr && box.touched()) {
+        color = color::input_text_hover;
+        if (input::just_released()) {
+            // start keyboard
+            SDL_StartTextInput();
+            m_input_text_str = str;
+            m_input_text_len = len;
+            m_input_text_pos = strlen(m_input_text_str);
+        }
+    }
+    if (m_input_text_str == str) {
+        color = color::input_text_active;
+    }
+
+    gfx::color(color);
+    gfx::rectangle(box.pos, box.size, 2);
+    gfx::color(color::make(0xffffff));
+//    gfx::print(box.pos + box.size / 2 - s / 2, str);
+    gfx::print(box.pos + Vec(15, 5), str);
+}
+
+
 bool drag_int(char const* label, int& value, int min, int max, int page) {
-    void const* id = get_id(label);
     print_to_text_buffer(label, value);
     Vec s = gfx::text_size(m_text_buffer.data());
 
@@ -222,6 +292,7 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
 	int handle_w = box.size.x * page / (max - min + page);
 	int handle_x = (value - min) * (box.size.x - handle_w)  / (max - min);
 
+    void const* id = get_id(label);
     if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
         m_active_item = id;
     }
@@ -246,10 +317,10 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
 
 
 bool clavier(uint8_t& n, int offset, bool highlight) {
-    void const* id = get_id(&n);
     int w = gfx::screensize().x - PADDING - m_cursor_max.x;
     Box box = item_box({ w, 65 });
 
+    void const* id = get_id(&n);
     if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
         m_active_item = id;
     }

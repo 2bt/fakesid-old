@@ -19,11 +19,6 @@ SDL_Renderer* renderer() { return m_renderer; }
 SDL_Window*   window() { return m_window; }
 Vec const&    screensize() { return m_screensize; }
 void font(FontID font) { m_font = font; }
-void resize(Vec const& s) {
-#ifdef __ANDROID__
-    m_screensize = s;
-#endif
-}
 void present() { SDL_RenderPresent(m_renderer); }
 
 
@@ -65,6 +60,21 @@ void free() {
     SDL_DestroyRenderer(m_renderer);
     SDL_DestroyWindow(m_window);
     SDL_Quit();
+}
+
+
+bool process_event(const SDL_Event& e) {
+    switch (e.type) {
+#ifdef __ANDROID__
+    case SDL_WINDOWEVENT:
+        if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+            m_screensize = { e.window.data1, e.window.data2 };
+        }
+        return true;
+#endif
+    default:
+        return false;
+    }
 }
 
 
