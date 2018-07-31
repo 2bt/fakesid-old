@@ -204,32 +204,55 @@ bool effect_select() {
 
 
 
+void sprint_track_id(char* dst, int nr) {
+    if (nr == 0) {
+        dst[0] = dst[1] == ' ';
+    }
+    else {
+        int x = (nr - 1) / 21;
+        int y = (nr - 1) % 21;
+        dst[0] = '0' + x + (x > 9) * 7;
+        dst[1] = '0' + y + (y > 9) * 7;
+    }
+    dst[2] = '\0';
+}
+
 
 bool track_select() {
     if (!m_edit.track_select.active) return false;
 
     gfx::font(FONT_DEFAULT);
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 88 });
+    auto widths = calculate_column_widths({ -1, -1 });
+    gui::min_item_size({ widths[0], 88 });
     if (gui::button("cancel")) {
         m_edit.track_select.active = false;
     }
+    gui::same_line();
+    if (m_edit.track_select.allow_nil) {
+        gui::min_item_size({ widths[1], 88 });
+        if (gui::button("clear")) {
+            m_edit.track_select.active = false;
+            *m_edit.track_select.value = 0;
+        }
+    }
+    else {
+        gui::padding({});
+    }
+
     gui::separator();
 
-    gfx::font(FONT_SMALL);
-    auto widths = calculate_column_widths(std::vector<int>(16, -1));
+    gfx::font(FONT_MONO);
+    widths = calculate_column_widths(std::vector<int>(12, -1));
     int track_nr = *m_edit.track_select.value;
-    for (int y = 0; y < 16; ++y) {
-        for (int x = 0; x < 16; ++x) {
-            if (x > 0) gui::same_line();
-            gui::min_item_size({ widths[x], 65 });
-            int n = y * 16 + x;
-            if (m_edit.track_select.allow_nil == false && n == 0) {
-                gui::text("");
-                continue;
-            }
 
+    for (int y = 0; y < 21; ++y) {
+        for (int x = 0; x < 12; ++x) {
+            if (x > 0) gui::same_line();
+            int n = x * 21 + y + 1;
+
+            gui::min_item_size({ widths[x], 65 });
             char str[3] = "  ";
-            if (n > 0) sprintf(str, "%02X", n);
+            sprint_track_id(str, n);
             if (gui::button(str, n == track_nr)) {
                 *m_edit.track_select.value = n;
                 m_edit.track_select.active = false;
@@ -297,8 +320,8 @@ void song_view() {
 
             gui::same_line();
 
-            char str[3] = "  ";
-            if (block[c] > 0) sprintf(str, "%02X", block[c]);
+            char str[3];
+            sprint_track_id(str, block[c]);
             gui::min_item_size({ widths[c + 2], 65 });
             if (highlight) gui::highlight();
             if (gui::button(str)) {
@@ -353,7 +376,7 @@ void track_view() {
     gui::min_item_size({ 88, 88 });
     if (gui::button("-")) m_edit.track = std::max(1, m_edit.track - 1);
     char str[3];
-    sprintf(str, "%02X", m_edit.track);
+    sprint_track_id(str, m_edit.track);
     gui::min_item_size({ 88, 88 });
     gui::same_line();
     if (gui::button(str)) {

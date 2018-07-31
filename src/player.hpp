@@ -8,7 +8,7 @@ enum {
     SAMPLES_PER_FRAME     = MIXRATE / 50,
     CHANNEL_COUNT         = 4,
     TRACK_LENGTH          = 32,
-    TRACK_COUNT           = 255,
+    TRACK_COUNT           = 21 * 12,
     INSTRUMENT_COUNT      = 54,
     EFFECT_COUNT          = INSTRUMENT_COUNT,
     MAX_INSTRUMENT_LENGTH = 16,
