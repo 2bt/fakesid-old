@@ -123,6 +123,10 @@ void instrument_view();
 void effect_view();
 void (*m_view)(void);
 
+constexpr char inst_effect_glyphs[INSTRUMENT_COUNT + 1] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+    "0123456789@!#$%&*+-./=<>!?#";
+
 
 bool instrument_select() {
     if (!m_edit.instrument_select_active) return false;
@@ -141,16 +145,16 @@ bool instrument_select() {
         for (int x = 0; x < 2; ++x) {
             if (x) gui::same_line();
 
-            int nr = y + x * (INSTRUMENT_COUNT / 2);
-            Instrument const& inst = tune.instruments[nr];
+            int nr = y + x * (INSTRUMENT_COUNT / 2) + 1;
+            Instrument const& inst = tune.instruments[nr - 1];
 
             Vec c = gui::cursor() + Vec(gui::PADDING);
             gui::min_item_size({ widths[x], 65 });
-            if (gui::button("")) {
+            if (gui::button("", nr == m_edit.instrument)) {
                 m_edit.instrument_select_active = false;
-                m_edit.instrument = nr + 1;
+                m_edit.instrument = nr;
             }
-            char str[2] = { char(nr + '0') };
+            char str[2] = { inst_effect_glyphs[nr - 1] };
             gfx::print(c + Vec(65 / 2) - gfx::text_size(str) / 2, str);
             char const* name = inst.name.data();
             gfx::print(c + Vec(65 + (widths[x] - 65) / 2, 65 / 2) - gfx::text_size(name) / 2, name);
@@ -178,16 +182,16 @@ bool effect_select() {
         for (int x = 0; x < 2; ++x) {
             if (x) gui::same_line();
 
-            int nr = y + x * (EFFECT_COUNT / 2);
-            Effect const& inst = tune.effects[nr];
+            int nr = y + x * (EFFECT_COUNT / 2) + 1;
+            Effect const& inst = tune.effects[nr - 1];
 
             Vec c = gui::cursor() + Vec(gui::PADDING);
             gui::min_item_size({ widths[x], 65 });
-            if (gui::button("")) {
+            if (gui::button("", nr == m_edit.effect)) {
                 m_edit.effect_select_active = false;
-                m_edit.effect = nr + 1;
+                m_edit.effect = nr;
             }
-            char str[2] = { char(nr + '0') };
+            char str[2] = { inst_effect_glyphs[nr - 1] };
             gfx::print(c + Vec(65 / 2) - gfx::text_size(str) / 2, str);
             char const* name = inst.name.data();
             gfx::print(c + Vec(65 + (widths[x] - 65) / 2, 65 / 2) - gfx::text_size(name) / 2, name);
@@ -224,7 +228,7 @@ bool track_select() {
                 continue;
             }
 
-            char str[3] = "..";
+            char str[3] = "  ";
             if (n > 0) sprintf(str, "%02X", n);
             if (gui::button(str, n == track_nr)) {
                 *m_edit.track_select.value = n;
@@ -293,7 +297,7 @@ void song_view() {
 
             gui::same_line();
 
-            char str[3] = "..";
+            char str[3] = "  ";
             if (block[c] > 0) sprintf(str, "%02X", block[c]);
             gui::min_item_size({ widths[c + 2], 65 });
             if (highlight) gui::highlight();
@@ -380,10 +384,10 @@ void track_view() {
         bool highlight = row_nr == player_row;
         Track::Row& row = track.rows[row_nr];
 
-        char str[4] = ".";
+        char str[4] = " ";
 
         // instrument
-        if (row.instrument > 0) str[0] = '0' - 1  + row.instrument;
+        if (row.instrument > 0) str[0] = inst_effect_glyphs[row.instrument - 1];
         gui::min_item_size({ 65, 65 });
         if (highlight) gui::highlight();
         if (gui::button(str)) {
@@ -397,8 +401,8 @@ void track_view() {
         }
 
         // effect
-        str[0] = '.';
-        if (row.effect > 0) str[0] = '0' - 1  + row.effect;
+        str[0] = ' ';
+        if (row.effect > 0) str[0] = inst_effect_glyphs[row.effect - 1];
         gui::same_line();
         gui::min_item_size({ 65, 65 });
         if (highlight) gui::highlight();
@@ -414,9 +418,10 @@ void track_view() {
 
 
         // note
-        str[0] = str[1] = str[2] = '.';
+        str[0] = str[1] = str[2] = ' ';
         if (row.note == 255) {
-            str[0] = str[1] = str[2] = '=';
+            str[0] = str[2];
+            str[1] = '\x11';
         }
         else if (row.note > 0) {
             str[0] = "CCDDEFFGGAAB"[(row.note - 1) % 12];
@@ -467,7 +472,7 @@ void instrument_view() {
     gfx::font(FONT_MONO);
     gui::min_item_size({ 88, 88 });
     if (gui::button("-")) m_edit.instrument = std::max(1, m_edit.instrument - 1);
-    char str[2] = { char('0' - 1  + m_edit.instrument) };
+    char str[2] = { inst_effect_glyphs[m_edit.instrument - 1] };
     gui::min_item_size({ 88, 88 });
     gui::same_line();
     if (gui::button(str)) {
@@ -590,7 +595,7 @@ void effect_view() {
     gfx::font(FONT_MONO);
     gui::min_item_size({ 88, 88 });
     if (gui::button("-")) m_edit.effect = std::max(1, m_edit.effect - 1);
-    char str[2] = { char('0' - 1  + m_edit.effect) };
+    char str[2] = { inst_effect_glyphs[m_edit.effect - 1] };
     gui::min_item_size({ 88, 88 });
     gui::same_line();
     if (gui::button(str)) {
