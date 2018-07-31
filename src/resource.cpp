@@ -28,16 +28,6 @@ constexpr FontSpec m_font_specs[] = {
             29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
         }
     },
-    {
-        TEX_FONT_SMALL, 18, 32, {
-            17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
-            17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
-            17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
-            17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
-            17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
-            17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
-        }
-    },
 };
 
 
@@ -76,7 +66,6 @@ SDL_Texture* load_texture(char const* name) {
 bool init() {
     if (!(m_textures[TEX_FONT_DEFAULT] = load_texture("res/font-default.png")) ||
         !(m_textures[TEX_FONT_MONO]    = load_texture("res/font-mono.png")) ||
-        !(m_textures[TEX_FONT_SMALL]   = load_texture("res/font-small.png")) ||
         false) return false;
     return true;
 }

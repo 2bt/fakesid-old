@@ -6,7 +6,6 @@
 enum TextureID {
     TEX_FONT_DEFAULT,
     TEX_FONT_MONO,
-    TEX_FONT_SMALL,
 
     TEX_COUNT
 };
@@ -15,7 +14,6 @@ enum TextureID {
 enum FontID {
     FONT_DEFAULT,
     FONT_MONO,
-    FONT_SMALL,
 };
 
 
