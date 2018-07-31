@@ -9,13 +9,11 @@ enum {
     CHANNEL_COUNT         = 4,
     TRACK_LENGTH          = 32,
     TRACK_COUNT           = 255,
-    INSTRUMENT_COUNT      = 46,
-    EFFECT_COUNT          = 46,
+    INSTRUMENT_COUNT      = 48,
+    EFFECT_COUNT          = 48,
     MAX_INSTRUMENT_LENGTH = 16,
     MAX_EFFECT_LENGTH     = 16,
     MAX_NAME_LENGTH       = 16,
-
-    PAGE_LENGTH           = 16,
 };
 
 

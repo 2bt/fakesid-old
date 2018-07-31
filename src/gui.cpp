@@ -119,10 +119,10 @@ void print_to_text_buffer(const char* fmt, ...) {
 } // namespace
 
 
-Vec cursor() { return m_cursor_max; }
-
-
-void cursor(Vec c) { m_cursor_max = c; }
+Vec cursor() {
+    if (m_same_line) return Vec(m_cursor_max.x, m_cursor_min.y);
+    else return Vec(m_cursor_min.x, m_cursor_max.y);
+}
 
 
 void id(void const* addr) {
@@ -283,11 +283,10 @@ void input_text(char* str, int len) {
     gfx::color(color);
     gfx::rectangle(box.pos, box.size, 0);
     gfx::color(color::make(0xffffff));
-    int oy = (box.size.y - s.y) / 2;
-    gfx::print(box.pos + Vec(15, oy), str);
+    gfx::print(box.pos + box.size / 2 - s / 2, str);
     // cursor
     if (m_input_text_str == str && m_input_cursor_blink % 16 < 8) {
-        gfx::print(box.pos + Vec(15 + s.x, oy), "_");
+        gfx::print(box.pos + box.size / 2 + Vec(s.x, -s.y) / 2, "_");
     }
 }
 

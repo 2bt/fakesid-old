@@ -7,7 +7,6 @@ namespace gui {
     enum { PADDING = 2 };
     bool process_event(const SDL_Event& e);
     Vec  cursor();
-    void cursor(Vec c);
     void begin_frame();
     void id(void const* addr);
     void same_line();
