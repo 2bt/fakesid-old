@@ -13,7 +13,7 @@ enum {
     EFFECT_COUNT          = 46,
     MAX_INSTRUMENT_LENGTH = 16,
     MAX_EFFECT_LENGTH     = 16,
-    MAX_NAME_LENGTH       = 32,
+    MAX_NAME_LENGTH       = 16,
 
     PAGE_LENGTH           = 16,
 };

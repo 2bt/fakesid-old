@@ -67,6 +67,7 @@ void const* m_active_item;
 char*       m_input_text_str = nullptr;
 int         m_input_text_len;
 int         m_input_text_pos;
+int         m_input_cursor_blink = 0;
 
 std::array<char, 1024> m_text_buffer;
 
@@ -140,6 +141,7 @@ void min_item_size(Vec const& s) {
 
 
 void begin_frame() {
+    ++m_input_cursor_blink;
     m_prev_touch_pos = m_touch_pos;
     m_touch_pos = input::touch(0).pos;
     m_cursor_min = { 0, 0 };
@@ -226,6 +228,7 @@ void block_touch() {
 
 
 bool process_event(const SDL_Event& e) {
+    char c;
     switch (e.type) {
     case SDL_KEYDOWN:
         if (!m_input_text_str) return false;
@@ -235,6 +238,7 @@ bool process_event(const SDL_Event& e) {
             m_input_text_str = nullptr;
             break;
         case SDL_SCANCODE_BACKSPACE:
+            m_input_cursor_blink = 0;
             if (m_input_text_pos > 0) {
                 m_input_text_str[--m_input_text_pos] = '\0';
             }
@@ -244,11 +248,11 @@ bool process_event(const SDL_Event& e) {
         }
         return true;
     case SDL_TEXTINPUT:
-        if (m_input_text_str) {
-            char c = e.text.text[0];
-            if (c >= 32 && c < 127 && m_input_text_pos < m_input_text_len) {
-                m_input_text_str[m_input_text_pos++] = c;
-            }
+        if (!m_input_text_str) return false;
+        m_input_cursor_blink = 0;
+        c = e.text.text[0];
+        if (c >= 32 && c < 127 && m_input_text_pos < m_input_text_len) {
+            m_input_text_str[m_input_text_pos++] = c;
         }
         return true;
     default:
@@ -277,11 +281,11 @@ void input_text(char* str, int len) {
     }
 
     gfx::color(color);
-    gfx::rectangle(box.pos, box.size, 2);
+    gfx::rectangle(box.pos, box.size, 0);
     gfx::color(color::make(0xffffff));
     gfx::print(box.pos + Vec(15, 5), str);
     // cursor
-    if (m_input_text_str == str) gfx::print(box.pos + Vec(15 + s.x, 5), "_");
+    if (m_input_text_str == str && m_input_cursor_blink % 16 < 8) gfx::print(box.pos + Vec(15 + s.x, (box.size.y - s.y) / 2), "_");
 }
 
 
@@ -326,12 +330,11 @@ bool clavier(uint8_t& n, int offset, bool highlight) {
         m_active_item = id;
     }
 
-    enum { COLS = 21 };
     uint8_t old_n = n;
 
     int x0 = 0;
-    for (int i = 0; i < COLS; ++i) {
-        int x1 = w * (i + 1) / COLS;
+    for (int i = 0; i < CLAVIER_WIDTH; ++i) {
+        int x1 = w * (i + 1) / CLAVIER_WIDTH;
         int nn = i + 1 + offset;
         Box b = {
             { box.pos.x + x0, box.pos.y },

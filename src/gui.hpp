@@ -1,6 +1,8 @@
 #pragma once
 #include "gfx.hpp"
 
+enum { CLAVIER_WIDTH = 24 };
+
 namespace gui {
     enum { PADDING = 2 };
     bool process_event(const SDL_Event& e);

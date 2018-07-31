@@ -253,13 +253,11 @@ void track_view() {
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
     gui::drag_int("page", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
-
     gui::separator();
 
     // clavier slider
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
-    enum { COLS = 21 };
-    gui::drag_int("clavier", m_edit.clavier_offset, 0, 96 - COLS, COLS);
+    gui::drag_int("clavier", m_edit.clavier_offset, 0, 96 - CLAVIER_WIDTH, CLAVIER_WIDTH);
 
     int player_row = player::row();
     assert(m_edit.track > 0);
@@ -267,6 +265,8 @@ void track_view() {
 
     gfx::font(FONT_MONO);
     for (int i = 0; i < PAGE_LENGTH; ++i) {
+        if (i % 4 == 0) gui::separator();
+
         int row_nr = m_edit.track_page * PAGE_LENGTH + i;
         bool highlight = row_nr == player_row;
         Track::Row& row = track.rows[row_nr];
@@ -327,12 +327,14 @@ void track_view() {
         // clavier
         gui::same_line();
         if (gui::clavier(row.note, m_edit.clavier_offset, highlight)) {
-            row.instrument = m_edit.instrument;
-            row.effect     = m_edit.effect;
+            if (row.note == 0) row = {};
+            else {
+                row.instrument = m_edit.instrument;
+                row.effect     = m_edit.effect;
+            }
         }
     }
-
-    gfx::font(FONT_DEFAULT);
+    gui::separator();
 }
 
 
@@ -569,8 +571,12 @@ bool init() {
     i.length = 2;
     i.loop = 1;
 
+    // blank effect
+    strcpy(t.effects[0].name.data(), "blank");
+
     // vibrato
     Effect& e = t.effects[1];
+    strcpy(e.name.data(), "vibrato");
     e.rows[0] = 0x80;
     e.rows[1] = 0x81;
     e.rows[2] = 0x82;
