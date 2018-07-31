@@ -92,6 +92,8 @@ namespace player {
     int   row();
     int   block();
     void  block(int b);
+    bool  block_loop();
+    void  block_loop(bool b);
     bool  is_channel_active(int c);
     void  set_channel_active(int c, bool a);
     Tune& tune();

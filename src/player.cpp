@@ -55,6 +55,7 @@ int  m_sample;
 int  m_frame;
 int  m_row;
 int  m_block;
+bool m_block_loop;
 std::array<Channel, CHANNEL_COUNT> m_channels;
 
 
@@ -148,7 +149,7 @@ void tick() {
         m_frame = 0;
         if (++m_row >= TRACK_LENGTH) {
             m_row = 0;
-            if (++m_block >= (int) m_tune.table.size()) {
+            if (!m_block_loop && ++m_block >= (int) m_tune.table.size()) {
                 m_block = 0;
             }
         }
@@ -269,6 +270,8 @@ void stop() {
 int   row() { return m_row; }
 int   block() { return m_block; }
 void  block(int b) { m_block = b; }
+bool  block_loop() { return m_block_loop; }
+void  block_loop(bool b) { m_block_loop = b; }
 bool  is_playing() { return m_playing; }
 bool  is_channel_active(int c) { return m_channels[c].active; }
 void  set_channel_active(int c, bool a) { m_channels[c].active = a; }

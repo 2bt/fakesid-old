@@ -636,14 +636,18 @@ void draw() {
         gui::padding({ 0, gfx::screensize().y - gui::cursor().y - gui::PADDING * 3 - 88 });
         gfx::font(FONT_DEFAULT);
         bool is_playing = player::is_playing();
-        columns(2, [is_playing](int i, int w) {
+        bool block_loop = player::block_loop();
+        columns(3, [is_playing, block_loop](int i, int w) {
             if (i) gui::same_line();
             gui::min_item_size({ w, 88 });
             switch (i) {
             case 0:
-                if (gui::button("\x11")) player::stop();
+                if (gui::button("loop", block_loop)) player::block_loop(!block_loop);
                 break;
             case 1:
+                if (gui::button("\x11")) player::stop();
+                break;
+            case 2:
                 if (gui::button("\x10\x12", is_playing)) {
                     if (is_playing) player::pause();
                     else player::play();
