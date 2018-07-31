@@ -261,7 +261,7 @@ void pause() {
 
 void stop() {
     pause();
-    m_block = 0;
+    if (!m_block_loop) m_block = 0;
     m_row = 0;
     m_frame = 0;
 }

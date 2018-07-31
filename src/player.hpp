@@ -9,7 +9,7 @@ enum {
     CHANNEL_COUNT         = 4,
     TRACK_LENGTH          = 32,
     TRACK_COUNT           = 21 * 12,
-    INSTRUMENT_COUNT      = 54,
+    INSTRUMENT_COUNT      = 48,
     EFFECT_COUNT          = INSTRUMENT_COUNT,
     MAX_INSTRUMENT_LENGTH = 16,
     MAX_EFFECT_LENGTH     = MAX_INSTRUMENT_LENGTH,

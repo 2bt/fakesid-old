@@ -124,8 +124,8 @@ void effect_view();
 void (*m_view)(void);
 
 constexpr char inst_effect_glyphs[INSTRUMENT_COUNT + 1] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ_"
-    "0123456789@!#$%&*+-./=<>!?#";
+    "ABCDEFGHIJKLMNOPQRSTUVWX"
+    "YZ_@0123456789#$*+=<>!?#";
 
 
 bool instrument_select() {
