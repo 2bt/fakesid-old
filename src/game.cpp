@@ -59,7 +59,7 @@ void audio_callback(void* userdata, Uint8* stream, int len) {
 struct Edit {
     // track view
     int track          = 1;
-    int clavier_offset = 48;
+    int clavier_offset = 36;
     int track_page     = 0;
     int instrument     = 1;
     int effect         = 1;
@@ -84,15 +84,35 @@ void effect_view();
 void (*m_view)(void);
 
 
-template<class F>
-void columns(int n, F f) {
-    int x = gfx::screensize().x - gui::PADDING * (n + 1);
-    for (int i = 0; i < n; ++i) {
-        int w = x / (n - i);
-        x -= w;
-        f(i, w);
+std::vector<int> calculate_column_widths(std::vector<int> weights) {
+//    int absolute = gfx::screensize().x - gui::cursor().x - gui::PADDING;
+    int absolute = gfx::screensize().x - gui::PADDING;
+    int relative = 0;
+    for (int w : weights) {
+        if (w > 0) {
+            absolute -= w + gui::PADDING;
+        }
+        else {
+            absolute -= gui::PADDING;
+            relative += -w;
+        }
     }
+    std::vector<int> widths;
+    widths.reserve(weights.size());
+    for (int w : weights) {
+        if (w > 0) {
+            widths.emplace_back(w);
+        }
+        else {
+            int q = absolute * -w / relative;
+            absolute -= q;
+            relative += w;
+            widths.emplace_back(q);
+        }
+    }
+    return widths;
 }
+
 
 
 bool track_select() {
@@ -133,19 +153,22 @@ void song_view() {
 
     gfx::font(FONT_MONO);
 
+    auto widths = calculate_column_widths({ 88, 6, -1, -1, -1, -1 });
+
     // mute buttons
-    gui::padding({ 88, 65 });
+    gui::padding({ widths[0], 65 });
     gui::same_line();
     gui::separator();
     gui::same_line();
+
+
     for (int c = 0; c < CHANNEL_COUNT; ++c) {
-
         gui::same_line();
-
-        gui::min_item_size({ 88, 65 });
-        char str[2] = { char('0' + c) };
+        gui::min_item_size({ widths[c + 2], 65 });
         bool a = player::is_channel_active(c);
-        if (gui::button(str, a)) {
+//        char str[2] = { char('0' + c) };
+//        if (gui::button(str, a)) {
+        if (gui::button("", a)) {
             player::set_channel_active(c, !a);
         }
     }
@@ -162,7 +185,7 @@ void song_view() {
 
         char str[3];
         sprintf(str, "%02X", i);
-        gui::min_item_size({ 88, 65 });
+        gui::min_item_size({ widths[0], 65 });
         if (highlight) gui::highlight();
         if (gui::button(str, i == m_edit.block)) {
             m_edit.block = i;
@@ -186,7 +209,7 @@ void song_view() {
 
             char str[3] = "..";
             if (block[c] > 0) sprintf(str, "%02X", block[c]);
-            gui::min_item_size({ 88, 65 });
+            gui::min_item_size({ widths[c + 2], 65 });
             if (highlight) gui::highlight();
             if (gui::button(str)) {
                 m_edit.track_select.active = true;
@@ -206,24 +229,24 @@ void song_view() {
 
     gfx::font(FONT_DEFAULT);
 
-    gui::min_item_size({ 260, 65 });
+    gui::min_item_size({ 260, 88 });
     if (gui::button("add")) {
         if (m_edit.block <= (int) table.size()) {
             table.insert(table.begin() + m_edit.block, { 0, 0, 0, 0 });
         }
     }
     gui::same_line();
-    gui::min_item_size({ 260, 65 });
+    gui::min_item_size({ 260, 88 });
     if (gui::button("delete")) {
         if (m_edit.block < (int) table.size() && table.size() > 1) {
             table.erase(table.begin() + m_edit.block);
         }
     }
 
-    gui::min_item_size({ 260, 65 });
+    gui::min_item_size({ 260, 88 });
     if (gui::button("save")) save_tune("tune");
     gui::same_line();
-    gui::min_item_size({ 260, 65 });
+    gui::min_item_size({ 260, 88 });
     if (gui::button("load")) load_tune("tune");
 }
 
@@ -233,29 +256,25 @@ void track_view() {
 
     // track select
     gfx::font(FONT_MONO);
-    gui::min_item_size({ 65, 65 });
+    gui::min_item_size({ 88, 88 });
     if (gui::button("-")) m_edit.track = std::max(1, m_edit.track - 1);
     char str[3];
     sprintf(str, "%02X", m_edit.track);
-    gui::min_item_size({ 88, 65 });
+    gui::min_item_size({ 88, 88 });
     gui::same_line();
     if (gui::button(str)) {
         m_edit.track_select.active = true;
         m_edit.track_select.value = &m_edit.track;
         m_edit.track_select.allow_nil = false;
     }
-    gui::min_item_size({ 65, 65 });
+    gui::min_item_size({ 88, 88 });
     gui::same_line();
     if (gui::button("+")) m_edit.track = std::min(255, m_edit.track + 1);
 
-    // track pages
-    gui::same_line();
-    gfx::font(FONT_DEFAULT);
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
-    gui::drag_int("page", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
-    gui::separator();
 
     // clavier slider
+    gui::separator();
+    gfx::font(FONT_DEFAULT);
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
     gui::drag_int("clavier", m_edit.clavier_offset, 0, 96 - CLAVIER_WIDTH, CLAVIER_WIDTH);
 
@@ -335,6 +354,11 @@ void track_view() {
         }
     }
     gui::separator();
+
+    // track pages
+    gfx::font(FONT_DEFAULT);
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
+    gui::drag_int("page", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
 }
 
 
@@ -342,15 +366,15 @@ void instrument_view() {
 
     // instrument select
     gfx::font(FONT_MONO);
-    gui::min_item_size({ 65, 65 });
+    gui::min_item_size({ 88, 88 });
     if (gui::button("-")) m_edit.instrument = std::max(1, m_edit.instrument - 1);
     char str[2] = { char('0' - 1  + m_edit.instrument) };
-    gui::min_item_size({ 65, 65 });
+    gui::min_item_size({ 88, 88 });
     gui::same_line();
     if (gui::button(str)) {
         // TODO
     }
-    gui::min_item_size({ 65, 65 });
+    gui::min_item_size({ 88, 88 });
     gui::same_line();
     if (gui::button("+")) m_edit.instrument = std::min<int>(INSTRUMENT_COUNT, m_edit.instrument + 1);
 
@@ -360,33 +384,23 @@ void instrument_view() {
     // name
     gfx::font(FONT_DEFAULT);
     gui::same_line();
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 88 });
     gui::input_text(inst.name.data(), inst.name.size() - 1);
 
     gui::separator();
 
     // adsr
     gfx::font(FONT_MONO);
-    columns(2, [&inst](int i, int w) {
-        if (i) gui::same_line();
-        gui::min_item_size({ w, 65 });
+    auto widths = calculate_column_widths({ -1, -1 });
+    for (int i = 0; i < 4; ++i) {
+        if (i % 2 > 0) gui::same_line();
+        gui::min_item_size({ widths[i % 2], 65 });
         gui::id(&inst.adsr[i]);
         int v = inst.adsr[i];
         if (gui::drag_int("%X", v, 0, 15)) {
             inst.adsr[i] = v;
         }
-    });
-    columns(2, [&inst](int i, int w) {
-        if (i) gui::same_line();
-        i += 2;
-        gui::min_item_size({ w, 65 });
-        gui::id(&inst.adsr[i]);
-        int v = inst.adsr[i];
-        if (gui::drag_int("%X", v, 0, 15)) {
-            inst.adsr[i] = v;
-        }
-    });
-
+    };
     gui::separator();
 
 
@@ -446,13 +460,13 @@ void instrument_view() {
 
     gfx::font(FONT_DEFAULT);
 
-    gui::min_item_size({ 260, 65 });
+    gui::min_item_size({ 260, 88 });
     if (gui::button("add") && inst.length < MAX_INSTRUMENT_LENGTH) {
         inst.rows[inst.length] = { GATE, SET_PULSEWIDTH, 8 };
         ++inst.length;
     }
     gui::same_line();
-    gui::min_item_size({ 260, 65 });
+    gui::min_item_size({ 260, 88 });
     if (gui::button("delete")) {
         if (inst.length > 0) {
             --inst.length;
@@ -466,15 +480,15 @@ void effect_view() {
 
     // effecct select
     gfx::font(FONT_MONO);
-    gui::min_item_size({ 65, 65 });
+    gui::min_item_size({ 88, 88 });
     if (gui::button("-")) m_edit.effect = std::max(1, m_edit.effect - 1);
     char str[2] = { char('0' - 1  + m_edit.effect) };
-    gui::min_item_size({ 65, 65 });
+    gui::min_item_size({ 88, 88 });
     gui::same_line();
     if (gui::button(str)) {
         // TODO
     }
-    gui::min_item_size({ 65, 65 });
+    gui::min_item_size({ 88, 88 });
     gui::same_line();
     if (gui::button("+")) m_edit.effect = std::min<int>(EFFECT_COUNT, m_edit.effect + 1);
 
@@ -485,7 +499,7 @@ void effect_view() {
     // name
     gfx::font(FONT_DEFAULT);
     gui::same_line();
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 88 });
     gui::input_text(effect.name.data(), effect.name.size() - 1);
 
     gui::separator();
@@ -526,13 +540,13 @@ void effect_view() {
 
     gfx::font(FONT_DEFAULT);
 
-    gui::min_item_size({ 260, 65 });
+    gui::min_item_size({ 260, 88 });
     if (gui::button("add") && effect.length < MAX_EFFECT_LENGTH) {
         effect.rows[effect.length] = 0x80;
         ++effect.length;
     }
     gui::same_line();
-    gui::min_item_size({ 260, 65 });
+    gui::min_item_size({ 260, 88 });
     if (gui::button("delete")) {
         if (effect.length > 0) {
             --effect.length;
@@ -623,38 +637,42 @@ void draw() {
     if (!track_select()) {
         gfx::font(FONT_DEFAULT);
 
-        columns(views.size(), [](int i, int w) {
-            if (i) gui::same_line();
-            gui::min_item_size({ w, 88 });
-            if (gui::button(views[i].name, m_view == views[i].func)) m_view = views[i].func;
-        });
-        gui::separator();
+        // view buttons
+        {
+            auto widths = calculate_column_widths(std::vector<int>(views.size(), -1));
+            for (int i = 0; i < (int) views.size(); ++i) {
+                if (i) gui::same_line();
+                gui::min_item_size({ widths[i], 88 });
+                if (gui::button(views[i].name, m_view == views[i].func)) m_view = views[i].func;
+            }
+            gui::separator();
+        }
 
         m_view();
 
         // stop and play
-        gui::padding({ 0, gfx::screensize().y - gui::cursor().y - gui::PADDING * 3 - 88 });
-        gfx::font(FONT_DEFAULT);
-        bool is_playing = player::is_playing();
-        bool block_loop = player::block_loop();
-        columns(3, [is_playing, block_loop](int i, int w) {
-            if (i) gui::same_line();
-            gui::min_item_size({ w, 88 });
-            switch (i) {
-            case 0:
-                if (gui::button("loop", block_loop)) player::block_loop(!block_loop);
-                break;
-            case 1:
-                if (gui::button("\x11")) player::stop();
-                break;
-            case 2:
-                if (gui::button("\x10\x12", is_playing)) {
-                    if (is_playing) player::pause();
-                    else player::play();
-                }
-                break;
+        {
+            gui::padding({ 0, gfx::screensize().y - gui::cursor().y - gui::PADDING * 3 - 88 });
+            gfx::font(FONT_DEFAULT);
+            bool is_playing = player::is_playing();
+            bool block_loop = player::block_loop();
+            auto widths = calculate_column_widths({ -1, -1, -1 });
+
+            gui::min_item_size({ widths[0], 88 });
+            if (gui::button("loop", block_loop)) player::block_loop(!block_loop);
+
+            gui::same_line();
+            gui::min_item_size({ widths[1], 88 });
+            if (gui::button("\x11")) player::stop();
+
+            gui::same_line();
+            gui::min_item_size({ widths[2], 88 });
+            if (gui::button("\x10\x12", is_playing)) {
+                if (is_playing) player::pause();
+                else player::play();
             }
-        });
+        }
+
 
     }
 

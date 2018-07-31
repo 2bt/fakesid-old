@@ -283,9 +283,12 @@ void input_text(char* str, int len) {
     gfx::color(color);
     gfx::rectangle(box.pos, box.size, 0);
     gfx::color(color::make(0xffffff));
-    gfx::print(box.pos + Vec(15, 5), str);
+    int oy = (box.size.y - s.y) / 2;
+    gfx::print(box.pos + Vec(15, oy), str);
     // cursor
-    if (m_input_text_str == str && m_input_cursor_blink % 16 < 8) gfx::print(box.pos + Vec(15 + s.x, (box.size.y - s.y) / 2), "_");
+    if (m_input_text_str == str && m_input_cursor_blink % 16 < 8) {
+        gfx::print(box.pos + Vec(15 + s.x, oy), "_");
+    }
 }
 
 
