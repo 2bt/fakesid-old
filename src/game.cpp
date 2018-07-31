@@ -67,6 +67,9 @@ struct Edit {
     // song view
     int block          = 0;
 
+    Track      copy_track;
+    Instrument copy_inst;
+    Effect     copy_effect;
 
     struct TrackSelect {
         bool active;
@@ -229,25 +232,29 @@ void song_view() {
 
     gfx::font(FONT_DEFAULT);
 
-    gui::min_item_size({ 260, 88 });
-    if (gui::button("add")) {
-        if (m_edit.block <= (int) table.size()) {
-            table.insert(table.begin() + m_edit.block, { 0, 0, 0, 0 });
+    // buttons
+    {
+        auto widths = calculate_column_widths({ -1, -1, -1, -1 });
+        gui::min_item_size({ widths[0], 88 });
+        if (gui::button("add")) {
+            if (m_edit.block <= (int) table.size()) {
+                table.insert(table.begin() + m_edit.block, { 0, 0, 0, 0 });
+            }
         }
-    }
-    gui::same_line();
-    gui::min_item_size({ 260, 88 });
-    if (gui::button("delete")) {
-        if (m_edit.block < (int) table.size() && table.size() > 1) {
-            table.erase(table.begin() + m_edit.block);
+        gui::same_line();
+        gui::min_item_size({ widths[1], 88 });
+        if (gui::button("delete")) {
+            if (m_edit.block < (int) table.size() && table.size() > 1) {
+                table.erase(table.begin() + m_edit.block);
+            }
         }
+        gui::same_line();
+        gui::min_item_size({ widths[2], 88 });
+        if (gui::button("save")) save_tune("tune");
+        gui::same_line();
+        gui::min_item_size({ widths[3], 88 });
+        if (gui::button("load")) load_tune("tune");
     }
-
-    gui::min_item_size({ 260, 88 });
-    if (gui::button("save")) save_tune("tune");
-    gui::same_line();
-    gui::min_item_size({ 260, 88 });
-    if (gui::button("load")) load_tune("tune");
 }
 
 
@@ -359,6 +366,15 @@ void track_view() {
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
     gui::drag_int("page", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
+    gui::separator();
+
+    auto widths = calculate_column_widths({ -1, -1, -1, -1 });
+    gui::min_item_size({ widths[0], 88 });
+    if (gui::button("copy")) m_edit.copy_track = track;
+    gui::same_line();
+    gui::min_item_size({ widths[1], 88 });
+    if (gui::button("paste")) track = m_edit.copy_track;
+
 }
 
 
@@ -386,22 +402,23 @@ void instrument_view() {
     gui::same_line();
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 88 });
     gui::input_text(inst.name.data(), inst.name.size() - 1);
-
     gui::separator();
+    gfx::font(FONT_MONO);
 
     // adsr
-    gfx::font(FONT_MONO);
-    auto widths = calculate_column_widths({ -1, -1 });
-    for (int i = 0; i < 4; ++i) {
-        if (i % 2 > 0) gui::same_line();
-        gui::min_item_size({ widths[i % 2], 65 });
-        gui::id(&inst.adsr[i]);
-        int v = inst.adsr[i];
-        if (gui::drag_int("%X", v, 0, 15)) {
-            inst.adsr[i] = v;
-        }
-    };
-    gui::separator();
+    {
+        auto widths = calculate_column_widths({ -1, -1 });
+        for (int i = 0; i < 4; ++i) {
+            if (i % 2 > 0) gui::same_line();
+            gui::min_item_size({ widths[i % 2], 65 });
+            gui::id(&inst.adsr[i]);
+            int v = inst.adsr[i];
+            if (gui::drag_int("%X", v, 0, 15)) {
+                inst.adsr[i] = v;
+            }
+        };
+        gui::separator();
+    }
 
 
     // rows
@@ -460,19 +477,27 @@ void instrument_view() {
 
     gfx::font(FONT_DEFAULT);
 
-    gui::min_item_size({ 260, 88 });
+    auto widths = calculate_column_widths({ -1, -1, -1, -1 });
+
+    gui::min_item_size({ widths[0], 88 });
     if (gui::button("add") && inst.length < MAX_INSTRUMENT_LENGTH) {
         inst.rows[inst.length] = { GATE, SET_PULSEWIDTH, 8 };
         ++inst.length;
     }
     gui::same_line();
-    gui::min_item_size({ 260, 88 });
+    gui::min_item_size({ widths[1], 88 });
     if (gui::button("delete")) {
         if (inst.length > 0) {
             --inst.length;
         }
     }
 
+    gui::same_line();
+    gui::min_item_size({ widths[2], 88 });
+    if (gui::button("copy")) m_edit.copy_inst = inst;
+    gui::same_line();
+    gui::min_item_size({ widths[3], 88 });
+    if (gui::button("paste")) inst = m_edit.copy_inst;
 }
 
 
@@ -540,18 +565,27 @@ void effect_view() {
 
     gfx::font(FONT_DEFAULT);
 
-    gui::min_item_size({ 260, 88 });
+    auto widths = calculate_column_widths({ -1, -1, -1, -1 });
+    gui::min_item_size({ widths[0], 88 });
     if (gui::button("add") && effect.length < MAX_EFFECT_LENGTH) {
         effect.rows[effect.length] = 0x80;
         ++effect.length;
     }
     gui::same_line();
-    gui::min_item_size({ 260, 88 });
+    gui::min_item_size({ widths[1], 88 });
     if (gui::button("delete")) {
         if (effect.length > 0) {
             --effect.length;
         }
     }
+
+    gui::same_line();
+    gui::min_item_size({ widths[2], 88 });
+    if (gui::button("copy")) m_edit.copy_effect = effect;
+    gui::same_line();
+    gui::min_item_size({ widths[3], 88 });
+    if (gui::button("paste")) effect = m_edit.copy_effect;
+
 }
 
 
