@@ -20,8 +20,8 @@ namespace color {
         };
     }
     const SDL_Color button_normal = make(0x555555, 255);
-    const SDL_Color button_hover  = make(0x884444, 255);
-    const SDL_Color button_active = make(0xaa4444, 255);
+    const SDL_Color button_hover  = make(0xaa4444, 255);
+    const SDL_Color button_active = make(0x884444, 255);
 
     const SDL_Color input_text_normal = make(0x222222, 255);
     const SDL_Color input_text_hover  = make(0x884444, 255);
@@ -204,7 +204,7 @@ bool button(char const* label, bool active) {
             if (++m_hold_count > 30) m_hold = true;
         }
         else m_hold_count = 0;
-        if (!m_hold && input::just_released()) clicked = true;
+        if (input::just_released()) clicked = true;
     }
     else {
         if (active) color = color::button_active;

@@ -92,7 +92,7 @@ std::vector<int> calculate_column_widths(std::vector<int> weights) {
 struct Cache {
     Cache() {
         for (int i = 0; i < SIZE; ++i) {
-            entries[i].age  = 0;
+            entries[i].age  = i;
             entries[i].data = i + 1;
         }
     }
@@ -151,11 +151,32 @@ struct Edit {
 } m_edit;
 
 
+enum EView {
+    VIEW_SONG,
+    VIEW_TRACK,
+    VIEW_INSTRUMENT,
+    VIEW_EFFECT,
+};
+
 void song_view();
 void track_view();
 void instrument_view();
 void effect_view();
-void (*m_view)(void);
+
+EView m_view = VIEW_SONG;
+
+struct View {
+    char const* name;
+    void (*draw)(void);
+};
+
+constexpr std::array<View, 4> views = {
+    View{ "song", song_view },
+    View{ "track", track_view },
+    View{ "instrument", instrument_view },
+    View{ "effect", effect_view },
+};
+
 
 
 void sprint_track_id(char* dst, int nr) {
@@ -374,7 +395,7 @@ void song_view() {
             if (block[c] > 0 && gui::hold()) {
                 gui::block_touch();
                 m_edit.track = block[c];
-                m_view = track_view;
+                m_view = VIEW_TRACK;
             }
         }
     }
@@ -410,7 +431,6 @@ void song_view() {
 
 
 void draw_cache(Cache& cache, int& data) {
-    gui::separator();
     gfx::font(FONT_MONO);
     auto widths = calculate_column_widths(std::vector<int>(Cache::SIZE, -1));
     for (int i = 0; i < Cache::SIZE; ++i) {
@@ -561,7 +581,9 @@ void track_view() {
     gui::drag_int("page", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
 
     // cache
+    gui::separator();
     inst_cache();
+    gui::separator();
     effect_cache();
 }
 
@@ -570,30 +592,17 @@ void track_view() {
 
 void instrument_view() {
 
-    auto widths = calculate_column_widths({ 88, 88, 88, -1, 88, 88 });
-
-    // instrument select
-    gfx::font(FONT_MONO);
-    gui::min_item_size({ 88, 88 });
-    if (gui::button("-")) m_edit.instrument = std::max(1, m_edit.instrument - 1);
-    char str[2];
-    sprint_inst_effect_id(str, m_edit.instrument);
-    gui::min_item_size({ 88, 88 });
-    gui::same_line();
-    if (gui::button(str)) {
-        m_edit.instrument_select_active = true;
-    }
-    gui::min_item_size({ 88, 88 });
-    gui::same_line();
-    if (gui::button("+")) m_edit.instrument = std::min<int>(INSTRUMENT_COUNT, m_edit.instrument + 1);
+    // cache
+    inst_cache();
+    gui::separator();
 
     Tune& tune = player::tune();
     Instrument& inst = tune.instruments[m_edit.instrument - 1];
 
     // name
+    auto widths = calculate_column_widths({ -1, 88, 88 });
     gfx::font(FONT_DEFAULT);
-    gui::same_line();
-    gui::min_item_size({ widths[3], 88 });
+    gui::min_item_size({ widths[0], 88 });
     gui::input_text(inst.name.data(), inst.name.size() - 1);
 
     // copy & paste
@@ -624,6 +633,7 @@ void instrument_view() {
     // rows
     for (int i = 0; i < MAX_INSTRUMENT_LENGTH; ++i) {
 
+        char str[2];
         sprintf(str, "%X", i);
         gui::min_item_size({ 65, 65 });
 
@@ -692,38 +702,23 @@ void instrument_view() {
     }
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
 
-    // cache
-    inst_cache();
-
 }
 
 
 void effect_view() {
 
-    auto widths = calculate_column_widths({ 88, 88, 88, -1, 88, 88 });
+    // cache
+    effect_cache();
+    gui::separator();
 
-    // effecct select
-    gfx::font(FONT_MONO);
-    gui::min_item_size({ 88, 88 });
-    if (gui::button("-")) m_edit.effect = std::max(1, m_edit.effect - 1);
-    char str[2];
-    sprint_inst_effect_id(str, m_edit.effect);
-    gui::min_item_size({ 88, 88 });
-    gui::same_line();
-    if (gui::button(str)) {
-        m_edit.effect_select_active = true;
-    }
-    gui::min_item_size({ 88, 88 });
-    gui::same_line();
-    if (gui::button("+")) m_edit.effect = std::min<int>(EFFECT_COUNT, m_edit.effect + 1);
 
     Tune& tune = player::tune();
     Effect& effect = tune.effects[m_edit.effect - 1];
 
     // name
+    auto widths = calculate_column_widths({ -1, 88, 88 });
     gfx::font(FONT_DEFAULT);
-    gui::same_line();
-    gui::min_item_size({ widths[3], 88 });
+    gui::min_item_size({ widths[0], 88 });
     gui::input_text(effect.name.data(), effect.name.size() - 1);
 
     // copy & paste
@@ -739,7 +734,7 @@ void effect_view() {
     // rows
     gfx::font(FONT_MONO);
     for (int i = 0; i < MAX_EFFECT_LENGTH; ++i) {
-
+        char str[2];
         sprintf(str, "%X", i);
         gui::min_item_size({ 65, 65 });
 
@@ -785,8 +780,6 @@ void effect_view() {
     }
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
 
-    // cache
-    effect_cache();
 }
 
 
@@ -796,8 +789,6 @@ void effect_view() {
 bool init() {
     m_pref_path = SDL_GetPrefPath("sdl", "rausch");
     if (!m_pref_path) return false;
-
-    m_view = song_view;
 
 
     // default tune
@@ -853,17 +844,6 @@ void free() {
 }
 
 
-struct View {
-    char const* name;
-    void (*func)(void);
-};
-constexpr std::array<View, 4> views = {
-    View{ "song", song_view },
-    View{ "track", track_view },
-    View{ "instrument", instrument_view },
-    View{ "effect", effect_view },
-};
-
 
 void draw() {
     gfx::clear();
@@ -878,12 +858,25 @@ void draw() {
             for (int i = 0; i < (int) views.size(); ++i) {
                 if (i) gui::same_line();
                 gui::min_item_size({ widths[i], 88 });
-                if (gui::button(views[i].name, m_view == views[i].func)) m_view = views[i].func;
+                if (gui::button(views[i].name, m_view == i)) {
+                    if (m_view == i) {
+                        if (m_view == VIEW_INSTRUMENT) {
+                            m_edit.instrument_select_active = true;
+                        }
+                        if (m_view == VIEW_EFFECT) {
+                            m_edit.effect_select_active = true;
+                        }
+                    }
+                    else {
+                        // switch view
+                        m_view = (EView) i;
+                    }
+                }
             }
             gui::separator();
         }
 
-        m_view();
+        views[m_view].draw();
 
         // stop and play
         {
