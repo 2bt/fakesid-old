@@ -2,6 +2,7 @@
 #include "gui.hpp"
 #include "player.hpp"
 #include "wavelog.hpp"
+#include <algorithm>
 
 
 namespace game {
@@ -88,6 +89,36 @@ std::vector<int> calculate_column_widths(std::vector<int> weights) {
 }
 
 
+struct Cache {
+    Cache() {
+        for (int i = 0; i < SIZE; ++i) {
+            entries[i].age  = 0;
+            entries[i].data = i + 1;
+        }
+    }
+    enum { SIZE = 12 };
+    struct Entry {
+        uint32_t age;
+        int      data;
+        bool operator<(Entry const& rhs) const { return data < rhs.data; }
+    };
+    std::array<Entry, SIZE> entries;
+    void insert(int data) {
+        Entry* f = &entries[0];
+        for (Entry& e : entries) {
+            if (e.data == data) e.age = -1;
+            else ++e.age;
+            if (e.age > f->age) {
+                f = &e;
+            }
+        }
+        f->data = data;
+        f->age = 0;
+//        std::sort(entries.begin(), entries.end());
+    }
+};
+
+
 struct Edit {
     // track view
     int track          = 1;
@@ -102,6 +133,9 @@ struct Edit {
     Track      copy_track;
     Instrument copy_inst;
     Effect     copy_effect;
+
+    Cache inst_cache;
+    Cache effect_cache;
 
     struct TrackSelect {
         bool active;
@@ -171,6 +205,7 @@ bool instrument_select() {
             if (gui::button("", nr == m_edit.instrument)) {
                 m_edit.instrument_select_active = false;
                 m_edit.instrument = nr;
+                m_edit.inst_cache.insert(m_edit.instrument);
             }
             char str[2];
             sprint_inst_effect_id(str, nr);
@@ -210,6 +245,7 @@ bool effect_select() {
             if (gui::button("", nr == m_edit.effect)) {
                 m_edit.effect_select_active = false;
                 m_edit.effect = nr;
+                m_edit.effect_cache.insert(m_edit.effect);
             }
             char str[2];
             sprint_inst_effect_id(str, nr);
@@ -346,32 +382,57 @@ void song_view() {
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
     gui::separator();
 
-    gfx::font(FONT_DEFAULT);
 
     // buttons
-    {
-        auto widths = calculate_column_widths({ -1, -1, -1, -1 });
-        gui::min_item_size({ widths[0], 88 });
-        if (gui::button("add")) {
-            if (m_edit.block <= (int) table.size()) {
-                table.insert(table.begin() + m_edit.block, { 0, 0, 0, 0 });
-            }
+    gfx::font(FONT_MONO);
+    widths = calculate_column_widths({ 88, 88, -1, -1 });
+    gui::min_item_size({ widths[0], 88 });
+    if (gui::button("-")) {
+        if (m_edit.block < (int) table.size() && table.size() > 1) {
+            table.erase(table.begin() + m_edit.block);
         }
-        gui::same_line();
-        gui::min_item_size({ widths[1], 88 });
-        if (gui::button("delete")) {
-            if (m_edit.block < (int) table.size() && table.size() > 1) {
-                table.erase(table.begin() + m_edit.block);
-            }
+    }
+    gui::same_line();
+    gui::min_item_size({ widths[1], 88 });
+    if (gui::button("+")) {
+        if (m_edit.block <= (int) table.size()) {
+            table.insert(table.begin() + m_edit.block, { 0, 0, 0, 0 });
         }
-        gui::same_line();
-        gui::min_item_size({ widths[2], 88 });
-        if (gui::button("save")) save_tune("tune");
-        gui::same_line();
-        gui::min_item_size({ widths[3], 88 });
-        if (gui::button("load")) load_tune("tune");
+    }
+    gfx::font(FONT_DEFAULT);
+    gui::same_line();
+    gui::min_item_size({ widths[2], 88 });
+    if (gui::button("save")) save_tune("tune");
+    gui::same_line();
+    gui::min_item_size({ widths[3], 88 });
+    if (gui::button("load")) load_tune("tune");
+}
+
+
+void draw_cache(Cache& cache, int& data) {
+    gui::separator();
+    gfx::font(FONT_MONO);
+    auto widths = calculate_column_widths(std::vector<int>(Cache::SIZE, -1));
+    for (int i = 0; i < Cache::SIZE; ++i) {
+        if (i) gui::same_line();
+        auto const& e = cache.entries[i];
+        char str[2];
+        sprint_inst_effect_id(str, e.data);
+        gui::min_item_size({ widths[i], 88 });
+        if (gui::button(str, e.data == data)) {
+            data = e.data;
+            cache.insert(data);
+        }
     }
 }
+
+void inst_cache() {
+    draw_cache(m_edit.inst_cache, m_edit.instrument);
+}
+void effect_cache() {
+    draw_cache(m_edit.effect_cache, m_edit.effect);
+}
+
 
 
 void track_view() {
@@ -441,9 +502,8 @@ void track_view() {
             else row.instrument = m_edit.instrument;
         }
         if (row.instrument > 0 && gui::hold()) {
-            gui::block_touch();
             m_edit.instrument = row.instrument;
-            m_view = instrument_view;
+            m_edit.inst_cache.insert(m_edit.instrument);
         }
 
         // effect
@@ -456,23 +516,22 @@ void track_view() {
             else row.effect = m_edit.effect;
         }
         if (row.effect > 0 && gui::hold()) {
-            gui::block_touch();
             m_edit.effect = row.effect;
-            m_view = effect_view;
+            m_edit.effect_cache.insert(m_edit.effect);
         }
 
 
         // note
         str[0] = str[1] = str[2] = ' ';
         if (row.note == 255) {
-            str[0] = str[2];
-            str[1] = '\x11';
+            str[0] = str[1] = str[2] = '-';
         }
         else if (row.note > 0) {
             str[0] = "CCDDEFFGGAAB"[(row.note - 1) % 12];
             str[1] = "-#-#--#-#-#-"[(row.note - 1) % 12];
             str[2] = '0' + (row.note - 1) / 12;
         }
+        str[3] = '\0';
         gui::min_item_size({ 0, 65 });
         gui::same_line();
         if (highlight) gui::highlight();
@@ -485,6 +544,7 @@ void track_view() {
 
         // clavier
         gui::same_line();
+        gui::separator();
         if (gui::clavier(row.note, m_edit.clavier_offset, highlight)) {
             if (row.note == 0) row = {};
             else {
@@ -499,9 +559,13 @@ void track_view() {
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
     gui::drag_int("page", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
-    gui::separator();
 
+    // cache
+    inst_cache();
+    effect_cache();
 }
+
+
 
 
 void instrument_view() {
@@ -611,22 +675,25 @@ void instrument_view() {
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
     gui::separator();
 
-    gfx::font(FONT_DEFAULT);
 
-    widths = calculate_column_widths({ -1, -1, -1, -1 });
-
+    widths = calculate_column_widths({ 88, 88, -1, -1 });
+    gfx::font(FONT_MONO);
     gui::min_item_size({ widths[0], 88 });
-    if (gui::button("add") && inst.length < MAX_INSTRUMENT_LENGTH) {
-        inst.rows[inst.length] = { GATE, SET_PULSEWIDTH, 8 };
-        ++inst.length;
-    }
-    gui::same_line();
-    gui::min_item_size({ widths[1], 88 });
-    if (gui::button("delete")) {
+    if (gui::button("-")) {
         if (inst.length > 0) {
             --inst.length;
         }
     }
+    gui::same_line();
+    gui::min_item_size({ widths[1], 88 });
+    if (gui::button("+") && inst.length < MAX_INSTRUMENT_LENGTH) {
+        inst.rows[inst.length] = { GATE, SET_PULSEWIDTH, 8 };
+        ++inst.length;
+    }
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
+
+    // cache
+    inst_cache();
 
 }
 
@@ -701,22 +768,25 @@ void effect_view() {
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
     gui::separator();
 
-    gfx::font(FONT_DEFAULT);
 
-    widths = calculate_column_widths({ -1, -1, -1, -1 });
+    widths = calculate_column_widths({ 88, 88, -1, -1 });
+    gfx::font(FONT_MONO);
     gui::min_item_size({ widths[0], 88 });
-    if (gui::button("add") && effect.length < MAX_EFFECT_LENGTH) {
-        effect.rows[effect.length] = 0x80;
-        ++effect.length;
-    }
-    gui::same_line();
-    gui::min_item_size({ widths[1], 88 });
-    if (gui::button("delete")) {
+    if (gui::button("-")) {
         if (effect.length > 0) {
             --effect.length;
         }
     }
+    gui::same_line();
+    gui::min_item_size({ widths[1], 88 });
+    if (gui::button("+") && effect.length < MAX_EFFECT_LENGTH) {
+        effect.rows[effect.length] = 0x80;
+        ++effect.length;
+    }
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
 
+    // cache
+    effect_cache();
 }
 
 

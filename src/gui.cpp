@@ -20,20 +20,20 @@ namespace color {
         };
     }
     const SDL_Color button_normal = make(0x555555, 255);
-    const SDL_Color button_hover  = make(0x885555, 255);
-    const SDL_Color button_active = make(0xaa5555, 255);
+    const SDL_Color button_hover  = make(0x884444, 255);
+    const SDL_Color button_active = make(0xaa4444, 255);
 
     const SDL_Color input_text_normal = make(0x222222, 255);
-    const SDL_Color input_text_hover  = make(0x885555, 255);
-    const SDL_Color input_text_active = make(0xaa5555, 255);
+    const SDL_Color input_text_hover  = make(0x884444, 255);
+    const SDL_Color input_text_active = make(0xaa4444, 255);
 
     const SDL_Color drag          = make(0x222222, 255);
-    const SDL_Color handle_normal = make(0x885555, 255);
-    const SDL_Color handle_active = make(0xaa5555, 255);
+    const SDL_Color handle_normal = make(0x884444, 255);
+    const SDL_Color handle_active = make(0xaa4444, 255);
 
     const SDL_Color separator     = make(0x111111, 255);
 
-    const SDL_Color highlight     = make(0xbbbbbb, 255);
+    const SDL_Color highlight     = make(0xff9999, 255);
 
     const SDL_Color note          = make(0xcc5555, 255);
 }
@@ -204,11 +204,11 @@ bool button(char const* label, bool active) {
             if (++m_hold_count > 30) m_hold = true;
         }
         else m_hold_count = 0;
-        if (input::just_released()) clicked = true;
+        if (!m_hold && input::just_released()) clicked = true;
     }
     else {
         if (active) color = color::button_active;
-        else if (m_highlight) color = color::mix(color, color::highlight, 0.25);
+        else if (m_highlight) color = color::mix(color, color::highlight, 0.3);
     }
     m_highlight = false;
     gfx::color(color);
@@ -280,8 +280,10 @@ void input_text(char* str, int len) {
         color = color::input_text_active;
     }
 
-    gfx::color(color);
+    gfx::color(color::input_text_normal);
     gfx::rectangle(box.pos, box.size, 0);
+    gfx::color(color);
+    gfx::rectangle(box.pos, box.size, 4);
     gfx::color(color::make(0xffffff));
     gfx::print(box.pos + box.size / 2 - s / 2, str);
     // cursor
@@ -351,11 +353,11 @@ bool clavier(uint8_t& n, int offset, bool highlight) {
             }
             else if (n != 0) n = nn;
         }
-        SDL_Color color = color::make(0x333333);
-        if ((i + offset) % 12 == 0) color = color::make(0x444444);
-        if ((1 << (i + offset) % 12) & 0b010101001010) color = color::make(0x222222);
+        SDL_Color color = color::make(0x222222);
+        if ((i + offset) % 12 == 0) color = color::make(0x333333);
+        if ((1 << (i + offset) % 12) & 0b010101001010) color = color::make(0x111111);
         if (m_active_item == id) color = color::mix(color, color::handle_active, 0.2);
-        else if (highlight) color = color::mix(color, color::highlight, 0.1);
+        else if (highlight) color = color::mix(color, color::highlight, 0.15);
         gfx::color(color);
         gfx::rectangle( b.pos, b.size, 0);
 
