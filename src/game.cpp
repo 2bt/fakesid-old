@@ -123,16 +123,34 @@ void instrument_view();
 void effect_view();
 void (*m_view)(void);
 
-constexpr char inst_effect_glyphs[INSTRUMENT_COUNT + 1] =
-    "ABCDEFGHIJKLMNOPQRSTUVWX"
-    "YZ_@0123456789#$*+=<>!?#";
+
+void sprint_track_id(char* dst, int nr) {
+    if (nr == 0) {
+        dst[0] = dst[1] == ' ';
+    }
+    else {
+        int x = (nr - 1) / 21;
+        int y = (nr - 1) % 21;
+        dst[0] = '0' + x + (x > 9) * 7;
+        dst[1] = '0' + y + (y > 9) * 7;
+    }
+    dst[2] = '\0';
+}
+
+void sprint_inst_effect_id(char* dst, int nr) {
+    dst[0] = " "
+        "ABCDEFGHIJKLMNOPQRSTUVWX"
+        "YZ_@0123456789#$*+=<>!?#"[nr];
+    dst[1] = '\0';
+}
 
 
 bool instrument_select() {
     if (!m_edit.instrument_select_active) return false;
 
     gfx::font(FONT_DEFAULT);
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 88 });
+    auto widths = calculate_column_widths({ -1, -1 });
+    gui::min_item_size({ widths[0], 88 });
     if (gui::button("cancel")) {
         m_edit.instrument_select_active = false;
     }
@@ -140,7 +158,6 @@ bool instrument_select() {
 
     Tune& tune = player::tune();
 
-    auto widths = calculate_column_widths({ -1, -1 });
     for (int y = 0; y < INSTRUMENT_COUNT / 2; ++y) {
         for (int x = 0; x < 2; ++x) {
             if (x) gui::same_line();
@@ -150,11 +167,13 @@ bool instrument_select() {
 
             Vec c = gui::cursor() + Vec(gui::PADDING);
             gui::min_item_size({ widths[x], 65 });
+            if (inst.length > 0) gui::highlight();
             if (gui::button("", nr == m_edit.instrument)) {
                 m_edit.instrument_select_active = false;
                 m_edit.instrument = nr;
             }
-            char str[2] = { inst_effect_glyphs[nr - 1] };
+            char str[2];
+            sprint_inst_effect_id(str, nr);
             gfx::print(c + Vec(65 / 2) - gfx::text_size(str) / 2, str);
             char const* name = inst.name.data();
             gfx::print(c + Vec(65 + (widths[x] - 65) / 2, 65 / 2) - gfx::text_size(name) / 2, name);
@@ -169,7 +188,8 @@ bool effect_select() {
     if (!m_edit.effect_select_active) return false;
 
     gfx::font(FONT_DEFAULT);
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 88 });
+    auto widths = calculate_column_widths({ -1, -1 });
+    gui::min_item_size({ widths[0], 88 });
     if (gui::button("cancel")) {
         m_edit.effect_select_active = false;
     }
@@ -177,44 +197,30 @@ bool effect_select() {
 
     Tune& tune = player::tune();
 
-    auto widths = calculate_column_widths({ -1, -1 });
     for (int y = 0; y < EFFECT_COUNT / 2; ++y) {
         for (int x = 0; x < 2; ++x) {
             if (x) gui::same_line();
 
             int nr = y + x * (EFFECT_COUNT / 2) + 1;
-            Effect const& inst = tune.effects[nr - 1];
+            Effect const& effect = tune.effects[nr - 1];
 
             Vec c = gui::cursor() + Vec(gui::PADDING);
             gui::min_item_size({ widths[x], 65 });
+            if (effect.length > 0) gui::highlight();
             if (gui::button("", nr == m_edit.effect)) {
                 m_edit.effect_select_active = false;
                 m_edit.effect = nr;
             }
-            char str[2] = { inst_effect_glyphs[nr - 1] };
+            char str[2];
+            sprint_inst_effect_id(str, nr);
             gfx::print(c + Vec(65 / 2) - gfx::text_size(str) / 2, str);
-            char const* name = inst.name.data();
+            char const* name = effect.name.data();
             gfx::print(c + Vec(65 + (widths[x] - 65) / 2, 65 / 2) - gfx::text_size(name) / 2, name);
         }
     }
     gui::separator();
 
     return true;
-}
-
-
-
-void sprint_track_id(char* dst, int nr) {
-    if (nr == 0) {
-        dst[0] = dst[1] == ' ';
-    }
-    else {
-        int x = (nr - 1) / 21;
-        int y = (nr - 1) % 21;
-        dst[0] = '0' + x + (x > 9) * 7;
-        dst[1] = '0' + y + (y > 9) * 7;
-    }
-    dst[2] = '\0';
 }
 
 
@@ -371,6 +377,9 @@ void song_view() {
 void track_view() {
     enum { PAGE_LENGTH = 16 };
 
+
+    auto widths = calculate_column_widths({ 88, 88, 88, -1, 88, 88 });
+
     // track select
     gfx::font(FONT_MONO);
     gui::min_item_size({ 88, 88 });
@@ -386,7 +395,23 @@ void track_view() {
     }
     gui::min_item_size({ 88, 88 });
     gui::same_line();
-    if (gui::button("+")) m_edit.track = std::min(255, m_edit.track + 1);
+    if (gui::button("+")) m_edit.track = std::min<int>(TRACK_COUNT, m_edit.track + 1);
+
+    assert(m_edit.track > 0);
+    Track& track = player::tune().tracks[m_edit.track - 1];
+
+    gui::same_line();
+    gui::padding({ widths[3], 0 });
+
+    // copy & paste
+    gfx::font(FONT_DEFAULT);
+    gui::same_line();
+    gui::min_item_size({ 88, 88 });
+    if (gui::button("C")) m_edit.copy_track = track;
+    gui::same_line();
+    gui::min_item_size({ 88, 88 });
+    if (gui::button("P")) track = m_edit.copy_track;
+
 
 
     // clavier slider
@@ -396,8 +421,6 @@ void track_view() {
     gui::drag_int("clavier", m_edit.clavier_offset, 0, 96 - CLAVIER_WIDTH, CLAVIER_WIDTH);
 
     int player_row = player::row();
-    assert(m_edit.track > 0);
-    Track& track = player::tune().tracks[m_edit.track - 1];
 
     gfx::font(FONT_MONO);
     for (int i = 0; i < PAGE_LENGTH; ++i) {
@@ -407,10 +430,10 @@ void track_view() {
         bool highlight = row_nr == player_row;
         Track::Row& row = track.rows[row_nr];
 
-        char str[4] = " ";
+        char str[4];
 
         // instrument
-        if (row.instrument > 0) str[0] = inst_effect_glyphs[row.instrument - 1];
+        sprint_inst_effect_id(str, row.instrument);
         gui::min_item_size({ 65, 65 });
         if (highlight) gui::highlight();
         if (gui::button(str)) {
@@ -424,8 +447,7 @@ void track_view() {
         }
 
         // effect
-        str[0] = ' ';
-        if (row.effect > 0) str[0] = inst_effect_glyphs[row.effect - 1];
+        sprint_inst_effect_id(str, row.effect);
         gui::same_line();
         gui::min_item_size({ 65, 65 });
         if (highlight) gui::highlight();
@@ -479,23 +501,19 @@ void track_view() {
     gui::drag_int("page", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
     gui::separator();
 
-    auto widths = calculate_column_widths({ -1, -1, -1, -1 });
-    gui::min_item_size({ widths[0], 88 });
-    if (gui::button("copy")) m_edit.copy_track = track;
-    gui::same_line();
-    gui::min_item_size({ widths[1], 88 });
-    if (gui::button("paste")) track = m_edit.copy_track;
-
 }
 
 
 void instrument_view() {
 
+    auto widths = calculate_column_widths({ 88, 88, 88, -1, 88, 88 });
+
     // instrument select
     gfx::font(FONT_MONO);
     gui::min_item_size({ 88, 88 });
     if (gui::button("-")) m_edit.instrument = std::max(1, m_edit.instrument - 1);
-    char str[2] = { inst_effect_glyphs[m_edit.instrument - 1] };
+    char str[2];
+    sprint_inst_effect_id(str, m_edit.instrument);
     gui::min_item_size({ 88, 88 });
     gui::same_line();
     if (gui::button(str)) {
@@ -511,25 +529,32 @@ void instrument_view() {
     // name
     gfx::font(FONT_DEFAULT);
     gui::same_line();
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 88 });
+    gui::min_item_size({ widths[3], 88 });
     gui::input_text(inst.name.data(), inst.name.size() - 1);
+
+    // copy & paste
+    gui::same_line();
+    gui::min_item_size({ 88, 88 });
+    if (gui::button("C")) m_edit.copy_inst = inst;
+    gui::same_line();
+    gui::min_item_size({ 88, 88 });
+    if (gui::button("P")) inst = m_edit.copy_inst;
+
     gui::separator();
-    gfx::font(FONT_MONO);
 
     // adsr
-    {
-        auto widths = calculate_column_widths({ -1, -1 });
-        for (int i = 0; i < 4; ++i) {
-            if (i % 2 > 0) gui::same_line();
-            gui::min_item_size({ widths[i % 2], 65 });
-            gui::id(&inst.adsr[i]);
-            int v = inst.adsr[i];
-            if (gui::drag_int("%X", v, 0, 15)) {
-                inst.adsr[i] = v;
-            }
-        };
-        gui::separator();
-    }
+    gfx::font(FONT_MONO);
+    widths = calculate_column_widths({ -1, -1 });
+    for (int i = 0; i < 4; ++i) {
+        if (i % 2 > 0) gui::same_line();
+        gui::min_item_size({ widths[i % 2], 65 });
+        gui::id(&inst.adsr[i]);
+        int v = inst.adsr[i];
+        if (gui::drag_int("%X", v, 0, 15)) {
+            inst.adsr[i] = v;
+        }
+    };
+    gui::separator();
 
 
     // rows
@@ -588,7 +613,7 @@ void instrument_view() {
 
     gfx::font(FONT_DEFAULT);
 
-    auto widths = calculate_column_widths({ -1, -1, -1, -1 });
+    widths = calculate_column_widths({ -1, -1, -1, -1 });
 
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("add") && inst.length < MAX_INSTRUMENT_LENGTH) {
@@ -603,22 +628,19 @@ void instrument_view() {
         }
     }
 
-    gui::same_line();
-    gui::min_item_size({ widths[2], 88 });
-    if (gui::button("copy")) m_edit.copy_inst = inst;
-    gui::same_line();
-    gui::min_item_size({ widths[3], 88 });
-    if (gui::button("paste")) inst = m_edit.copy_inst;
 }
 
 
 void effect_view() {
 
+    auto widths = calculate_column_widths({ 88, 88, 88, -1, 88, 88 });
+
     // effecct select
     gfx::font(FONT_MONO);
     gui::min_item_size({ 88, 88 });
     if (gui::button("-")) m_edit.effect = std::max(1, m_edit.effect - 1);
-    char str[2] = { inst_effect_glyphs[m_edit.effect - 1] };
+    char str[2];
+    sprint_inst_effect_id(str, m_edit.effect);
     gui::min_item_size({ 88, 88 });
     gui::same_line();
     if (gui::button(str)) {
@@ -628,18 +650,24 @@ void effect_view() {
     gui::same_line();
     if (gui::button("+")) m_edit.effect = std::min<int>(EFFECT_COUNT, m_edit.effect + 1);
 
-
     Tune& tune = player::tune();
     Effect& effect = tune.effects[m_edit.effect - 1];
 
     // name
     gfx::font(FONT_DEFAULT);
     gui::same_line();
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 88 });
+    gui::min_item_size({ widths[3], 88 });
     gui::input_text(effect.name.data(), effect.name.size() - 1);
 
-    gui::separator();
+    // copy & paste
+    gui::same_line();
+    gui::min_item_size({ 88, 88 });
+    if (gui::button("C")) m_edit.copy_effect = effect;
+    gui::same_line();
+    gui::min_item_size({ 88, 88 });
+    if (gui::button("P")) effect = m_edit.copy_effect;
 
+    gui::separator();
 
     // rows
     gfx::font(FONT_MONO);
@@ -675,7 +703,7 @@ void effect_view() {
 
     gfx::font(FONT_DEFAULT);
 
-    auto widths = calculate_column_widths({ -1, -1, -1, -1 });
+    widths = calculate_column_widths({ -1, -1, -1, -1 });
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("add") && effect.length < MAX_EFFECT_LENGTH) {
         effect.rows[effect.length] = 0x80;
@@ -688,13 +716,6 @@ void effect_view() {
             --effect.length;
         }
     }
-
-    gui::same_line();
-    gui::min_item_size({ widths[2], 88 });
-    if (gui::button("copy")) m_edit.copy_effect = effect;
-    gui::same_line();
-    gui::min_item_size({ widths[3], 88 });
-    if (gui::button("paste")) effect = m_edit.copy_effect;
 
 }
 
@@ -796,7 +817,9 @@ void draw() {
 
         // stop and play
         {
-            gui::padding({ 0, gfx::screensize().y - gui::cursor().y - gui::PADDING * 3 - 88 });
+            int y = gfx::screensize().y - gui::cursor().y - gui::PADDING * 3 - 88;
+            if (y > 0) gui::padding({ 0, y });
+
             gfx::font(FONT_DEFAULT);
             bool is_playing = player::is_playing();
             bool block_loop = player::block_loop();
