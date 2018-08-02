@@ -29,7 +29,7 @@ struct Track {
 };
 
 
-enum Flags {
+enum {
     GATE  = 0x01,
     SYNC  = 0x02,
     RING  = 0x04,

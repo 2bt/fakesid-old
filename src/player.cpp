@@ -5,6 +5,9 @@
 namespace player {
 namespace {
 
+constexpr Filter     null_filter     = {};
+constexpr Instrument null_instrument = {};
+constexpr Effect     null_effect     = {};
 
 constexpr std::array<int, 16> attack_speeds = {
     168867, 47495, 24124, 15998, 10200, 6908, 5692, 4855,
@@ -21,13 +24,13 @@ enum State { RELEASE, ATTACK, DECAY, SUSTAIN };
 
 
 struct Channel {
-    bool active = true;
+    bool              active = true;
 
     int               note;
     bool              gate;
-    Instrument const* inst;
+    Instrument const* inst = &null_instrument;
     int               inst_row;
-    Effect const*     effect;
+    Effect const*     effect = &null_effect;
     int               effect_row;
 
     // TODO
@@ -48,6 +51,21 @@ struct Channel {
     uint32_t shift = 0x7ffff8;
     int      noise;
 };
+
+
+struct {
+    Filter const* filter = &null_filter;
+    int           row;
+
+    uint8_t type;
+    int     resonance;
+    int     freq;
+
+    int high;
+    int band;
+    int low;
+
+} m_filter;
 
 Tune m_tune;
 bool m_playing;
@@ -91,6 +109,12 @@ void tick() {
                 // cause envelop reset
                 // XXX: do we want that?
                 chan.state = RELEASE;
+
+                // filter
+                if (inst.filter.length > 0) {
+                    m_filter.filter = &inst.filter;
+                    m_filter.row = 0;
+                }
             }
 
             // effect
@@ -115,24 +139,28 @@ void tick() {
         Channel& chan = m_channels[c];
 
         // instrument
-        if (chan.inst && chan.inst->length > 0) {
-            Instrument const& inst = *chan.inst;
+        Instrument const& inst = *chan.inst;
+        if (inst.length > 0) {
             if (chan.inst_row >= inst.length) {
                 chan.inst_row = std::min<int>(inst.loop, inst.length - 1);
             }
             Instrument::Row const& row = inst.rows[chan.inst_row++];
             chan.flags = row.flags;
-            if (row.operation == OP_SET) {
+            switch (row.operation) {
+            case OP_SET:
                 chan.pulsewidth = row.value * 0x800000;
-            }
-            if (row.operation == OP_INC) {
+                break;
+            case OP_INC:
                 chan.pulsewidth = (chan.pulsewidth + row.value * 0x40000) & 0xfffffff;
+                break;
+            default:
+                break;
             }
         }
 
         // effect
-        if (chan.effect && chan.effect->length > 0) {
-            Effect const& effect = *chan.effect;
+        Effect const& effect = *chan.effect;
+        if (effect.length > 0) {
             if (chan.effect_row >= effect.length) {
                 chan.effect_row = std::min<int>(effect.loop, effect.length - 1);
             }
@@ -141,7 +169,32 @@ void tick() {
         }
     }
 
+    // filter
+    Filter const& filter = *m_filter.filter;
+    if (filter.length > 0) {
+        if (m_filter.row >= filter.length) {
+            m_filter.row = std::min<int>(filter.loop, filter.length - 1);
+        }
+        auto& row = filter.rows[m_filter.row++];
+        m_filter.type = row.type;
+        switch (row.operation) {
+        case OP_SET:
+            break;
+        case OP_DEC:
+            break;
+        case OP_INC:
+            break;
+        default:
+            break;
+        }
 
+        // TODO: set freq + reso
+    }
+
+
+
+
+    // advance
     int frames_per_row = m_tune.tempo;
     if (m_row % 2 == 0) frames_per_row += m_tune.swing;
 
@@ -164,6 +217,7 @@ void mix(short* buffer, int length) {
 
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
             Channel& chan = m_channels[c];
+            Channel& prev_chan = m_channels[c == 0 ? CHANNEL_COUNT - 1 : c - 1];
             if (!chan.active) continue;
 
             bool gate = chan.gate && (chan.flags & GATE);
@@ -197,6 +251,14 @@ void mix(short* buffer, int length) {
             chan.phase += chan.freq;
             chan.phase &= 0xfffffff;
 
+            // sync
+            if (chan.flags & SYNC) {
+                if (prev_chan.phase < prev_chan.freq) {
+                    chan.phase = prev_chan.phase * chan.freq / prev_chan.freq;
+                }
+            }
+
+            // waveforms
             uint8_t tri   = ((chan.phase < 0x8000000 ? chan.phase : ~chan.phase) >> 19) & 0xff;
             uint8_t saw   = (chan.phase >> 20) & 0xff;
             uint8_t pulse = ((chan.phase > chan.pulsewidth) - 1) & 0xff;
@@ -215,6 +277,9 @@ void mix(short* buffer, int length) {
             }
             uint8_t noise = chan.noise;
 
+            // ringmod
+            if (chan.flags & RING && prev_chan.phase < 0x8000000) tri = ~tri;
+
             uint8_t out = 0xff;
             if (chan.flags & TRI)   out &= tri;
             if (chan.flags & SAW)   out &= saw;
@@ -223,6 +288,11 @@ void mix(short* buffer, int length) {
 
             sample += ((out - 0x80) * chan.level) >> 18;
         }
+
+
+
+        // filter
+
 
         buffer[i] = std::max(-32768, std::min<int>(sample, 32767));
     }
@@ -253,8 +323,8 @@ void play() {
 void pause() {
     m_playing = false;
     for (Channel& chan : m_channels) {
-        chan.gate  = false;
-        chan.level = 0;
+        chan.gate   = false;
+        chan.level  = 0;
     }
 }
 
