@@ -12,7 +12,8 @@ enum {
     INSTRUMENT_COUNT      = 48,
     EFFECT_COUNT          = INSTRUMENT_COUNT,
     MAX_INSTRUMENT_LENGTH = 16,
-    MAX_EFFECT_LENGTH     = MAX_INSTRUMENT_LENGTH,
+    MAX_FILTER_LENGTH     = 16,
+    MAX_EFFECT_LENGTH     = 16,
     MAX_NAME_LENGTH       = 16,
 };
 
@@ -39,26 +40,51 @@ enum Flags {
 };
 
 
-enum Operations {
-    SET_PULSEWIDTH,
-    INC_PULSEWIDTH,
+enum {
+    OP_INC,
+    OP_SET,
+    OP_DEC,
+};
+
+enum {
+    FILTER_LOW  = 1,
+    FILTER_BAND = 2,
+    FILTER_HIGH = 4,
+};
+
+
+struct Filter {
+    struct Row {
+        uint8_t type;
+        uint8_t resonance;
+        uint8_t operation;
+        uint8_t value;
+    };
+
+    uint8_t                            routing;
+    uint8_t                            length;
+    uint8_t                            loop;
+    std::array<Row, MAX_FILTER_LENGTH> rows;
 };
 
 
 struct Instrument {
     struct Row {
         uint8_t flags;
-        uint8_t operaton;
+        uint8_t operation;
         uint8_t value;
     };
+
     std::array<char, MAX_NAME_LENGTH>      name;
     std::array<uint8_t, 4>                 adsr;
     uint8_t                                silence;
+
     uint8_t                                length;
     uint8_t                                loop;
     std::array<Row, MAX_INSTRUMENT_LENGTH> rows;
-};
 
+    Filter                                 filter;
+};
 
 struct Effect {
     std::array<char, MAX_NAME_LENGTH>      name;
@@ -66,7 +92,6 @@ struct Effect {
     uint8_t                                loop;
     std::array<uint8_t, MAX_EFFECT_LENGTH> rows;
 };
-
 
 struct Tune {
     uint8_t tempo; // 4 to F

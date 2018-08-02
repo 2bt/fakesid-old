@@ -122,11 +122,11 @@ void tick() {
             }
             Instrument::Row const& row = inst.rows[chan.inst_row++];
             chan.flags = row.flags;
-            if (row.operaton == SET_PULSEWIDTH) {
-                chan.pulsewidth = row.value * 0x1000000;
+            if (row.operation == OP_SET) {
+                chan.pulsewidth = row.value * 0x800000;
             }
-            if (row.operaton == INC_PULSEWIDTH) {
-                chan.pulsewidth = (chan.pulsewidth + row.value * 0x80000) & 0xfffffff;
+            if (row.operation == OP_INC) {
+                chan.pulsewidth = (chan.pulsewidth + row.value * 0x40000) & 0xfffffff;
             }
         }
 
