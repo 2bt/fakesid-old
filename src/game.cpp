@@ -897,7 +897,7 @@ void effect_view() {
 
 
 bool init() {
-    m_pref_path = SDL_GetPrefPath("sdl", "rausch");
+    m_pref_path = SDL_GetPrefPath("sdl", "insidious");
     if (!m_pref_path) return false;
 
 

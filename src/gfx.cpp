@@ -28,7 +28,7 @@ bool init() {
         return false;
     }
 
-    m_window = SDL_CreateWindow("rausch",
+    m_window = SDL_CreateWindow("insidious",
                                 SDL_WINDOWPOS_UNDEFINED,
                                 SDL_WINDOWPOS_UNDEFINED,
                                 m_screensize.x, m_screensize.y,
