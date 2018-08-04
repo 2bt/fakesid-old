@@ -150,12 +150,14 @@ struct Edit {
 
 
 enum EView {
+    VIEW_PROJECT,
     VIEW_SONG,
     VIEW_TRACK,
     VIEW_INSTRUMENT,
     VIEW_EFFECT,
 };
 
+void project_view();
 void song_view();
 void track_view();
 void instrument_view();
@@ -168,11 +170,12 @@ struct View {
     void (*draw)(void);
 };
 
-constexpr std::array<View, 4> views = {
-    View{ "song", song_view },
-    View{ "track", track_view },
-    View{ "instrument", instrument_view },
-    View{ "effect", effect_view },
+constexpr std::array<View, 5> views = {
+    View{ "Project", project_view },
+    View{ "Song", song_view },
+    View{ "Track", track_view },
+    View{ "Instrum.", instrument_view },
+    View{ "Effect", effect_view },
 };
 
 
@@ -325,6 +328,20 @@ bool track_select() {
 }
 
 
+void project_view() {
+
+
+    auto widths = calculate_column_widths({ -1, -1 });
+    gfx::font(FONT_DEFAULT);
+    gui::min_item_size({ widths[0], 88 });
+    if (gui::button("Load")) load_tune("tune");
+    gui::same_line();
+    gui::min_item_size({ widths[1], 88 });
+    if (gui::button("Save")) save_tune("tune");
+
+}
+
+
 void song_view() {
 
     gfx::font(FONT_MONO);
@@ -339,7 +356,7 @@ void song_view() {
 
 
     gfx::font(FONT_DEFAULT);
-    char str[] = "voice .";
+    char str[] = "Voice .";
     for (int c = 0; c < CHANNEL_COUNT; ++c) {
         str[6] = '1' + c;
         gui::same_line();
@@ -407,8 +424,7 @@ void song_view() {
 
     // buttons
     gfx::font(FONT_MONO);
-    widths = calculate_column_widths({ 88, 88, -1, -1 });
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ 88, 88 });
     if (gui::button("-")) {
         if (m_edit.block < tune.table_length && tune.table_length > 1) {
             table[m_edit.block] = {};
@@ -420,7 +436,7 @@ void song_view() {
         }
     }
     gui::same_line();
-    gui::min_item_size({ widths[1], 88 });
+    gui::min_item_size({ 88, 88 });
     if (gui::button("+")) {
         if (m_edit.block <= tune.table_length && tune.table_length < MAX_SONG_LENGTH) {
             std::rotate(
@@ -430,13 +446,6 @@ void song_view() {
             ++tune.table_length;
         }
     }
-    gfx::font(FONT_DEFAULT);
-    gui::same_line();
-    gui::min_item_size({ widths[2], 88 });
-    if (gui::button("save")) save_tune("tune");
-    gui::same_line();
-    gui::min_item_size({ widths[3], 88 });
-    if (gui::button("load")) load_tune("tune");
 }
 
 
@@ -495,7 +504,7 @@ void track_view() {
     gui::padding({ widths[3], 0 });
 
     // copy & paste
-    gfx::font(FONT_DEFAULT);
+    gfx::font(FONT_MONO);
     gui::same_line();
     gui::min_item_size({ 88, 88 });
     if (gui::button("C")) m_edit.copy_track = track;
@@ -509,7 +518,7 @@ void track_view() {
     gui::separator();
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
-    gui::drag_int("clavier", m_edit.clavier_offset, 0, 96 - CLAVIER_WIDTH, CLAVIER_WIDTH);
+    gui::drag_int("Clavier", m_edit.clavier_offset, 0, 96 - CLAVIER_WIDTH, CLAVIER_WIDTH);
 
     int player_row = player::row();
 
@@ -588,7 +597,7 @@ void track_view() {
     // track pages
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
-    gui::drag_int("page", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
+    gui::drag_int("Page", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
 
     // cache
     gui::separator();
@@ -614,6 +623,7 @@ void instrument_view() {
     gui::input_text(inst.name.data(), inst.name.size() - 1);
 
     // copy & paste
+    gfx::font(FONT_MONO);
     gui::same_line();
     gui::min_item_size({ 88, 88 });
     if (gui::button("C")) m_edit.copy_inst = inst;
@@ -628,10 +638,10 @@ void instrument_view() {
     gfx::font(FONT_DEFAULT);
     widths = calculate_column_widths({ -1, -1 });
     gui::min_item_size({ widths[0], 88 });
-    if (gui::button("wave", !m_edit.filter_mode)) m_edit.filter_mode = false;
+    if (gui::button("Wave", !m_edit.filter_mode)) m_edit.filter_mode = false;
     gui::same_line();
     gui::min_item_size({ widths[1], 88 });
-    if (gui::button("filter", m_edit.filter_mode)) m_edit.filter_mode = true;
+    if (gui::button("Filter", m_edit.filter_mode)) m_edit.filter_mode = true;
     gui::separator();
 
 
@@ -672,10 +682,10 @@ void instrument_view() {
 
             // flags
             constexpr std::pair<uint8_t, char const*> flags[] = {
-                { NOISE, "\x13" },
-                { PULSE, "\x14" },
-                { SAW,   "\x15" },
-                { TRI,   "\x16" },
+                { NOISE, "\x14" },
+                { PULSE, "\x15" },
+                { SAW,   "\x16" },
+                { TRI,   "\x17" },
                 { RING,  "R" },
                 { SYNC,  "S" },
                 { GATE,  "G" },
@@ -724,7 +734,7 @@ void instrument_view() {
         Filter& filter = inst.filter;
 
         widths = calculate_column_widths({ -1, -1, -1, -1 });
-        char str[] = "voice .";
+        char str[] = "Voice .";
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
             str[6] = '1' + c;
             if (c) gui::same_line();
@@ -832,6 +842,7 @@ void effect_view() {
     gui::input_text(effect.name.data(), effect.name.size() - 1);
 
     // copy & paste
+    gfx::font(FONT_MONO);
     gui::same_line();
     gui::min_item_size({ 88, 88 });
     if (gui::button("C")) m_edit.copy_effect = effect;
@@ -1009,13 +1020,16 @@ void draw() {
         bool block_loop = player::block_loop();
         widths = calculate_column_widths({ -1, -1, -1 });
 
+        // loop
         gui::min_item_size({ widths[0], 88 });
-        if (gui::button("loop", block_loop)) player::block_loop(!block_loop);
+        if (gui::button("\x13", block_loop)) player::block_loop(!block_loop);
 
+        // stop
         gui::same_line();
         gui::min_item_size({ widths[1], 88 });
         if (gui::button("\x11")) player::stop();
 
+        // play/pause
         gui::same_line();
         gui::min_item_size({ widths[2], 88 });
         if (gui::button("\x10\x12", is_playing)) {

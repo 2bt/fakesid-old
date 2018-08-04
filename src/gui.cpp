@@ -19,6 +19,8 @@ namespace color {
             uint8_t(a.a * w + b.a * x),
         };
     }
+
+
     const SDL_Color button_normal = make(0x555555, 255);
     const SDL_Color button_hover  = make(0xaa4444, 255);
     const SDL_Color button_active = make(0x884444, 255);
