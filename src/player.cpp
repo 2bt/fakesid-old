@@ -5,6 +5,12 @@
 namespace player {
 namespace {
 
+int pfloat_ConvertFromInt(int i) { return i << 16; }
+int pfloat_ConvertFromFloat(float f) { return (int)(f * (1 << 16)); }
+int pfloat_Multiply(int a, int b) { return (a >> 8) * (b >> 8); }
+int pfloat_ConvertToInt(int i) { return i >> 16; }
+
+
 constexpr Filter     null_filter     = {};
 constexpr Instrument null_instrument = {};
 constexpr Effect     null_effect     = {};
@@ -32,6 +38,7 @@ struct Channel {
     int               inst_row;
     Effect const*     effect = &null_effect;
     int               effect_row;
+    int               pulsewidth_acc;
 
     // TODO
     //int               inst_pw  = 0;
@@ -50,20 +57,22 @@ struct Channel {
     uint32_t noise_phase;
     uint32_t shift = 0x7ffff8;
     int      noise;
+    bool     filter;
 };
 
 
 struct {
     Filter const* filter = &null_filter;
     int           row;
+    int           freq_acc;
 
-    uint8_t type;
-    int     resonance;
-    int     freq;
+    uint8_t       type;
+    int           resonance;
+    int           freq;
 
-    int high;
-    int band;
-    int low;
+    int           high;
+    int           band;
+    int           low;
 
 } m_filter;
 
@@ -114,6 +123,9 @@ void tick() {
                 if (inst.filter.length > 0) {
                     m_filter.filter = &inst.filter;
                     m_filter.row = 0;
+                    for (int i = 0; i < CHANNEL_COUNT; ++i) {
+                        m_channels[i].filter = (inst.filter.routing & (1 << i)) != 0;
+                    }
                 }
             }
 
@@ -148,14 +160,17 @@ void tick() {
             chan.flags = row.flags;
             switch (row.operation) {
             case OP_SET:
-                chan.pulsewidth = row.value * 0x800000;
+                chan.pulsewidth_acc = row.value * 0x10;
                 break;
             case OP_INC:
-                chan.pulsewidth = (chan.pulsewidth + row.value * 0x40000) & 0xfffffff;
+                chan.pulsewidth_acc += row.value;
+                chan.pulsewidth_acc &= 0x1ff;
                 break;
             default:
                 break;
             }
+            uint32_t p = chan.pulsewidth_acc > 0xff ? chan.pulsewidth_acc : ~chan.pulsewidth_acc & 0x1ff;
+            chan.pulsewidth = p * 0x7cccc;
         }
 
         // effect
@@ -179,16 +194,20 @@ void tick() {
         m_filter.type = row.type;
         switch (row.operation) {
         case OP_SET:
+            m_filter.freq_acc = row.value * 66;
             break;
         case OP_DEC:
+            m_filter.freq_acc = std::max(0, m_filter.freq_acc - row.value * 4);
             break;
         case OP_INC:
+            m_filter.freq_acc = std::min(0x7ff, m_filter.freq_acc + row.value * 4);
             break;
         default:
             break;
         }
 
-        // TODO: set freq + reso
+        m_filter.freq = m_filter.freq_acc * (pfloat_ConvertFromFloat(21.5332031f) / MIXRATE);
+        m_filter.resonance = pfloat_ConvertFromFloat(1.2f) - pfloat_ConvertFromFloat(0.04f) * row.resonance;
     }
 
 
@@ -202,7 +221,7 @@ void tick() {
         m_frame = 0;
         if (++m_row >= TRACK_LENGTH) {
             m_row = 0;
-            if (!m_block_loop && ++m_block >= (int) m_tune.table.size()) {
+            if (!m_block_loop && ++m_block >= (int) m_tune.table_length) {
                 m_block = 0;
             }
         }
@@ -213,7 +232,7 @@ void tick() {
 void mix(short* buffer, int length) {
     for (int i = 0; i < length; ++i) {
 
-        int sample = 0;
+        int out[2] = {};
 
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
             Channel& chan = m_channels[c];
@@ -280,20 +299,29 @@ void mix(short* buffer, int length) {
             // ringmod
             if (chan.flags & RING && prev_chan.phase < 0x8000000) tri = ~tri;
 
-            uint8_t out = 0xff;
-            if (chan.flags & TRI)   out &= tri;
-            if (chan.flags & SAW)   out &= saw;
-            if (chan.flags & PULSE) out &= pulse;
-            if (chan.flags & NOISE) out &= noise;
+            int v = 0xff;
+            if (chan.flags & TRI)   v &= tri;
+            if (chan.flags & SAW)   v &= saw;
+            if (chan.flags & PULSE) v &= pulse;
+            if (chan.flags & NOISE) v &= noise;
 
-            sample += ((out - 0x80) * chan.level) >> 18;
+            v = ((v - 0x80) * chan.level) >> 18;
+
+            out[chan.filter] += v;
         }
 
 
 
         // filter
+        m_filter.high = pfloat_ConvertFromInt(out[1]) - pfloat_Multiply(m_filter.band, m_filter.resonance) - m_filter.low;
+        m_filter.band += pfloat_Multiply(m_filter.freq, m_filter.high);
+        m_filter.low  += pfloat_Multiply(m_filter.freq, m_filter.band);
+        int f = 0;
+        if (m_filter.type & FILTER_LOW)  f += pfloat_ConvertToInt(m_filter.low);
+        if (m_filter.type & FILTER_BAND) f += pfloat_ConvertToInt(m_filter.band);
+        if (m_filter.type & FILTER_HIGH) f += pfloat_ConvertToInt(m_filter.high);
 
-
+        int sample = (out[0] + f);
         buffer[i] = std::max(-32768, std::min<int>(sample, 32767));
     }
 }

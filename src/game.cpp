@@ -27,8 +27,8 @@ bool save_tune(char const* name) {
     SDL_RWwrite(file, t.tracks.data(), sizeof(Track), t.tracks.size());
     SDL_RWwrite(file, t.instruments.data(), sizeof(Instrument), t.instruments.size());
     SDL_RWwrite(file, t.effects.data(), sizeof(Effect), t.effects.size());
-    SDL_WriteU8(file, t.table.size());
-    SDL_RWwrite(file, t.table.data(), sizeof(Tune::Block), t.table.size());
+    SDL_WriteU8(file, t.table_length);
+    SDL_RWwrite(file, t.table.data(), sizeof(Tune::Block), t.table_length);
     SDL_RWclose(file);
     return true;
 }
@@ -46,9 +46,8 @@ bool load_tune(char const* name) {
     SDL_RWread(file, t.tracks.data(), sizeof(Track), t.tracks.size());
     SDL_RWread(file, t.instruments.data(), sizeof(Instrument), t.instruments.size());
     SDL_RWread(file, t.effects.data(), sizeof(Effect), t.effects.size());
-    uint8_t table_len = SDL_ReadU8(file);
-    t.table.resize(table_len);
-    SDL_RWread(file, t.table.data(), sizeof(Tune::Block), table_len);
+    t.table_length = SDL_ReadU8(file);
+    SDL_RWread(file, t.table.data(), sizeof(Tune::Block), t.table_length);
     SDL_RWclose(file);
     return true;
 }
@@ -373,7 +372,7 @@ void song_view() {
         }
         gui::same_line();
         gui::separator();
-        if (i >= (int) table.size()) {
+        if (i >= tune.table_length) {
             gui::padding({});
             continue;
         }
@@ -411,15 +410,24 @@ void song_view() {
     widths = calculate_column_widths({ 88, 88, -1, -1 });
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("-")) {
-        if (m_edit.block < (int) table.size() && table.size() > 1) {
-            table.erase(table.begin() + m_edit.block);
+        if (m_edit.block < tune.table_length && tune.table_length > 1) {
+            table[m_edit.block] = {};
+            std::rotate(
+                table.begin() + m_edit.block,
+                table.begin() + m_edit.block + 1,
+                table.begin() + tune.table_length);
+            --tune.table_length;
         }
     }
     gui::same_line();
     gui::min_item_size({ widths[1], 88 });
     if (gui::button("+")) {
-        if (m_edit.block <= (int) table.size()) {
-            table.insert(table.begin() + m_edit.block, { 0, 0, 0, 0 });
+        if (m_edit.block <= tune.table_length && tune.table_length < MAX_SONG_LENGTH) {
+            std::rotate(
+                table.begin() + m_edit.block,
+                table.begin() + tune.table_length,
+                table.begin() + tune.table_length + 1);
+            ++tune.table_length;
         }
     }
     gfx::font(FONT_DEFAULT);
@@ -896,6 +904,7 @@ bool init() {
     // default tune
     Tune& t = player::tune();
     t.tempo = 5;
+    t.table_length = 1;
     t.table = {
         { 1, 0, 0, 0 }
     };
@@ -912,6 +921,10 @@ bool init() {
     i.rows[1] = { PULSE | GATE, OP_INC, 0x1 };
     i.length = 2;
     i.loop = 1;
+    i.filter.length = 1;
+    i.filter.routing = 1;
+    i.filter.rows = { FILTER_LOW, 15, OP_SET, 25 };
+
 
     // blank effect
     strcpy(t.effects[0].name.data(), "blank");
