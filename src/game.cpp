@@ -200,6 +200,17 @@ void sprint_inst_effect_id(char* dst, int nr) {
     dst[1] = '\0';
 }
 
+void set_instrument(int i) {
+    m_edit.instrument = i;
+    m_edit.inst_cache.insert(i);
+}
+
+
+void set_effect(int e) {
+    m_edit.effect = e;
+    m_edit.effect_cache.insert(e);
+}
+
 
 bool instrument_select() {
     if (!m_edit.instrument_select_active) return false;
@@ -207,7 +218,7 @@ bool instrument_select() {
     gfx::font(FONT_DEFAULT);
     auto widths = calculate_column_widths({ -1, -1 });
     gui::min_item_size({ widths[0], 88 });
-    if (gui::button("cancel")) {
+    if (gui::button("Cancel")) {
         m_edit.instrument_select_active = false;
     }
     gui::separator();
@@ -226,8 +237,7 @@ bool instrument_select() {
             if (inst.length > 0) gui::highlight();
             if (gui::button("", nr == m_edit.instrument)) {
                 m_edit.instrument_select_active = false;
-                m_edit.instrument = nr;
-                m_edit.inst_cache.insert(m_edit.instrument);
+                set_instrument(nr);
             }
             char str[2];
             sprint_inst_effect_id(str, nr);
@@ -247,7 +257,7 @@ bool effect_select() {
     gfx::font(FONT_DEFAULT);
     auto widths = calculate_column_widths({ -1, -1 });
     gui::min_item_size({ widths[0], 88 });
-    if (gui::button("cancel")) {
+    if (gui::button("Cancel")) {
         m_edit.effect_select_active = false;
     }
     gui::separator();
@@ -266,8 +276,7 @@ bool effect_select() {
             if (effect.length > 0) gui::highlight();
             if (gui::button("", nr == m_edit.effect)) {
                 m_edit.effect_select_active = false;
-                m_edit.effect = nr;
-                m_edit.effect_cache.insert(m_edit.effect);
+                set_effect(nr);
             }
             char str[2];
             sprint_inst_effect_id(str, nr);
@@ -288,13 +297,13 @@ bool track_select() {
     gfx::font(FONT_DEFAULT);
     auto widths = calculate_column_widths({ -1, -1 });
     gui::min_item_size({ widths[0], 88 });
-    if (gui::button("cancel")) {
+    if (gui::button("Cancel")) {
         m_edit.track_select.active = false;
     }
     gui::same_line();
     if (m_edit.track_select.allow_nil) {
         gui::min_item_size({ widths[1], 88 });
-        if (gui::button("clear")) {
+        if (gui::button("Clear")) {
             m_edit.track_select.active = false;
             *m_edit.track_select.value = 0;
         }
@@ -329,7 +338,6 @@ bool track_select() {
 
 
 void project_view() {
-
 
     auto widths = calculate_column_widths({ -1, -1 });
     gfx::font(FONT_DEFAULT);
@@ -383,9 +391,6 @@ void song_view() {
         if (highlight) gui::highlight();
         if (gui::button(str, i == m_edit.block)) {
             m_edit.block = i;
-        }
-        if (gui::hold()) {
-            player::block(i);
         }
         gui::same_line();
         gui::separator();
@@ -468,11 +473,10 @@ void draw_cache(Cache& cache, int& data) {
 void inst_cache() {
     draw_cache(m_edit.inst_cache, m_edit.instrument);
 }
+
 void effect_cache() {
     draw_cache(m_edit.effect_cache, m_edit.effect);
 }
-
-
 
 void track_view() {
     enum { PAGE_LENGTH = 16 };
@@ -541,8 +545,7 @@ void track_view() {
             else row.instrument = m_edit.instrument;
         }
         if (row.instrument > 0 && gui::hold()) {
-            m_edit.instrument = row.instrument;
-            m_edit.inst_cache.insert(m_edit.instrument);
+            set_instrument(row.instrument);
         }
 
         // effect
@@ -555,8 +558,7 @@ void track_view() {
             else row.effect = m_edit.effect;
         }
         if (row.effect > 0 && gui::hold()) {
-            m_edit.effect = row.effect;
-            m_edit.effect_cache.insert(m_edit.effect);
+            set_effect(row.effect);
         }
 
 
@@ -768,13 +770,13 @@ void instrument_view() {
             // type
             gui::same_line();
             gui::min_item_size({ 65, 65 });
-            if (gui::button("L", row.type & FILTER_LOW)) row.type ^= FILTER_LOW;
+            if (gui::button("\x18", row.type & FILTER_LOW)) row.type ^= FILTER_LOW;
             gui::same_line();
             gui::min_item_size({ 65, 65 });
-            if (gui::button("B", row.type & FILTER_BAND)) row.type ^= FILTER_BAND;
+            if (gui::button("\x19", row.type & FILTER_BAND)) row.type ^= FILTER_BAND;
             gui::same_line();
             gui::min_item_size({ 65, 65 });
-            if (gui::button("H", row.type & FILTER_HIGH)) row.type ^= FILTER_HIGH;
+            if (gui::button("\x1a", row.type & FILTER_HIGH)) row.type ^= FILTER_HIGH;
 
             // resonance
             gui::same_line();
@@ -1027,7 +1029,10 @@ void draw() {
         // stop
         gui::same_line();
         gui::min_item_size({ widths[1], 88 });
-        if (gui::button("\x11")) player::stop();
+        if (gui::button("\x11")) {
+            player::stop();
+            player::block(m_edit.block);
+        }
 
         // play/pause
         gui::same_line();
