@@ -15,7 +15,7 @@ enum {
     MAX_FILTER_LENGTH     = 16,
     MAX_EFFECT_LENGTH     = 16,
     MAX_NAME_LENGTH       = 16,
-    MAX_SONG_LENGTH       = 255,
+    MAX_SONG_LENGTH       = 256,
 };
 
 
@@ -104,7 +104,7 @@ struct Tune {
     std::array<Instrument, INSTRUMENT_COUNT> instruments;
     std::array<Effect, EFFECT_COUNT>         effects;
     std::array<Block, MAX_SONG_LENGTH>       table;
-    uint8_t                                  table_length;
+    uint16_t                                 table_length;
 };
 
 

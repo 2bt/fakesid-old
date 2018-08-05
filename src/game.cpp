@@ -27,7 +27,7 @@ bool save_tune(char const* name) {
     SDL_RWwrite(file, t.tracks.data(), sizeof(Track), t.tracks.size());
     SDL_RWwrite(file, t.instruments.data(), sizeof(Instrument), t.instruments.size());
     SDL_RWwrite(file, t.effects.data(), sizeof(Effect), t.effects.size());
-    SDL_WriteU8(file, t.table_length);
+    SDL_WriteLE16(file, t.table_length);
     SDL_RWwrite(file, t.table.data(), sizeof(Tune::Block), t.table_length);
     SDL_RWclose(file);
     return true;
@@ -46,7 +46,7 @@ bool load_tune(char const* name) {
     SDL_RWread(file, t.tracks.data(), sizeof(Track), t.tracks.size());
     SDL_RWread(file, t.instruments.data(), sizeof(Instrument), t.instruments.size());
     SDL_RWread(file, t.effects.data(), sizeof(Effect), t.effects.size());
-    t.table_length = SDL_ReadU8(file);
+    t.table_length = SDL_ReadLE16(file);
     SDL_RWread(file, t.table.data(), sizeof(Tune::Block), t.table_length);
     SDL_RWclose(file);
     return true;
@@ -122,6 +122,7 @@ struct Edit {
     int        track          = 1;
     int        clavier_offset = 36;
     int        track_page     = 0;
+    int        song_page      = 0;
     int        instrument     = 1;
     int        effect         = 1;
     int        block          = 0;
@@ -382,25 +383,26 @@ void song_view() {
     auto& table = tune.table;
 
     gfx::font(FONT_MONO);
-    int block_nr = player::block();
-    for (int i = 0; i < 16; ++i) {
-        bool highlight = i == block_nr;
+    int player_block = player::block();
+    for (int i = 0; i < PAGE_LENGTH; ++i) {
+        int block_nr = m_edit.song_page * PAGE_LENGTH + i;
+        bool highlight = block_nr == player_block;
 
-        sprintf(str, "%02X", i);
+        sprintf(str, "%02X", block_nr);
         gui::min_item_size({ widths[0], 65 });
         if (highlight) gui::highlight();
-        if (gui::button(str, i == m_edit.block)) {
-            m_edit.block = i;
+        if (gui::button(str, block_nr == m_edit.block)) {
+            m_edit.block = block_nr;
         }
         gui::same_line();
         gui::separator();
-        if (i >= tune.table_length) {
+        if (block_nr >= tune.table_length) {
             gui::padding({});
             continue;
         }
 
 
-        Tune::Block& block = table[i];
+        Tune::Block& block = table[block_nr];
 
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
 
@@ -422,9 +424,15 @@ void song_view() {
             }
         }
     }
-
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
     gui::separator();
+
+    // song pages
+    gfx::font(FONT_DEFAULT);
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
+    gui::drag_int("Page", m_edit.song_page, 0, (tune.table_length + PAGE_LENGTH - 1) / PAGE_LENGTH - 1);
+    gui::separator();
+
 
 
     // buttons
@@ -479,8 +487,6 @@ void effect_cache() {
 }
 
 void track_view() {
-    enum { PAGE_LENGTH = 16 };
-
 
     auto widths = calculate_column_widths({ 88, 88, 88, -1, 88, 88 });
 
@@ -959,9 +965,9 @@ bool init() {
     e.loop = 0;
 
     wavelog::init(MIXRATE);
-	SDL_AudioSpec spec = { MIXRATE, AUDIO_S16, 1, 0, 1024, 0, 0, audio_callback };
-	SDL_OpenAudio(&spec, nullptr);
-	SDL_PauseAudio(0);
+    SDL_AudioSpec spec = { MIXRATE, AUDIO_S16, 1, 0, 1024, 0, 0, audio_callback };
+    SDL_OpenAudio(&spec, nullptr);
+    SDL_PauseAudio(0);
     return true;
 }
 

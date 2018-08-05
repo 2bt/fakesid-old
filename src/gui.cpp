@@ -167,15 +167,15 @@ void padding(Vec const& size) {
 void separator() {
     enum { WIDTH = 6 };
     gfx::color(color::separator);
-	if (m_same_line) {
-		Box box = item_box({ WIDTH, m_cursor_max.y - m_cursor_min.y - PADDING });
-		m_same_line = true;
+    if (m_same_line) {
+        Box box = item_box({ WIDTH, m_cursor_max.y - m_cursor_min.y - PADDING });
+        m_same_line = true;
         gfx::rectangle(box.pos + Vec(0, -PADDING), box.size + Vec(0, PADDING * 2), 0);
     }
-	else {
-		Box box = item_box({ m_cursor_max.x - m_cursor_min.x - PADDING, WIDTH });
+    else {
+        Box box = item_box({ m_cursor_max.x - m_cursor_min.x - PADDING, WIDTH });
         gfx::rectangle(box.pos + Vec(-PADDING, 0), box.size + Vec(PADDING * 2, 0), 0);
-	}
+    }
 }
 
 
@@ -300,8 +300,9 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
     Vec s = gfx::text_size(m_text_buffer.data());
 
     Box box = item_box(s + Vec(30, 10));
-	int handle_w = box.size.x * page / (max - min + page);
-	int handle_x = (value - min) * (box.size.x - handle_w)  / (max - min);
+    int range = max - min;
+    int handle_w = box.size.x * page / (range + page);
+    int handle_x = range == 0 ? 0 : (value - min) * (box.size.x - handle_w) / range;
 
     void const* id = get_id(label);
     if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
@@ -310,8 +311,8 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
     int old_value = value;
     if (m_active_item == id) {
         int x = m_touch_pos.x - box.pos.x;
-		int v = min + (x - handle_w * (page - 1) / (2 * page)) * (max - min) / (box.size.x - handle_w);
-		value = glm::clamp(v, min, max);
+        int v = min + (x - handle_w * (page - 1) / (2 * page)) * range / (box.size.x - handle_w);
+        value = glm::clamp(v, min, max);
     }
 
     gfx::color(color::drag);
