@@ -932,6 +932,22 @@ void init_tune() {
         i.length = 2;
         i.loop = 1;
         i.filter.routing = 1;
+        i.filter.rows[0] = { FILTER_LOW, 13, OP_SET, 12 };
+        i.filter.rows[1] = { FILTER_LOW, 13, OP_DEC, 8 };
+        i.filter.length = 2;
+        i.filter.loop = 1;
+    }
+
+    // kick
+    {
+        Instrument& i = t.instruments[1];
+        strcpy(i.name.data(), "kick");
+        i.adsr = { 1, 8, 8, 8 };
+        i.rows[0] = { NOISE | GATE, OP_SET, 13 };
+        i.rows[1] = { PULSE | GATE, OP_INC, 3 };
+        i.length = 2;
+        i.loop = 1;
+        i.filter.routing = 1;
         i.filter.rows[0] = { FILTER_LOW, 13, OP_SET, 13 };
         i.filter.rows[1] = { FILTER_LOW, 13, OP_SET, 30 };
         i.filter.rows[2] = { FILTER_LOW, 13, OP_SET, 5 };
@@ -1019,13 +1035,18 @@ void init_tune() {
     t.table_length = 1;
     t.table = { { 1, 0, 0, 0 } };
     Track& track = t.tracks[0];
-    track.rows[0] = { 1, 2, 37 };
+    track.rows[0] = { 2, 2, 37 };
     track.rows[2] = { 1, 1, 37 };
     track.rows[4] = { 0, 0, 255 };
+    track.rows[6] = { 1, 1, 37 };
     track.rows[8] = { 3, 3, 49 };
-    track.rows[16] = { 1, 2, 37 };
+    track.rows[10] = { 1, 1, 25 };
+    track.rows[12] = { 1, 1, 37 };
+    track.rows[14] = { 0, 0, 255 };
+    track.rows[16] = { 2, 2, 37 };
     track.rows[18] = { 0, 0, 255 };
     track.rows[24] = { 3, 3, 49 };
+    track.rows[28] = { 1, 1, 35 };
 }
 
 
