@@ -915,50 +915,125 @@ void effect_view() {
 } // namespace
 
 
-bool init() {
-    m_pref_path = SDL_GetPrefPath("sdl", "insidious");
-    if (!m_pref_path) return false;
-
-
+void init_tune() {
     // default tune
     Tune& t = player::tune();
+
+
+    // instruments
+
+    // bass
+    {
+        Instrument& i = t.instruments[0];
+        strcpy(i.name.data(), "bass");
+        i.adsr = { 1, 8, 8, 8 };
+        i.rows[0] = { NOISE | GATE, OP_SET, 13 };
+        i.rows[1] = { PULSE | GATE, OP_INC, 3 };
+        i.length = 2;
+        i.loop = 1;
+        i.filter.routing = 1;
+        i.filter.rows[0] = { FILTER_LOW, 13, OP_SET, 13 };
+        i.filter.rows[1] = { FILTER_LOW, 13, OP_SET, 30 };
+        i.filter.rows[2] = { FILTER_LOW, 13, OP_SET, 5 };
+        i.filter.length = 3;
+        i.filter.loop = 2;
+    }
+
+    // snare
+    {
+        Instrument& i = t.instruments[2];
+        strcpy(i.name.data(), "snare");
+        i.adsr = { 1, 1, 7, 9 };
+        i.rows[0] = { NOISE | GATE, OP_SET, 0x8 };
+        i.rows[1] = { NOISE | GATE, OP_INC, 0x0 };
+        i.rows[2] = { PULSE | GATE, OP_INC, 0x0 };
+        i.rows[3] = { PULSE | GATE, OP_INC, 0x0 };
+        i.rows[4] = { NOISE, OP_INC, 0x0 };
+        i.length = 5;
+        i.loop = 4;
+        i.filter.routing = 1;
+        i.filter.rows[0] = { FILTER_LOW, 13, OP_SET, 13 };
+        i.filter.rows[1] = { FILTER_LOW, 13, OP_DEC, 3 };
+        i.filter.length = 2;
+        i.filter.loop = 1;
+    }
+
+
+    // effects
+
+
+    {
+        // bass
+        Effect& e = t.effects[0];
+        strcpy(e.name.data(), "bass");
+        e.rows[0] = 0x80 - 4 * 12;
+        e.length = 1;
+        e.loop = 0;
+    }
+    {
+        // kick
+        Effect& e = t.effects[1];
+        strcpy(e.name.data(), "kick");
+        e.rows[0] = 0x80 + 4 * 12;
+        e.rows[1] = 0x80 + 4 * 4;
+        e.rows[2] = 0x80 - 4 * 4;
+        e.rows[3] = 0x80 - 4 * 12;
+        e.length = 4;
+        e.loop = 3;
+    }
+    {
+        // snare
+        Effect& e = t.effects[2];
+        strcpy(e.name.data(), "snare");
+        e.rows[0] = 0x80 + 4 * 13;
+        e.rows[1] = 0x80 + 4 * 13;
+        e.rows[2] = 0x80 - 4 * 6;
+        e.rows[3] = 0x80 - 4 * 11;
+        e.rows[4] = 0x80 + 4 * 9;
+        e.rows[5] = 0x80 + 4 * 13;
+        e.length = 6;
+        e.loop = 4;
+    }
+
+
+    {
+        // vibrato
+        Effect& e = t.effects[INSTRUMENT_COUNT - 1];
+        strcpy(e.name.data(), "vibrato");
+        e.rows[0] = 0x80;
+        e.rows[1] = 0x81;
+        e.rows[2] = 0x82;
+        e.rows[3] = 0x82;
+        e.rows[4] = 0x81;
+        e.rows[5] = 0x80;
+        e.rows[6] = 0x7f;
+        e.rows[7] = 0x7e;
+        e.rows[8] = 0x7e;
+        e.rows[9] = 0x7f;
+        e.length = 10;
+        e.loop = 0;
+    }
+
+
     t.tempo = 5;
     t.table_length = 1;
     t.table = { { 1, 0, 0, 0 } };
     Track& track = t.tracks[0];
-    track.rows[0] = { 1, 1, 37 };
-    track.rows[2] = { 0, 0, 255 };
-    track.rows[4] = { 1, 1, 49 };
-    track.rows[6] = { 0, INSTRUMENT_COUNT, 0 };
-    track.rows[14] = { 0, 0, 255 };
-
-    // default instrument
-    Instrument& i = t.instruments[0];
-    i.adsr = { 1, 8, 8, 8 };
-    i.rows[0] = { NOISE | GATE, OP_SET, 0x8 };
-    i.rows[1] = { PULSE | GATE, OP_INC, 0x1 };
-    i.length = 2;
-    i.loop = 1;
-//    i.filter.length = 1;
-//    i.filter.routing = 1;
-//    i.filter.rows = { FILTER_LOW, 15, OP_SET, 25 };
+    track.rows[0] = { 1, 2, 37 };
+    track.rows[2] = { 1, 1, 37 };
+    track.rows[4] = { 0, 0, 255 };
+    track.rows[8] = { 3, 3, 49 };
+    track.rows[16] = { 1, 2, 37 };
+    track.rows[18] = { 0, 0, 255 };
+    track.rows[24] = { 3, 3, 49 };
+}
 
 
-    // vibrato
-    Effect& e = t.effects[INSTRUMENT_COUNT - 1];
-    strcpy(e.name.data(), "vibrato");
-    e.rows[0] = 0x80;
-    e.rows[1] = 0x81;
-    e.rows[2] = 0x82;
-    e.rows[3] = 0x82;
-    e.rows[4] = 0x81;
-    e.rows[5] = 0x80;
-    e.rows[6] = 0x7f;
-    e.rows[7] = 0x7e;
-    e.rows[8] = 0x7e;
-    e.rows[9] = 0x7f;
-    e.length = 10;
-    e.loop = 0;
+bool init() {
+    m_pref_path = SDL_GetPrefPath("sdl", "insidious");
+    if (!m_pref_path) return false;
+
+    init_tune();
 
     wavelog::init(MIXRATE);
     SDL_AudioSpec spec = { MIXRATE, AUDIO_S16, 1, 0, 1024, 0, 0, audio_callback };
