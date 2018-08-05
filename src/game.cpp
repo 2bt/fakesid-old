@@ -197,7 +197,7 @@ void sprint_track_id(char* dst, int nr) {
 void sprint_inst_effect_id(char* dst, int nr) {
     dst[0] = " "
         "ABCDEFGHIJKLMNOPQRSTUVWX"
-        "YZ_@0123456789#$*+=<>!?#"[nr];
+        "YZ@0123456789#$*+=<>!?#~"[nr];
     dst[1] = '\0';
 }
 
@@ -924,32 +924,28 @@ bool init() {
     Tune& t = player::tune();
     t.tempo = 5;
     t.table_length = 1;
-    t.table = {
-        { 1, 0, 0, 0 }
-    };
+    t.table = { { 1, 0, 0, 0 } };
     Track& track = t.tracks[0];
     track.rows[0] = { 1, 1, 37 };
     track.rows[2] = { 0, 0, 255 };
     track.rows[4] = { 1, 1, 49 };
-    track.rows[6] = { 0, 2, 0 };
+    track.rows[6] = { 0, INSTRUMENT_COUNT, 0 };
     track.rows[14] = { 0, 0, 255 };
 
+    // default instrument
     Instrument& i = t.instruments[0];
     i.adsr = { 1, 8, 8, 8 };
     i.rows[0] = { NOISE | GATE, OP_SET, 0x8 };
     i.rows[1] = { PULSE | GATE, OP_INC, 0x1 };
     i.length = 2;
     i.loop = 1;
-    i.filter.length = 1;
-    i.filter.routing = 1;
-    i.filter.rows = { FILTER_LOW, 15, OP_SET, 25 };
+//    i.filter.length = 1;
+//    i.filter.routing = 1;
+//    i.filter.rows = { FILTER_LOW, 15, OP_SET, 25 };
 
-
-    // blank effect
-    strcpy(t.effects[0].name.data(), "blank");
 
     // vibrato
-    Effect& e = t.effects[1];
+    Effect& e = t.effects[INSTRUMENT_COUNT - 1];
     strcpy(e.name.data(), "vibrato");
     e.rows[0] = 0x80;
     e.rows[1] = 0x81;

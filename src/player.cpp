@@ -47,6 +47,7 @@ struct Channel {
     State    state;
     int      adsr[4];
     int      flags;
+    uint32_t next_pulsewidth;
     uint32_t pulsewidth;
     uint32_t freq;
 
@@ -170,7 +171,7 @@ void tick() {
                 break;
             }
             uint32_t p = chan.pulsewidth_acc > 0xff ? chan.pulsewidth_acc : ~chan.pulsewidth_acc & 0x1ff;
-            chan.pulsewidth = p * 0x7cccc;
+            chan.next_pulsewidth = p * 0x7cccc;
         }
 
         // effect
@@ -270,9 +271,14 @@ void mix(short* buffer, int length) {
             chan.phase += chan.freq;
             chan.phase &= 0xfffffff;
 
+            // smooth pulsewith change
+            if (chan.phase < chan.freq) {
+                chan.pulsewidth = chan.next_pulsewidth;
+            }
+
             // sync
-            if (chan.flags & SYNC) {
-                if (prev_chan.phase < prev_chan.freq) {
+            if (prev_chan.phase < prev_chan.freq) {
+                if (chan.flags & SYNC) {
                     chan.phase = prev_chan.phase * chan.freq / prev_chan.freq;
                 }
             }
