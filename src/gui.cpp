@@ -26,8 +26,8 @@ namespace color {
     const SDL_Color button_active = make(0x884444, 255);
 
     const SDL_Color input_text_normal = make(0x222222, 255);
-    const SDL_Color input_text_hover  = make(0x884444, 255);
-    const SDL_Color input_text_active = make(0xaa4444, 255);
+    const SDL_Color input_text_hover  = make(0xaa4444, 255);
+    const SDL_Color input_text_active = make(0x884444, 255);
 
     const SDL_Color drag          = make(0x222222, 255);
     const SDL_Color handle_normal = make(0x884444, 255);
@@ -316,7 +316,8 @@ bool drag_int(char const* label, char const* fmt, int& value, int min, int max, 
     int old_value = value;
     if (m_active_item == id) {
         int x = m_touch_pos.x - box.pos.x;
-        int v = min + (x - handle_w * (page - 1) / (2 * page)) * range / (box.size.x - handle_w);
+        int v = min;
+        if (range > 0) v += (x - handle_w * (page - 1) / (2 * page)) * range / (box.size.x - handle_w);
         value = glm::clamp(v, min, max);
     }
 

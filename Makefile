@@ -29,5 +29,5 @@ android-install: android
 	cd android-project && ant debug install
 
 android-run: android-install
-	cd android-project && adb shell am start -a android.intenon.MAIN -n com.sdl.game/com.sdl.game.Insidious
+	cd android-project && adb shell am start -a android.intenon.MAIN -n com.sdl.insidious/com.sdl.insidious.MainActivity
 
