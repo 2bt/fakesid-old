@@ -1,7 +1,7 @@
-insidious
-log.wav
-obj/
-android-project/bin/
-android-project/gen/
-android-project/libs/
-android-project/obj/
+/insidious
+/log.wav
+/obj/
+/android-project/bin/
+/android-project/gen/
+/android-project/libs/
+/android-project/obj/
