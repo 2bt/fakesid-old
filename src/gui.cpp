@@ -295,11 +295,16 @@ void input_text(char* str, int len) {
 }
 
 
-bool drag_int(char const* label, int& value, int min, int max, int page) {
-    print_to_text_buffer(label, value);
-    Vec s = gfx::text_size(m_text_buffer.data());
+bool drag_int(char const* label, char const* fmt, int& value, int min, int max, int page) {
+    gfx::font(FONT_DEFAULT);
+    Vec s1 = gfx::text_size(label);
+    gfx::font(FONT_MONO);
+    print_to_text_buffer(fmt, value);
+    Vec s2 = gfx::text_size(m_text_buffer.data());
+    // padding
+    if (s2.x > 0) s1.x += 30;
 
-    Box box = item_box(s + Vec(30, 10));
+    Box box = item_box(Vec(s1.x + s2.x, std::max(s1.y, s2.y)) + Vec(30, 10));
     int range = max - min;
     int handle_w = box.size.x * page / (range + page);
     int handle_x = range == 0 ? 0 : (value - min) * (box.size.x - handle_w) / range;
@@ -321,8 +326,14 @@ bool drag_int(char const* label, int& value, int min, int max, int page) {
     gfx::color(m_active_item == id ? color::handle_active : color::handle_normal);
     gfx::rectangle(box.pos + Vec(handle_x, 0), { handle_w, box.size.y }, 0);
 
+
+    gfx::font(FONT_DEFAULT);
     gfx::color(color::make(0xffffff));
-    gfx::print(box.pos + box.size / 2 - s / 2, m_text_buffer.data());
+    gfx::print(box.pos + Vec(15, box.size.y / 2 - s1.y / 2), label);
+
+    gfx::font(FONT_MONO);
+    gfx::color(color::make(0xffffff));
+    gfx::print(box.pos + Vec(box.size.x - s2.x - 15, box.size.y / 2 - s2.y / 2), m_text_buffer.data());
 
     return value != old_value;
 }

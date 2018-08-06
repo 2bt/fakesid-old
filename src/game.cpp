@@ -430,7 +430,7 @@ void song_view() {
     // song pages
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
-    gui::drag_int("Page", m_edit.song_page, 0, (tune.table_length + PAGE_LENGTH - 1) / PAGE_LENGTH - 1);
+    gui::drag_int("Page", "%X", m_edit.song_page, 0, (tune.table_length + PAGE_LENGTH - 1) / PAGE_LENGTH - 1);
     gui::separator();
 
 
@@ -528,7 +528,7 @@ void track_view() {
     gui::separator();
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
-    gui::drag_int("Clavier", m_edit.clavier_offset, 0, 96 - CLAVIER_WIDTH, CLAVIER_WIDTH);
+    gui::drag_int("Clavier", "", m_edit.clavier_offset, 0, 96 - CLAVIER_WIDTH, CLAVIER_WIDTH);
 
     int player_row = player::row();
 
@@ -605,7 +605,7 @@ void track_view() {
     // track pages
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
-    gui::drag_int("Page", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
+    gui::drag_int("Page", "%X", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
 
     // cache
     gui::separator();
@@ -656,13 +656,14 @@ void instrument_view() {
     if (!m_edit.filter_mode) {
 
         // adsr
+        constexpr char const* labels[] = { "Attack", "Decay", "Sustain", "Release" };
         widths = calculate_column_widths({ -1, -1 });
         for (int i = 0; i < 4; ++i) {
             if (i % 2 > 0) gui::same_line();
             gui::min_item_size({ widths[i % 2], 65 });
             gui::id(&inst.adsr[i]);
             int v = inst.adsr[i];
-            if (gui::drag_int("%X", v, 0, 15)) {
+            if (gui::drag_int(labels[i], "%X", v, 0, 15)) {
                 inst.adsr[i] = v;
             }
         };
@@ -716,7 +717,7 @@ void instrument_view() {
             gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
             int v = row.value;
             gui::id(&row.value);
-            if (gui::drag_int("%02X", v, 0, 31)) row.value = v;
+            if (gui::drag_int("", "%02X", v, 0, 31)) row.value = v;
         }
 
         gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
@@ -791,7 +792,7 @@ void instrument_view() {
             int v = row.resonance;
             gui::min_item_size({ 240, 65 });
             gui::id(&row.resonance);
-            if (gui::drag_int("%X", v, 0, 15)) row.resonance = v;
+            if (gui::drag_int("", "%X", v, 0, 15)) row.resonance = v;
 
 
             // operation
@@ -807,7 +808,7 @@ void instrument_view() {
             gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
             v = row.value;
             gui::id(&row.value);
-            if (gui::drag_int("%02X", v, 0, 31)) row.value = v;
+            if (gui::drag_int("", "%02X", v, 0, 31)) row.value = v;
         }
 
         gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
@@ -878,13 +879,13 @@ void effect_view() {
         int v = (effect.rows[i] >> 2) - 32;
         gui::min_item_size({ gfx::screensize().x * 4 / 5, 65 });
         gui::id(&effect.rows[i]);
-        if (gui::drag_int("%+3d", v, -16, 16)) effect.rows[i] = (effect.rows[i] & 0x03) | ((v + 32) << 2);
+        if (gui::drag_int("", "%d", v, -16, 16)) effect.rows[i] = (effect.rows[i] & 0x03) | ((v + 32) << 2);
 
         v = effect.rows[i] & 0x03;
         gui::same_line();
         gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
         gui::id(&effect.rows[i + MAX_EFFECT_LENGTH]);
-        if (gui::drag_int("%d", v, 0, 3)) {
+        if (gui::drag_int("", "%d", v, 0, 3)) {
             effect.rows[i] = (effect.rows[i] & 0xfc) | v;
         }
     }
@@ -916,9 +917,7 @@ void effect_view() {
 
 
 void init_tune() {
-    // default tune
     Tune& t = player::tune();
-
 
     // instruments
 
@@ -949,7 +948,7 @@ void init_tune() {
         i.loop = 1;
         i.filter.routing = 1;
         i.filter.rows[0] = { FILTER_LOW, 13, OP_SET, 13 };
-        i.filter.rows[1] = { FILTER_LOW, 13, OP_SET, 30 };
+        i.filter.rows[1] = { FILTER_LOW, 13, OP_SET, 20 };
         i.filter.rows[2] = { FILTER_LOW, 13, OP_SET, 5 };
         i.filter.length = 3;
         i.filter.loop = 2;
