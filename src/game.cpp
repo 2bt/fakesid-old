@@ -242,8 +242,10 @@ bool instrument_select() {
             }
             char str[2];
             sprint_inst_effect_id(str, nr);
+            gfx::font(FONT_MONO);
             gfx::print(c + Vec(65 / 2) - gfx::text_size(str) / 2, str);
             char const* name = inst.name.data();
+            gfx::font(FONT_DEFAULT);
             gfx::print(c + Vec(65 + (widths[x] - 65) / 2, 65 / 2) - gfx::text_size(name) / 2, name);
         }
     }
@@ -281,8 +283,10 @@ bool effect_select() {
             }
             char str[2];
             sprint_inst_effect_id(str, nr);
+            gfx::font(FONT_MONO);
             gfx::print(c + Vec(65 / 2) - gfx::text_size(str) / 2, str);
             char const* name = effect.name.data();
+            gfx::font(FONT_DEFAULT);
             gfx::print(c + Vec(65 + (widths[x] - 65) / 2, 65 / 2) - gfx::text_size(name) / 2, name);
         }
     }
