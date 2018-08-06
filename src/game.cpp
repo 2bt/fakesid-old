@@ -164,7 +164,7 @@ void track_view();
 void instrument_view();
 void effect_view();
 
-EView m_view = VIEW_SONG;
+EView m_view = VIEW_PROJECT;
 
 struct View {
     char const* name;
