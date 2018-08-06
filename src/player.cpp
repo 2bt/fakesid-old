@@ -77,7 +77,7 @@ struct {
 
 } m_filter;
 
-Tune m_tune;
+Song m_song;
 bool m_playing;
 int  m_sample;
 int  m_frame;
@@ -93,21 +93,21 @@ void tick() {
     // row_update
     if (m_frame == 0) {
         int block_nr = m_block;
-        if (m_block >= (int) m_tune.table.size()) block_nr = 0;
+        if (m_block >= (int) m_song.table.size()) block_nr = 0;
         m_block = block_nr;
 
-        Tune::Block const& block = m_tune.table[block_nr];
+        Song::Block const& block = m_song.table[block_nr];
 
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
             Channel& chan = m_channels[c];
             int track_nr = block[c];
             if (track_nr == 0) continue;
-            Track const& track = m_tune.tracks[track_nr - 1];
+            Track const& track = m_song.tracks[track_nr - 1];
             Track::Row const& row = track.rows[m_row];
 
             // instrument
             if (row.instrument > 0) {
-                chan.inst = &m_tune.instruments[row.instrument - 1];
+                chan.inst = &m_song.instruments[row.instrument - 1];
                 Instrument const& inst = *chan.inst;
                 chan.adsr[0] = attack_speeds[inst.adsr[0]];
                 chan.adsr[1] = release_speeds[inst.adsr[1]];
@@ -132,7 +132,7 @@ void tick() {
 
             // effect
             if (row.effect > 0) {
-                chan.effect = &m_tune.effects[row.effect - 1];
+                chan.effect = &m_song.effects[row.effect - 1];
                 chan.effect_row = 0;
             }
 
@@ -215,14 +215,14 @@ void tick() {
 
 
     // advance
-    int frames_per_row = m_tune.tempo;
-    if (m_row % 2 == 0) frames_per_row += m_tune.swing;
+    int frames_per_row = m_song.tempo;
+    if (m_row % 2 == 0) frames_per_row += m_song.swing;
 
     if (++m_frame >= frames_per_row) {
         m_frame = 0;
         if (++m_row >= TRACK_LENGTH) {
             m_row = 0;
-            if (!m_block_loop && ++m_block >= (int) m_tune.table_length) {
+            if (!m_block_loop && ++m_block >= (int) m_song.table_length) {
                 m_block = 0;
             }
         }
@@ -379,7 +379,7 @@ void  block_loop(bool b) { m_block_loop = b; }
 bool  is_playing() { return m_playing; }
 bool  is_channel_active(int c) { return m_channels[c].active; }
 void  set_channel_active(int c, bool a) { m_channels[c].active = a; }
-Tune& tune() { return m_tune; }
+Song& song() { return m_song; }
 
 
 } // namespace;

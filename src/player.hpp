@@ -94,7 +94,7 @@ struct Effect {
     std::array<uint8_t, MAX_EFFECT_LENGTH> rows;
 };
 
-struct Tune {
+struct Song {
     using Block = std::array<int, CHANNEL_COUNT>;
 
     uint8_t tempo; // 4 to F
@@ -121,5 +121,5 @@ namespace player {
     void  block_loop(bool b);
     bool  is_channel_active(int c);
     void  set_channel_active(int c, bool a);
-    Tune& tune();
+    Song& song();
 }

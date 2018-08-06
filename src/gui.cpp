@@ -21,23 +21,28 @@ namespace color {
     }
 
 
-    const SDL_Color button_normal = make(0x555555, 255);
-    const SDL_Color button_hover  = make(0xaa4444, 255);
-    const SDL_Color button_active = make(0x884444, 255);
+    const SDL_Color button_normal = make(0x505050);
+    const SDL_Color button_active = make(0x55a049);
+    const SDL_Color button_hover = make(0x94e089);
+//    const SDL_Color button_hover  = make(0xb86962);
+//    const SDL_Color button_active = make(0x883932);
 
-    const SDL_Color input_text_normal = make(0x222222, 255);
-    const SDL_Color input_text_hover  = make(0xaa4444, 255);
-    const SDL_Color input_text_active = make(0x884444, 255);
+    const SDL_Color input_text_normal = make(0x222222);
+    const SDL_Color input_text_hover  = button_hover;
+    const SDL_Color input_text_active = button_active;
 
-    const SDL_Color drag          = make(0x222222, 255);
-    const SDL_Color handle_normal = make(0x884444, 255);
-    const SDL_Color handle_active = make(0xaa4444, 255);
+    const SDL_Color drag          = make(0x222222);
+    const SDL_Color handle_normal = button_active;
+    const SDL_Color handle_active = button_hover;
 
-    const SDL_Color separator     = make(0x111111, 255);
+    const SDL_Color separator     = make(0x111111);
 
-    const SDL_Color highlight     = make(0xff9999, 255);
+    const SDL_Color highlight     = make(0x787878);
 
-    const SDL_Color note          = make(0xcc5555, 255);
+    const SDL_Color note_normal   = handle_normal;
+    const SDL_Color note_active   = handle_active;
+
+    const SDL_Color text          = make(0xffffff);
 }
 
 
@@ -186,7 +191,7 @@ void text(char const* fmt, ...) {
     va_end(args);
     Vec s = gfx::text_size(m_text_buffer.data());
     Box box = item_box(s);
-    gfx::color(color::make(0xffffff));
+    gfx::color(color::text);
     gfx::print(box.pos + box.size / 2 - s / 2, m_text_buffer.data());
 }
 
@@ -210,12 +215,12 @@ bool button(char const* label, bool active) {
     }
     else {
         if (active) color = color::button_active;
-        else if (m_highlight) color = color::mix(color, color::highlight, 0.3);
+        else if (m_highlight) color = color::highlight;
     }
     m_highlight = false;
     gfx::color(color);
     gfx::rectangle(box.pos, box.size, 2);
-    gfx::color(color::make(0xffffff));
+    gfx::color(color::text);
     gfx::print(box.pos + box.size / 2 - s / 2, label);
     return clicked;
 }
@@ -286,7 +291,7 @@ void input_text(char* str, int len) {
     gfx::rectangle(box.pos, box.size, 0);
     gfx::color(color);
     gfx::rectangle(box.pos, box.size, 4);
-    gfx::color(color::make(0xffffff));
+    gfx::color(color::text);
     gfx::print(box.pos + box.size / 2 - s / 2, str);
     // cursor
     if (m_input_text_str == str && m_input_cursor_blink % 16 < 8) {
@@ -329,11 +334,11 @@ bool drag_int(char const* label, char const* fmt, int& value, int min, int max, 
 
 
     gfx::font(FONT_DEFAULT);
-    gfx::color(color::make(0xffffff));
+    gfx::color(color::text);
     gfx::print(box.pos + Vec(15, box.size.y / 2 - s1.y / 2), label);
 
     gfx::font(FONT_MONO);
-    gfx::color(color::make(0xffffff));
+    gfx::color(color::text);
     gfx::print(box.pos + Vec(box.size.x - s2.x - 15, box.size.y / 2 - s2.y / 2), m_text_buffer.data());
 
     return value != old_value;
@@ -352,6 +357,7 @@ bool clavier(uint8_t& n, int offset, bool highlight) {
     uint8_t old_n = n;
 
     int x0 = 0;
+    bool just_pressed = input::just_pressed();
     for (int i = 0; i < CLAVIER_WIDTH; ++i) {
         int x1 = w * (i + 1) / CLAVIER_WIDTH;
         int nn = i + 1 + offset;
@@ -362,7 +368,7 @@ bool clavier(uint8_t& n, int offset, bool highlight) {
         bool touch = b.contains({ m_touch_pos.x, b.pos.y });
         b.size.x -= PADDING;
         if (m_active_item == id && touch) {
-            if (input::just_pressed()) {
+            if (just_pressed) {
                 if (n == nn) n = 0;
                 else if (n == 0) n = nn;
             }
@@ -371,13 +377,13 @@ bool clavier(uint8_t& n, int offset, bool highlight) {
         SDL_Color color = color::make(0x222222);
         if ((i + offset) % 12 == 0) color = color::make(0x333333);
         if ((1 << (i + offset) % 12) & 0b010101001010) color = color::make(0x111111);
-        if (m_active_item == id) color = color::mix(color, color::handle_active, 0.2);
-        else if (highlight) color = color::mix(color, color::highlight, 0.15);
+        if (highlight) color = color::mix(color, color::highlight, 0.2);
         gfx::color(color);
         gfx::rectangle( b.pos, b.size, 0);
 
         if (n == nn) {
-            gfx::color(color::note);
+            if (m_active_item == id && touch) gfx::color(color::note_active);
+            else gfx::color(color::note_normal);
             gfx::rectangle( b.pos, b.size, 2);
         }
 

@@ -15,39 +15,39 @@ enum {
 char* m_pref_path;
 
 
-bool save_tune(char const* name) {
+bool save_song(char const* name) {
     if (!m_pref_path) return false;
     static std::array<char, 1024> path;
     snprintf(path.data(), path.size(), "%s%s", m_pref_path, name);
     SDL_RWops* file = SDL_RWFromFile(path.data(), "wb");
     if (!file) return false;
-    Tune& t = player::tune();
-    SDL_WriteU8(file, t.tempo);
-    SDL_WriteU8(file, t.swing);
-    SDL_RWwrite(file, t.tracks.data(), sizeof(Track), t.tracks.size());
-    SDL_RWwrite(file, t.instruments.data(), sizeof(Instrument), t.instruments.size());
-    SDL_RWwrite(file, t.effects.data(), sizeof(Effect), t.effects.size());
-    SDL_WriteLE16(file, t.table_length);
-    SDL_RWwrite(file, t.table.data(), sizeof(Tune::Block), t.table_length);
+    Song& s = player::song();
+    SDL_WriteU8(file, s.tempo);
+    SDL_WriteU8(file, s.swing);
+    SDL_RWwrite(file, s.tracks.data(), sizeof(Track), s.tracks.size());
+    SDL_RWwrite(file, s.instruments.data(), sizeof(Instrument), s.instruments.size());
+    SDL_RWwrite(file, s.effects.data(), sizeof(Effect), s.effects.size());
+    SDL_WriteLE16(file, s.table_length);
+    SDL_RWwrite(file, s.table.data(), sizeof(Song::Block), s.table_length);
     SDL_RWclose(file);
     return true;
 }
 
 
-bool load_tune(char const* name) {
+bool load_song(char const* name) {
     if (!m_pref_path) return false;
     static std::array<char, 1024> path;
     snprintf(path.data(), path.size(), "%s%s", m_pref_path, name);
     SDL_RWops* file = SDL_RWFromFile(path.data(), "rb");
     if (!file) return false;
-    Tune& t = player::tune();
-    t.tempo = SDL_ReadU8(file);
-    t.swing = SDL_ReadU8(file);
-    SDL_RWread(file, t.tracks.data(), sizeof(Track), t.tracks.size());
-    SDL_RWread(file, t.instruments.data(), sizeof(Instrument), t.instruments.size());
-    SDL_RWread(file, t.effects.data(), sizeof(Effect), t.effects.size());
-    t.table_length = SDL_ReadLE16(file);
-    SDL_RWread(file, t.table.data(), sizeof(Tune::Block), t.table_length);
+    Song& s = player::song();
+    s.tempo = SDL_ReadU8(file);
+    s.swing = SDL_ReadU8(file);
+    SDL_RWread(file, s.tracks.data(), sizeof(Track), s.tracks.size());
+    SDL_RWread(file, s.instruments.data(), sizeof(Instrument), s.instruments.size());
+    SDL_RWread(file, s.effects.data(), sizeof(Effect), s.effects.size());
+    s.table_length = SDL_ReadLE16(file);
+    SDL_RWread(file, s.table.data(), sizeof(Song::Block), s.table_length);
     SDL_RWclose(file);
     return true;
 }
@@ -224,14 +224,14 @@ bool instrument_select() {
     }
     gui::separator();
 
-    Tune& tune = player::tune();
+    Song& song = player::song();
 
     for (int y = 0; y < INSTRUMENT_COUNT / 2; ++y) {
         for (int x = 0; x < 2; ++x) {
             if (x) gui::same_line();
 
             int nr = y + x * (INSTRUMENT_COUNT / 2) + 1;
-            Instrument const& inst = tune.instruments[nr - 1];
+            Instrument const& inst = song.instruments[nr - 1];
 
             Vec c = gui::cursor() + Vec(gui::PADDING);
             gui::min_item_size({ widths[x], 65 });
@@ -265,14 +265,14 @@ bool effect_select() {
     }
     gui::separator();
 
-    Tune& tune = player::tune();
+    Song& song = player::song();
 
     for (int y = 0; y < EFFECT_COUNT / 2; ++y) {
         for (int x = 0; x < 2; ++x) {
             if (x) gui::same_line();
 
             int nr = y + x * (EFFECT_COUNT / 2) + 1;
-            Effect const& effect = tune.effects[nr - 1];
+            Effect const& effect = song.effects[nr - 1];
 
             Vec c = gui::cursor() + Vec(gui::PADDING);
             gui::min_item_size({ widths[x], 65 });
@@ -347,27 +347,27 @@ void project_view() {
     auto widths = calculate_column_widths({ -1, -1 });
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ widths[0], 88 });
-    if (gui::button("Load")) load_tune("tune");
+    if (gui::button("Load")) load_song("song");
     gui::same_line();
     gui::min_item_size({ widths[1], 88 });
-    if (gui::button("Save")) save_tune("tune");
+    if (gui::button("Save")) save_song("song");
 
 }
 
 
 void song_view() {
-    Tune& tune = player::tune();
+    Song& song = player::song();
 
 
     // tempo and swing
     auto widths = calculate_column_widths({ -12, -5 });
-    int v = tune.tempo;
+    int v = song.tempo;
     gui::min_item_size({ widths[0], 0 });
-    if (gui::drag_int("Tempo", "%X", v, 4, 15)) tune.tempo = v;
+    if (gui::drag_int("Tempo", "%X", v, 4, 15)) song.tempo = v;
     gui::same_line();
-    v = tune.swing;
+    v = song.swing;
     gui::min_item_size({ widths[1], 0 });
-    if (gui::drag_int("Swing", "%X", v, 0, 4)) tune.swing = v;
+    if (gui::drag_int("Swing", "%X", v, 0, 4)) song.swing = v;
     gui::separator();
 
     // mute buttons
@@ -391,7 +391,7 @@ void song_view() {
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
     gui::separator();
 
-    auto& table = tune.table;
+    auto& table = song.table;
 
     gfx::font(FONT_MONO);
     int player_block = player::block();
@@ -407,13 +407,13 @@ void song_view() {
         }
         gui::same_line();
         gui::separator();
-        if (block_nr >= tune.table_length) {
+        if (block_nr >= song.table_length) {
             gui::padding({});
             continue;
         }
 
 
-        Tune::Block& block = table[block_nr];
+        Song::Block& block = table[block_nr];
 
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
 
@@ -441,7 +441,7 @@ void song_view() {
     // song pages
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
-    gui::drag_int("Page", "%X", m_edit.song_page, 0, (tune.table_length + PAGE_LENGTH - 1) / PAGE_LENGTH - 1);
+    gui::drag_int("Page", "%X", m_edit.song_page, 0, (song.table_length + PAGE_LENGTH - 1) / PAGE_LENGTH - 1);
     gui::separator();
 
 
@@ -450,24 +450,24 @@ void song_view() {
     gfx::font(FONT_MONO);
     gui::min_item_size({ 88, 88 });
     if (gui::button("-")) {
-        if (m_edit.block < tune.table_length && tune.table_length > 1) {
+        if (m_edit.block < song.table_length && song.table_length > 1) {
             table[m_edit.block] = {};
             std::rotate(
                 table.begin() + m_edit.block,
                 table.begin() + m_edit.block + 1,
-                table.begin() + tune.table_length);
-            --tune.table_length;
+                table.begin() + song.table_length);
+            --song.table_length;
         }
     }
     gui::same_line();
     gui::min_item_size({ 88, 88 });
     if (gui::button("+")) {
-        if (m_edit.block <= tune.table_length && tune.table_length < MAX_SONG_LENGTH) {
+        if (m_edit.block <= song.table_length && song.table_length < MAX_SONG_LENGTH) {
             std::rotate(
                 table.begin() + m_edit.block,
-                table.begin() + tune.table_length,
-                table.begin() + tune.table_length + 1);
-            ++tune.table_length;
+                table.begin() + song.table_length,
+                table.begin() + song.table_length + 1);
+            ++song.table_length;
         }
     }
 }
@@ -519,7 +519,7 @@ void track_view() {
     if (gui::button("+")) m_edit.track = std::min<int>(TRACK_COUNT, m_edit.track + 1);
 
     assert(m_edit.track > 0);
-    Track& track = player::tune().tracks[m_edit.track - 1];
+    Track& track = player::song().tracks[m_edit.track - 1];
 
     gui::same_line();
     gui::padding({ widths[3], 0 });
@@ -632,8 +632,8 @@ void instrument_view() {
     inst_cache();
     gui::separator();
 
-    Tune& tune = player::tune();
-    Instrument& inst = tune.instruments[m_edit.instrument - 1];
+    Song& song = player::song();
+    Instrument& inst = song.instruments[m_edit.instrument - 1];
 
     // name
     auto widths = calculate_column_widths({ -1, 88, 88 });
@@ -852,8 +852,8 @@ void effect_view() {
     gui::separator();
 
 
-    Tune& tune = player::tune();
-    Effect& effect = tune.effects[m_edit.effect - 1];
+    Song& song = player::song();
+    Effect& effect = song.effects[m_edit.effect - 1];
 
     // name
     auto widths = calculate_column_widths({ -1, 88, 88 });
@@ -927,14 +927,14 @@ void effect_view() {
 } // namespace
 
 
-void init_tune() {
-    Tune& t = player::tune();
+void init_song() {
+    Song& s = player::song();
 
     // instruments
 
     // bass
     {
-        Instrument& i = t.instruments[0];
+        Instrument& i = s.instruments[0];
         strcpy(i.name.data(), "bass");
         i.adsr = { 1, 8, 8, 8 };
         i.rows[0] = { NOISE | GATE, OP_SET, 13 };
@@ -950,7 +950,7 @@ void init_tune() {
 
     // kick
     {
-        Instrument& i = t.instruments[1];
+        Instrument& i = s.instruments[1];
         strcpy(i.name.data(), "kick");
         i.adsr = { 1, 8, 8, 8 };
         i.rows[0] = { NOISE | GATE, OP_SET, 13 };
@@ -967,7 +967,7 @@ void init_tune() {
 
     // snare
     {
-        Instrument& i = t.instruments[2];
+        Instrument& i = s.instruments[2];
         strcpy(i.name.data(), "snare");
         i.adsr = { 1, 1, 7, 9 };
         i.rows[0] = { NOISE | GATE, OP_SET, 0x8 };
@@ -990,7 +990,7 @@ void init_tune() {
 
     {
         // bass
-        Effect& e = t.effects[0];
+        Effect& e = s.effects[0];
         strcpy(e.name.data(), "bass");
         e.rows[0] = 0x80 - 4 * 12;
         e.length = 1;
@@ -998,7 +998,7 @@ void init_tune() {
     }
     {
         // kick
-        Effect& e = t.effects[1];
+        Effect& e = s.effects[1];
         strcpy(e.name.data(), "kick");
         e.rows[0] = 0x80 + 4 * 12;
         e.rows[1] = 0x80 + 4 * 4;
@@ -1009,7 +1009,7 @@ void init_tune() {
     }
     {
         // snare
-        Effect& e = t.effects[2];
+        Effect& e = s.effects[2];
         strcpy(e.name.data(), "snare");
         e.rows[0] = 0x80 + 4 * 13;
         e.rows[1] = 0x80 + 4 * 13;
@@ -1024,7 +1024,7 @@ void init_tune() {
 
     {
         // vibrato
-        Effect& e = t.effects[INSTRUMENT_COUNT - 1];
+        Effect& e = s.effects[INSTRUMENT_COUNT - 1];
         strcpy(e.name.data(), "vibrato");
         e.rows[0] = 0x80;
         e.rows[1] = 0x81;
@@ -1041,10 +1041,10 @@ void init_tune() {
     }
 
 
-    t.tempo = 5;
-    t.table_length = 1;
-    t.table = { { 1, 0, 0, 0 } };
-    Track& track = t.tracks[0];
+    s.tempo = 5;
+    s.table_length = 1;
+    s.table = { { 1, 0, 0, 0 } };
+    Track& track = s.tracks[0];
     track.rows[0] = { 2, 2, 37 };
     track.rows[2] = { 1, 1, 37 };
     track.rows[4] = { 0, 0, 255 };
@@ -1064,7 +1064,7 @@ bool init() {
     m_pref_path = SDL_GetPrefPath("sdl", "insidious");
     if (!m_pref_path) return false;
 
-    init_tune();
+    init_song();
 
     wavelog::init(MIXRATE);
     SDL_AudioSpec spec = { MIXRATE, AUDIO_S16, 1, 0, 1024, 0, 0, audio_callback };
