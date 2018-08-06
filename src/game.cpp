@@ -356,18 +356,26 @@ void project_view() {
 
 
 void song_view() {
+    Tune& tune = player::tune();
 
-    gfx::font(FONT_MONO);
 
-    auto widths = calculate_column_widths({ 88, 6, -1, -1, -1, -1 });
+    // tempo and swing
+    auto widths = calculate_column_widths({ -12, -5 });
+    int v = tune.tempo;
+    gui::min_item_size({ widths[0], 0 });
+    if (gui::drag_int("Tempo", "%X", v, 4, 15)) tune.tempo = v;
+    gui::same_line();
+    v = tune.swing;
+    gui::min_item_size({ widths[1], 0 });
+    if (gui::drag_int("Swing", "%X", v, 0, 4)) tune.swing = v;
+    gui::separator();
 
     // mute buttons
+    widths = calculate_column_widths({ 88, 6, -1, -1, -1, -1 });
     gui::padding({ widths[0], 65 });
     gui::same_line();
     gui::separator();
     gui::same_line();
-
-
     gfx::font(FONT_DEFAULT);
     char str[] = "Voice .";
     for (int c = 0; c < CHANNEL_COUNT; ++c) {
@@ -383,7 +391,6 @@ void song_view() {
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
     gui::separator();
 
-    Tune& tune = player::tune();
     auto& table = tune.table;
 
     gfx::font(FONT_MONO);
