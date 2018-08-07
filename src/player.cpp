@@ -78,7 +78,6 @@ struct {
 } m_filter;
 
 Song m_song;
-bool m_playing;
 int  m_sample;
 int  m_frame;
 int  m_row;
@@ -88,8 +87,6 @@ std::array<Channel, CHANNEL_COUNT> m_channels;
 
 
 void tick() {
-    if (!m_playing) return;
-
     // row_update
     if (m_frame == 0) {
         int block_nr = m_block;
@@ -349,25 +346,12 @@ void fill_buffer(short* buffer, int length) {
 }
 
 
-void play() {
-    m_playing = true;
-}
-
-
-void pause() {
-    m_playing = false;
-    for (Channel& chan : m_channels) {
-        chan.gate   = false;
-        chan.level  = 0;
-    }
-}
-
-
-void stop() {
-    pause();
-    if (!m_block_loop) m_block = 0;
-    m_row = 0;
+void reset() {
+    m_sample = 0;
     m_frame = 0;
+    m_row = 0;
+    m_block = 0;
+    m_channels = {};
 }
 
 
@@ -376,7 +360,6 @@ int   block() { return m_block; }
 void  block(int b) { m_block = b; }
 bool  block_loop() { return m_block_loop; }
 void  block_loop(bool b) { m_block_loop = b; }
-bool  is_playing() { return m_playing; }
 bool  is_channel_active(int c) { return m_channels[c].active; }
 void  set_channel_active(int c, bool a) { m_channels[c].active = a; }
 Song& song() { return m_song; }

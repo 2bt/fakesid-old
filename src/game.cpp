@@ -2,6 +2,7 @@
 #include "gui.hpp"
 #include "player.hpp"
 #include "wavelog.hpp"
+#include <vector>
 #include <algorithm>
 
 
@@ -55,7 +56,6 @@ bool load_song(char const* name) {
 
 void audio_callback(void* userdata, Uint8* stream, int len) {
     player::fill_buffer((short*) stream, len / 2);
-    wavelog::write((short*) stream, len / 2);
 }
 
 
@@ -99,7 +99,7 @@ struct Cache {
     struct Entry {
         uint32_t age;
         int      data;
-        bool operator<(Entry const& rhs) const { return data < rhs.data; }
+//        bool operator<(Entry const& rhs) const { return data < rhs.data; }
     };
     std::array<Entry, SIZE> entries;
     void insert(int data) {
@@ -146,6 +146,8 @@ struct Edit {
 
     bool instrument_select_active;
     bool effect_select_active;
+
+    bool is_playing = false;
 
 } m_edit;
 
@@ -352,6 +354,38 @@ void project_view() {
     gui::min_item_size({ widths[1], 88 });
     if (gui::button("Save")) save_song("song");
 
+
+    // TODO: make it incremental
+    gui::min_item_size({ widths[0], 88 });
+    if (gui::button("Export to ogg")) {
+
+        // stop
+        m_edit.is_playing = false;
+        SDL_PauseAudio(1);
+        //TODO: ensure that the callback has exited
+
+        player::reset();
+        player::block(0);
+        player::block_loop(false);
+
+
+        Song const& song = player::song();
+        int samples = SAMPLES_PER_FRAME;
+        samples *= TRACK_LENGTH * song.tempo + TRACK_LENGTH / 2 * song.swing;
+        samples *= song.table_length;
+
+        std::array<short, 1024> buffer;
+
+        wavelog::init(MIXRATE);
+        while (samples > 0) {
+            int len = std::min(samples, (int) buffer.size());
+            samples -= len;
+            player::fill_buffer(buffer.data(), len);
+            wavelog::write(buffer.data(), len);
+        }
+        wavelog::free();
+    }
+
 }
 
 
@@ -360,10 +394,10 @@ void song_view() {
 
 
     // tempo and swing
-    auto widths = calculate_column_widths({ -12, -5 });
+    auto widths = calculate_column_widths({ -1, -1 });
     int v = song.tempo;
     gui::min_item_size({ widths[0], 0 });
-    if (gui::drag_int("Tempo", "%X", v, 4, 15)) song.tempo = v;
+    if (gui::drag_int("Tempo", "%X", v, 4, 8)) song.tempo = v;
     gui::same_line();
     v = song.swing;
     gui::min_item_size({ widths[1], 0 });
@@ -668,16 +702,33 @@ void instrument_view() {
 
         // adsr
         constexpr char const* labels[] = { "Attack", "Decay", "Sustain", "Release" };
-        widths = calculate_column_widths({ -1, -1 });
-        for (int i = 0; i < 4; ++i) {
-            if (i % 2 > 0) gui::same_line();
-            gui::min_item_size({ widths[i % 2], 65 });
+        widths = calculate_column_widths({ -1, -1, 88 });
+        for (int i = 0; i < 2; ++i) {
+            if (i > 0) gui::same_line();
+            gui::min_item_size({ widths[i], 65 });
             gui::id(&inst.adsr[i]);
             int v = inst.adsr[i];
             if (gui::drag_int(labels[i], "%X", v, 0, 15)) {
                 inst.adsr[i] = v;
             }
         };
+        Vec c = gui::cursor();
+        gui::same_line();
+        gui::min_item_size({ 88, 65 * 2 + gui::PADDING });
+        if (gui::button("\x11", inst.hard_restart)) inst.hard_restart ^= 1;
+        gui::cursor(c);
+        for (int i = 0; i < 2; ++i) {
+            if (i > 0) gui::same_line();
+            gui::min_item_size({ widths[i], 65 });
+            gui::id(&inst.adsr[i]);
+            int v = inst.adsr[i];
+            if (gui::drag_int(labels[i + 2], "%X", v, 0, 15)) {
+                inst.adsr[i] = v;
+            }
+        };
+
+
+
         gui::separator();
         gfx::font(FONT_MONO);
 
@@ -1066,17 +1117,15 @@ bool init() {
 
     init_song();
 
-    wavelog::init(MIXRATE);
     SDL_AudioSpec spec = { MIXRATE, AUDIO_S16, 1, 0, 1024, 0, 0, audio_callback };
     SDL_OpenAudio(&spec, nullptr);
-    SDL_PauseAudio(0);
     return true;
 }
 
 
 void free() {
+    SDL_CloseAudio();
     SDL_free(m_pref_path);
-    wavelog::free();
 }
 
 
@@ -1126,7 +1175,6 @@ void draw() {
         if (y > 0) gui::padding({ 0, y });
 
         gfx::font(FONT_DEFAULT);
-        bool is_playing = player::is_playing();
         bool block_loop = player::block_loop();
         widths = calculate_column_widths({ -1, -1, -1 });
 
@@ -1138,16 +1186,18 @@ void draw() {
         gui::same_line();
         gui::min_item_size({ widths[1], 88 });
         if (gui::button("\x11")) {
-            player::stop();
+            m_edit.is_playing = false;
+            SDL_PauseAudio(1);
+            player::reset();
             player::block(m_edit.block);
         }
 
         // play/pause
         gui::same_line();
         gui::min_item_size({ widths[2], 88 });
-        if (gui::button("\x10\x12", is_playing)) {
-            if (is_playing) player::pause();
-            else player::play();
+        if (gui::button("\x10\x12", m_edit.is_playing)) {
+            SDL_PauseAudio(m_edit.is_playing);
+            m_edit.is_playing ^= 1;
         }
 
     }

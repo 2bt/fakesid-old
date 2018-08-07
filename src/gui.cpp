@@ -131,6 +131,17 @@ Vec cursor() {
     else return Vec(m_cursor_min.x, m_cursor_max.y);
 }
 
+void cursor(Vec const& c) {
+    if (m_same_line) {
+        m_cursor_max.x = c.x;
+        m_cursor_min.y = c.y;
+    }
+    else {
+        m_cursor_min.x = c.x;
+        m_cursor_max.y = c.y;
+    }
+}
+
 
 void id(void const* addr) {
     m_id = addr;
