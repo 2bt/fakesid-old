@@ -40,10 +40,6 @@ struct Channel {
     int               effect_row;
     int               pulsewidth_acc;
 
-    // TODO
-    //int               inst_pw  = 0;
-
-
     State    state;
     int      adsr[4];
     int      flags;
@@ -90,9 +86,7 @@ void tick() {
     // row_update
     if (m_frame == 0) {
         int block_nr = m_block;
-        if (m_block >= (int) m_song.table.size()) block_nr = 0;
-        m_block = block_nr;
-
+        if (block_nr >= m_song.table_length) block_nr = 0;
         Song::Block const& block = m_song.table[block_nr];
 
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
@@ -113,9 +107,9 @@ void tick() {
                 chan.inst_row = 0;
                 chan.gate = true;
 
-                // cause envelop reset
+                // cause envelop restart
                 // XXX: do we want that?
-                chan.state = RELEASE;
+                //chan.state = RELEASE;
 
                 // filter
                 if (inst.filter.length > 0) {
@@ -211,15 +205,47 @@ void tick() {
 
 
 
-    // advance
     int frames_per_row = m_song.tempo;
     if (m_row % 2 == 0) frames_per_row += m_song.swing;
 
+
+    // hard restart
+    // look two frames into the future
+    if (m_frame == frames_per_row - 2) {
+        int block_nr = m_block;
+        int row_nr   = m_row + 1;
+        if (row_nr >= TRACK_LENGTH) {
+            row_nr = 0;
+            if (!m_block_loop && ++block_nr >= m_song.table_length) {
+                block_nr = 0;
+            }
+        }
+        if (block_nr >= m_song.table_length) block_nr = 0;
+        Song::Block const& block = m_song.table[block_nr];
+
+        for (int c = 0; c < CHANNEL_COUNT; ++c) {
+            Channel& chan = m_channels[c];
+            int track_nr = block[c];
+            Track const& track = m_song.tracks[track_nr - 1];
+            Track::Row const& row = track.rows[row_nr];
+            if (row.instrument > 0) {
+                Instrument const& inst = m_song.instruments[row.instrument - 1];
+                if (inst.hard_restart) {
+                    chan.gate = false;
+                    chan.adsr[2] = 0;
+                    chan.adsr[3] = release_speeds[0];
+                }
+            }
+        }
+    }
+
+
+    // advance
     if (++m_frame >= frames_per_row) {
         m_frame = 0;
         if (++m_row >= TRACK_LENGTH) {
             m_row = 0;
-            if (!m_block_loop && ++m_block >= (int) m_song.table_length) {
+            if (!m_block_loop && ++m_block >= m_song.table_length) {
                 m_block = 0;
             }
         }
@@ -351,7 +377,12 @@ void reset() {
     m_frame = 0;
     m_row = 0;
     m_block = 0;
-    m_channels = {};
+    for (Channel& chan : m_channels) {
+        // i'm lazy
+        bool a = chan.active;
+        chan = {};
+        chan.active = a;
+    }
 }
 
 

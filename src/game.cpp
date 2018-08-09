@@ -394,10 +394,10 @@ void song_view() {
 
 
     // tempo and swing
-    auto widths = calculate_column_widths({ -1, -1 });
+    auto widths = calculate_column_widths({ -9, -5 });
     int v = song.tempo;
     gui::min_item_size({ widths[0], 0 });
-    if (gui::drag_int("Tempo", "%X", v, 4, 8)) song.tempo = v;
+    if (gui::drag_int("Tempo", "%X", v, 4, 12)) song.tempo = v;
     gui::same_line();
     v = song.swing;
     gui::min_item_size({ widths[1], 0 });
@@ -720,10 +720,10 @@ void instrument_view() {
         for (int i = 0; i < 2; ++i) {
             if (i > 0) gui::same_line();
             gui::min_item_size({ widths[i], 65 });
-            gui::id(&inst.adsr[i]);
-            int v = inst.adsr[i];
+            gui::id(&inst.adsr[i + 2]);
+            int v = inst.adsr[i + 2];
             if (gui::drag_int(labels[i + 2], "%X", v, 0, 15)) {
-                inst.adsr[i] = v;
+                inst.adsr[i + 2] = v;
             }
         };
 
@@ -987,6 +987,7 @@ void init_song() {
     {
         Instrument& i = s.instruments[0];
         strcpy(i.name.data(), "bass");
+        i.hard_restart = 1;
         i.adsr = { 1, 8, 8, 8 };
         i.rows[0] = { NOISE | GATE, OP_SET, 13 };
         i.rows[1] = { PULSE | GATE, OP_INC, 3 };
@@ -1004,6 +1005,7 @@ void init_song() {
         Instrument& i = s.instruments[1];
         strcpy(i.name.data(), "kick");
         i.adsr = { 1, 8, 8, 8 };
+        i.hard_restart = 1;
         i.rows[0] = { NOISE | GATE, OP_SET, 13 };
         i.rows[1] = { PULSE | GATE, OP_INC, 3 };
         i.length = 2;
@@ -1020,6 +1022,7 @@ void init_song() {
     {
         Instrument& i = s.instruments[2];
         strcpy(i.name.data(), "snare");
+        i.hard_restart = 1;
         i.adsr = { 1, 1, 7, 9 };
         i.rows[0] = { NOISE | GATE, OP_SET, 0x8 };
         i.rows[1] = { NOISE | GATE, OP_INC, 0x0 };

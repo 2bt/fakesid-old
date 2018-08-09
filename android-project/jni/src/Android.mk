@@ -13,10 +13,6 @@ LOCAL_CPP_FEATURES := rtti
 LOCAL_CFLAGS += -O2
 LOCAL_CPPFLAGS += -std=c++14
 
-#LOCAL_SRC_FILES := ../../../src/main.cpp\
-#                   ../../../src/gfx.cpp\
-#                   ../../../src/map.cpp
-
 LOCAL_SRC_FILES := $(patsubst $(LOCAL_PATH)/%,%,$(wildcard $(LOCAL_PATH)/../../../src/*.cpp))
 
 LOCAL_SHARED_LIBRARIES := SDL2 SDL2_image SDL2_mixer
