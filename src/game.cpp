@@ -1145,14 +1145,12 @@ void draw() {
         for (int i = 0; i < (int) views.size(); ++i) {
             if (i) gui::same_line();
             gui::min_item_size({ widths[i], 88 });
-            if (gui::button(views[i].name, m_view == i)) {
-                if (m_view != i) {
-                    // switch view
-                    m_view = (EView) i;
-                }
-                else {
+            bool button = gui::button(views[i].name, m_view == i);
+            bool hold = gui::hold();
+            if (button || hold) {
+                if (m_view == i || hold) {
                     // open select menu
-                    switch (m_view) {
+                    switch (i) {
                     case VIEW_TRACK:
                         m_edit.track_select.active = true;
                         m_edit.track_select.value = &m_edit.track;
@@ -1166,6 +1164,10 @@ void draw() {
                         break;
                     default: break;
                     }
+                }
+                else {
+                    // switch view
+                    m_view = (EView) i;
                 }
             }
         }

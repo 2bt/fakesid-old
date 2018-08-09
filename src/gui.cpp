@@ -219,7 +219,7 @@ bool button(char const* label, bool active) {
     if (m_active_item == nullptr && box.touched()) {
         color = color::button_hover;
         if (box.contains(m_prev_touch_pos)) {
-            if (++m_hold_count > 30) m_hold = true;
+            if (++m_hold_count > 20) m_hold = true;
         }
         else m_hold_count = 0;
         if (input::just_released()) clicked = true;
