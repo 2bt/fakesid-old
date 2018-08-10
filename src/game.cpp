@@ -717,7 +717,7 @@ void track_view() {
         gui::min_item_size({ w, 65 });
         if (gui::clavier(row.note, m_edit.clavier_offset, highlight)) {
             if (row.note == 0) row = {};
-            else {
+            else if (row.instrument == 0 && row.effect == 0) {
                 row.instrument = m_edit.instrument;
                 row.effect     = m_edit.effect;
             }
