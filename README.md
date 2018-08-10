@@ -2,7 +2,7 @@
 
 This is a chiptune tracker for android that's trying to sound a lot like the MOS Technology SID.
 The synth code is based on TinySID by Tammo Hinrichs (kb).
-Many details of SID chip aren't emulated correctly.
+Some details of the SID chip aren't emulated correctly but it's close enough, I think.
 Also, I added a fourth voice (but you don't have to use it if you don't want to, of course).
 
 The tracker is highly inspired by [lft's Blackbird](https://csdb.dk/release/?id=161554).
