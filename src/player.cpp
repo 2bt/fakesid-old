@@ -208,7 +208,6 @@ void tick() {
     int frames_per_row = m_song.tempo;
     if (m_row % 2 == 0) frames_per_row += m_song.swing;
 
-
     // hard restart
     // look two frames into the future
     if (m_frame == frames_per_row - 2) {
@@ -226,8 +225,10 @@ void tick() {
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
             Channel& chan = m_channels[c];
             int track_nr = block[c];
+            if (track_nr == 0) continue;
             Track const& track = m_song.tracks[track_nr - 1];
             Track::Row const& row = track.rows[row_nr];
+
             if (row.instrument > 0) {
                 Instrument const& inst = m_song.instruments[row.instrument - 1];
                 if (inst.hard_restart) {

@@ -118,7 +118,7 @@ Vec text_size(char const* str) {
             continue;
         }
         int i = glm::clamp(c, 16, 127);
-        width += c < 32 ? spec.width - 1: spec.spacing[i - 32];
+        width += c < 32 ? spec.width - 1 : spec.spacing[i - 32];
         size.x = std::max(size.x, width);
     }
     return size;
@@ -136,11 +136,12 @@ void print(Vec const& pos, char const* str) {
             continue;
         }
         int i = glm::clamp(c, 16, 127);
-        src.w = dst.w = c < 32 ? spec.width - 1: spec.spacing[i - 32];
+        int width = dst.w = c < 32 ? spec.width - 1 : spec.spacing[i - 32];
+        src.w     = dst.w = c < 32 ? spec.width     : spec.spacing[i - 32];
         src.x = i % 16 * spec.width;
         src.y = i / 16 * spec.height;
         render(spec.texture, src, dst);
-        dst.x += dst.w;
+        dst.x += width;
     }
 }
 

@@ -5,17 +5,12 @@
 #include <vector>
 #include <algorithm>
 #include <dirent.h>
+#include <unistd.h>
+#include <sys/stat.h>
+
 
 namespace game {
 namespace {
-
-enum {
-    PAGE_LENGTH = 16
-};
-
-
-static std::array<char, 256> m_song_path = { '.' };
-
 
 void audio_callback(void* userdata, Uint8* stream, int len) {
     player::fill_buffer((short*) stream, len / 2);
@@ -62,7 +57,6 @@ struct Cache {
     struct Entry {
         uint32_t age;
         int      data;
-//        bool operator<(Entry const& rhs) const { return data < rhs.data; }
     };
     std::array<Entry, SIZE> entries;
     void insert(int data) {
@@ -76,43 +70,9 @@ struct Cache {
         }
         f->data = data;
         f->age = 0;
-//        std::sort(entries.begin(), entries.end());
     }
 };
 
-
-struct Edit {
-    int        track          = 1;
-    int        clavier_offset = 36;
-    int        track_page     = 0;
-    int        song_scroll    = 0;
-    int        instrument     = 1;
-    int        effect         = 1;
-    int        block          = 0;
-    bool       filter_mode    = false;
-
-
-    Track      copy_track;
-    Instrument copy_inst;
-    Effect     copy_effect;
-
-    Cache      inst_cache;
-    Cache      effect_cache;
-
-
-    struct {
-        bool active;
-        bool allow_nil;
-        int* value;
-    } track_select;
-
-
-    bool instrument_select_active;
-    bool effect_select_active;
-
-    bool is_playing = false;
-
-} m_edit;
 
 
 enum EView {
@@ -129,21 +89,50 @@ void track_view();
 void instrument_view();
 void effect_view();
 
-EView m_view = VIEW_PROJECT;
-
 struct View {
     char const* name;
     void (*draw)(void);
 };
 
-constexpr std::array<View, 5> views = {
-    View{ "Project", project_view },
-    View{ "Song", song_view },
-    View{ "Track", track_view },
-    View{ "Instrum.", instrument_view },
-    View{ "Effect", effect_view },
-};
+struct Edit {
+    EView view = VIEW_PROJECT;
 
+    int                      file_scroll;
+    std::string              dir_name = ".";
+    std::array<char, 25>     file_name;
+    std::vector<std::string> file_names;
+
+
+    int  track          = 1;
+    int  clavier_offset = 36;
+    int  track_page     = 0;
+    int  song_scroll    = 0;
+    int  instrument     = 1;
+    int  effect         = 1;
+    int  block          = 0;
+    bool filter_mode    = false;
+
+
+    Track      copy_track;
+    Instrument copy_inst;
+    Effect     copy_effect;
+
+    Cache      inst_cache;
+    Cache      effect_cache;
+
+    struct {
+        bool active;
+        bool allow_nil;
+        int* value;
+    } track_select;
+
+
+    bool instrument_select_active;
+    bool effect_select_active;
+
+    bool is_playing = false;
+
+} m_edit;
 
 
 void sprint_track_id(char* dst, int nr) {
@@ -307,41 +296,107 @@ bool track_select() {
 }
 
 
+enum {
+    PAGE_LENGTH = 16
+};
+
+
+
+void init_file_names() {
+    m_edit.file_names.clear();
+    if (DIR* dir = opendir(m_edit.dir_name.c_str())) {
+        while (struct dirent* ent = readdir(dir)) {
+            if (ent->d_type == DT_REG) {
+                m_edit.file_names.emplace_back(ent->d_name);
+            }
+        }
+        closedir(dir);
+        std::sort(m_edit.file_names.begin(), m_edit.file_names.end());
+    }
+}
+
 
 void project_view() {
-//    gui::text("%s", m_song_path.data());
-//    static std::vector<std::string> m_files;
-//    if (gui::button("X")) {
-//        m_files.clear();
-//        if (DIR* dir = opendir(m_song_path.data())) {
-//            while (struct dirent* ent = readdir(dir)) {
-//                if (ent->d_type == DT_REG) {
-//                    m_files.emplace_back(ent->d_name);
-//                }
-//            }
-//            closedir(dir);
-//            std::sort(m_files.begin(), m_files.end());
-//        }
-//    }
-//    for (std::string const& s : m_files) gui::text(s.c_str());
 
-    auto widths = calculate_column_widths({ -1, -1 });
-    gfx::font(FONT_DEFAULT);
+    enum {
+        PAGE_LENGTH = 8
+    };
+
+
+    // file select
+    auto widths = calculate_column_widths({ -1, gui::SEPARATOR_WIDTH, 65 });
     gui::min_item_size({ widths[0], 88 });
-    {
-        static std::array<char, 512> path;
-        if (gui::button("Load")) {
-            snprintf(path.data(), path.size(), "%s/song", m_song_path.data());
-            load_song(player::song(), path.data());
+    gui::input_text(m_edit.file_name.data(), m_edit.file_name.size() - 1);
+    gui::same_line();
+    gui::separator();
+    gui::padding({ widths[2], 0 });
+    gui::separator();
+    gui::same_line();
+    Vec c1 = gui::cursor() + Vec(-65 - gui::PADDING, + gui::PADDING + gui::SEPARATOR_WIDTH);
+    gui::next_line();
+
+    int max_scroll = std::max<int>(PAGE_LENGTH, m_edit.file_names.size()) - PAGE_LENGTH;
+    if (m_edit.file_scroll > max_scroll) m_edit.file_scroll = max_scroll;
+
+    for (int i = 0; i < PAGE_LENGTH; ++i) {
+        int nr = i + m_edit.file_scroll;
+        gui::min_item_size({ widths[0], 65 });
+        if (nr < (int) m_edit.file_names.size()) {
+            bool select = strcmp(m_edit.file_names[nr].c_str(), m_edit.file_name.data()) == 0;
+            if (gui::button(m_edit.file_names[nr].c_str(), select)) {
+                strcpy(m_edit.file_name.data(), m_edit.file_names[nr].c_str());
+            }
+        }
+        else {
+            gui::padding({});
         }
         gui::same_line();
-        gui::min_item_size({ widths[1], 88 });
-        if (gui::button("Save")) {
-            snprintf(path.data(), path.size(), "%s/song", m_song_path.data());
-            save_song(player::song(), path.data());
+        gui::separator();
+        gui::padding({ widths[2], 0 });
+    }
+
+
+    // scrollbar
+    Vec c2 = gui::cursor();
+    gui::cursor(c1);
+    gui::min_item_size({ 65, c2.y - c1.y - gui::PADDING });
+    gui::vertical_drag_int(m_edit.file_scroll, 0, max_scroll, PAGE_LENGTH);
+    gui::cursor(c2);
+    gui::separator();
+
+    // file buttons
+    widths = calculate_column_widths({ -1, -1, -1 });
+    gfx::font(FONT_DEFAULT);
+    gui::min_item_size({ widths[0], 88 });
+    if (gui::button("Load")) {
+        std::string name = m_edit.file_name.data();
+        if (std::find(m_edit.file_names.begin(), m_edit.file_names.end(), name) != m_edit.file_names.end()) {
+            std::string path = m_edit.dir_name + name;
+            load_song(player::song(), path.c_str());
+        }
+    }
+    gui::same_line();
+    gui::min_item_size({ widths[1], 88 });
+    if (gui::button("Save")) {
+        std::string name = m_edit.file_name.data();
+        std::string path = m_edit.dir_name + name;
+        save_song(player::song(), path.c_str());
+        init_file_names();
+    }
+    gui::same_line();
+    gui::min_item_size({ widths[2], 88 });
+    if (gui::button("Delete")) {
+        std::string name = m_edit.file_name.data();
+        if (std::find(m_edit.file_names.begin(), m_edit.file_names.end(), name) != m_edit.file_names.end()) {
+            std::string path = m_edit.dir_name + name;
+            unlink(path.c_str());
+            init_file_names();
         }
     }
 
+
+
+    // export
     // TODO: make it incremental
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("Export to ogg")) {
@@ -457,7 +512,7 @@ void song_view() {
                 if (block[c] > 0 && gui::hold()) {
                     gui::block_touch();
                     m_edit.track = block[c];
-                    m_view = VIEW_TRACK;
+                    m_edit.view = VIEW_TRACK;
                 }
             }
         }
@@ -503,6 +558,8 @@ void song_view() {
             ++song.table_length;
         }
     }
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
+    gui::separator();
 }
 
 
@@ -667,6 +724,7 @@ void track_view() {
     inst_cache();
     gui::separator();
     effect_cache();
+    gui::separator();
 }
 
 
@@ -886,7 +944,7 @@ void instrument_view() {
         }
     }
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
-
+    gui::separator();
 }
 
 
@@ -965,7 +1023,7 @@ void effect_view() {
         ++effect.length;
     }
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
-
+    gui::separator();
 }
 
 
@@ -973,9 +1031,20 @@ void effect_view() {
 
 
 bool init() {
+
+    // paths
 #ifdef __ANDROID__
-    if (char const* p = SDL_AndroidGetExternalStoragePath()) strcpy(m_song_path.data(), p);
+    m_edit.dir_name = SDL_AndroidGetExternalStoragePath();
 #endif
+
+    m_edit.dir_name += "/songs/";
+    struct stat st = {};
+    if (stat(m_edit.dir_name.c_str(), &st) == -1) {
+        mkdir(m_edit.dir_name.c_str(), 0700);
+    }
+    strcpy(m_edit.file_name.data(), "my_song");
+    init_file_names();
+
 
     init_song(player::song());
 
@@ -999,14 +1068,22 @@ void draw() {
         gfx::font(FONT_DEFAULT);
 
         // view select buttons
+        constexpr std::array<View, 5> views = {
+            View{ "Project", project_view },
+            View{ "Song", song_view },
+            View{ "Track", track_view },
+            View{ "Instrum.", instrument_view },
+            View{ "Effect", effect_view },
+        };
+
         auto widths = calculate_column_widths(std::vector<int>(views.size(), -1));
         for (int i = 0; i < (int) views.size(); ++i) {
             if (i) gui::same_line();
             gui::min_item_size({ widths[i], 88 });
-            bool button = gui::button(views[i].name, m_view == i);
+            bool button = gui::button(views[i].name, m_edit.view == i);
             bool hold = gui::hold();
             if (button || hold) {
-                if (m_view == i || hold) {
+                if (m_edit.view == i || hold) {
                     // open select menu
                     switch (i) {
                     case VIEW_TRACK:
@@ -1025,18 +1102,16 @@ void draw() {
                 }
                 else {
                     // switch view
-                    m_view = (EView) i;
+                    m_edit.view = (EView) i;
+                    if (m_edit.view == VIEW_PROJECT) init_file_names();
                 }
             }
         }
         gui::separator();
 
-        views[m_view].draw();
+        views[m_edit.view].draw();
 
-        // stop and play
-        int y = gfx::screensize().y - gui::cursor().y - gui::PADDING * 3 - 88;
-        if (y > 0) gui::padding({ 0, y });
-
+        gui::cursor({ 0, gfx::screensize().y  - gui::PADDING * 2 - 88 });
         gfx::font(FONT_DEFAULT);
         bool block_loop = player::block_loop();
         widths = calculate_column_widths({ -1, -1, -1 });
