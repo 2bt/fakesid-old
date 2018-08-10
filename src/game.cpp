@@ -332,6 +332,10 @@ void init_file_names() {
 
 void project_view() {
 
+    enum {
+        PAGE_LENGTH = 8
+    };
+
     // file select
     int max_scroll = std::max<int>(PAGE_LENGTH, m_edit.file_names.size()) - PAGE_LENGTH;
     if (m_edit.file_scroll > max_scroll) m_edit.file_scroll = max_scroll;
@@ -404,8 +408,8 @@ void project_view() {
     }
 
 
-
-    // export
+// TODO: export in android
+#ifndef __ANDROID__
     // TODO: make it incremental
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("Export to ogg")) {
@@ -436,6 +440,10 @@ void project_view() {
         }
         wavelog::free();
     }
+#endif
+
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
+    gui::separator();
 
 }
 
