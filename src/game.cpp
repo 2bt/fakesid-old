@@ -4,7 +4,7 @@
 #include "wavelog.hpp"
 #include <vector>
 #include <algorithm>
-
+#include <dirent.h>
 
 namespace game {
 namespace {
@@ -13,8 +13,8 @@ enum {
     PAGE_LENGTH = 16
 };
 
-char* m_pref_path;
 
+static std::array<char, 256> m_song_path = { '.' };
 
 
 void audio_callback(void* userdata, Uint8* stream, int len) {
@@ -85,7 +85,7 @@ struct Edit {
     int        track          = 1;
     int        clavier_offset = 36;
     int        track_page     = 0;
-    int        song_page      = 0;
+    int        song_scroll    = 0;
     int        instrument     = 1;
     int        effect         = 1;
     int        block          = 0;
@@ -307,27 +307,38 @@ bool track_select() {
 }
 
 
-void project_view() {
 
+void project_view() {
+//    gui::text("%s", m_song_path.data());
+//    static std::vector<std::string> m_files;
+//    if (gui::button("X")) {
+//        m_files.clear();
+//        if (DIR* dir = opendir(m_song_path.data())) {
+//            while (struct dirent* ent = readdir(dir)) {
+//                if (ent->d_type == DT_REG) {
+//                    m_files.emplace_back(ent->d_name);
+//                }
+//            }
+//            closedir(dir);
+//            std::sort(m_files.begin(), m_files.end());
+//        }
+//    }
+//    for (std::string const& s : m_files) gui::text(s.c_str());
 
     auto widths = calculate_column_widths({ -1, -1 });
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ widths[0], 88 });
     {
-        static std::array<char, 1024> path;
+        static std::array<char, 512> path;
         if (gui::button("Load")) {
-            if (m_pref_path) {
-                snprintf(path.data(), path.size(), "%ssong", m_pref_path);
-                load_song(player::song(), path.data());
-            }
+            snprintf(path.data(), path.size(), "%s/song", m_song_path.data());
+            load_song(player::song(), path.data());
         }
         gui::same_line();
         gui::min_item_size({ widths[1], 88 });
         if (gui::button("Save")) {
-            if (m_pref_path) {
-                snprintf(path.data(), path.size(), "%ssong", m_pref_path);
-                save_song(player::song(), path.data());
-            }
+            snprintf(path.data(), path.size(), "%s/song", m_song_path.data());
+            save_song(player::song(), path.data());
         }
     }
 
@@ -371,17 +382,15 @@ void song_view() {
 
     // tempo and swing
     auto widths = calculate_column_widths({ -9, -5 });
-    int v = song.tempo;
     gui::min_item_size({ widths[0], 0 });
-    if (gui::drag_int("Tempo", "%X", v, 4, 12)) song.tempo = v;
+    gui::drag_int("Tempo", "%X", song.tempo, 4, 12);
     gui::same_line();
-    v = song.swing;
     gui::min_item_size({ widths[1], 0 });
-    if (gui::drag_int("Swing", "%X", v, 0, 4)) song.swing = v;
+    gui::drag_int("Swing", "%X", song.swing, 0, 4);
     gui::separator();
 
     // mute buttons
-    widths = calculate_column_widths({ 88, 6, -1, -1, -1, -1 });
+    widths = calculate_column_widths({ 88, gui::SEPARATOR_WIDTH, -1, -1, -1, -1, gui::SEPARATOR_WIDTH, 65 });
     gui::padding({ widths[0], 65 });
     gui::same_line();
     gui::separator();
@@ -390,15 +399,22 @@ void song_view() {
     char str[] = "Voice .";
     for (int c = 0; c < CHANNEL_COUNT; ++c) {
         str[6] = '1' + c;
-        gui::same_line();
         gui::min_item_size({ widths[c + 2], 65 });
         bool a = player::is_channel_active(c);
         if (gui::button(str, a)) {
             player::set_channel_active(c, !a);
         }
+        gui::same_line();
     }
 
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
+    gui::separator();
+
+    // prepare scrollbar
+    int max_scroll = std::max<int>(PAGE_LENGTH, song.table_length) - PAGE_LENGTH;
+    if (m_edit.song_scroll > max_scroll) m_edit.song_scroll = max_scroll;
+    Vec c1 = gui::cursor() + Vec(0, 65 + gui::PADDING * 2 + gui::SEPARATOR_WIDTH);
+
+    gui::padding({ 65, 0 });
     gui::separator();
 
     auto& table = song.table;
@@ -406,7 +422,7 @@ void song_view() {
     gfx::font(FONT_MONO);
     int player_block = player::block();
     for (int i = 0; i < PAGE_LENGTH; ++i) {
-        int block_nr = m_edit.song_page * PAGE_LENGTH + i;
+        int block_nr = m_edit.song_scroll + i;
         bool highlight = block_nr == player_block;
 
         sprintf(str, "%02X", block_nr);
@@ -418,42 +434,49 @@ void song_view() {
         gui::same_line();
         gui::separator();
         if (block_nr >= song.table_length) {
-            gui::padding({});
-            continue;
-        }
-
-
-        Song::Block& block = table[block_nr];
-
-        for (int c = 0; c < CHANNEL_COUNT; ++c) {
-
-            gui::same_line();
-
-            char str[3];
-            sprint_track_id(str, block[c]);
-            gui::min_item_size({ widths[c + 2], 65 });
-            if (highlight) gui::highlight();
-            if (gui::button(str)) {
-                m_edit.track_select.active = true;
-                m_edit.track_select.value = &block[c];
-                m_edit.track_select.allow_nil = true;
-            }
-            if (block[c] > 0 && gui::hold()) {
-                gui::block_touch();
-                m_edit.track = block[c];
-                m_view = VIEW_TRACK;
+            for (int c = 0; c < CHANNEL_COUNT; ++c) {
+                gui::same_line();
+                gui::min_item_size({ widths[c + 2], 65 });
+                gui::padding({});
             }
         }
+        else {
+
+            Song::Block& block = table[block_nr];
+            for (int c = 0; c < CHANNEL_COUNT; ++c) {
+                gui::same_line();
+                char str[3];
+                sprint_track_id(str, block[c]);
+                gui::min_item_size({ widths[c + 2], 65 });
+                if (highlight) gui::highlight();
+                if (gui::button(str)) {
+                    m_edit.track_select.active = true;
+                    m_edit.track_select.value = &block[c];
+                    m_edit.track_select.allow_nil = true;
+                }
+                if (block[c] > 0 && gui::hold()) {
+                    gui::block_touch();
+                    m_edit.track = block[c];
+                    m_view = VIEW_TRACK;
+                }
+            }
+        }
+
+        gui::same_line();
+        gui::separator();
+        gui::padding({});
+
     }
+
+    // song scrollbar
+    Vec c2 = gui::cursor();
+    gui::cursor(c1);
+    gui::min_item_size({ 65, c2.y - c1.y - gui::PADDING });
+    gui::vertical_drag_int("%X", m_edit.song_scroll, 0, max_scroll, PAGE_LENGTH);
+    gui::cursor(c2);
+
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
     gui::separator();
-
-    // song pages
-    gfx::font(FONT_DEFAULT);
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
-    gui::drag_int("Page", "%X", m_edit.song_page, 0, (song.table_length + PAGE_LENGTH - 1) / PAGE_LENGTH - 1);
-    gui::separator();
-
 
 
     // buttons
@@ -624,7 +647,6 @@ void track_view() {
     gui::separator();
 
     // track pages
-    gfx::font(FONT_DEFAULT);
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
     gui::drag_int("Page", "%X", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
 
@@ -662,7 +684,6 @@ void instrument_view() {
     gui::separator();
 
 
-
     // wave/filter switch
     gfx::font(FONT_DEFAULT);
     widths = calculate_column_widths({ -1, -1 });
@@ -682,11 +703,7 @@ void instrument_view() {
         for (int i = 0; i < 2; ++i) {
             if (i > 0) gui::same_line();
             gui::min_item_size({ widths[i], 65 });
-            gui::id(&inst.adsr[i]);
-            int v = inst.adsr[i];
-            if (gui::drag_int(labels[i], "%X", v, 0, 15)) {
-                inst.adsr[i] = v;
-            }
+            gui::drag_int(labels[i], "%X", inst.adsr[i], 0, 15);
         };
         Vec c = gui::cursor();
         gui::same_line();
@@ -696,13 +713,8 @@ void instrument_view() {
         for (int i = 0; i < 2; ++i) {
             if (i > 0) gui::same_line();
             gui::min_item_size({ widths[i], 65 });
-            gui::id(&inst.adsr[i + 2]);
-            int v = inst.adsr[i + 2];
-            if (gui::drag_int(labels[i + 2], "%X", v, 0, 15)) {
-                inst.adsr[i + 2] = v;
-            }
+            gui::drag_int(labels[i], "%X", inst.adsr[i + 2], 0, 15);
         };
-
 
 
         gui::separator();
@@ -753,9 +765,7 @@ void instrument_view() {
             if (gui::button(str)) row.operation = !row.operation;
             gui::same_line();
             gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
-            int v = row.value;
-            gui::id(&row.value);
-            if (gui::drag_int("", "%02X", v, 0, 31)) row.value = v;
+            gui::drag_int("", "%02X", row.value, 0, 31);
         }
 
         gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
@@ -827,10 +837,8 @@ void instrument_view() {
             gui::same_line();
             gui::separator();
 
-            int v = row.resonance;
             gui::min_item_size({ 240, 65 });
-            gui::id(&row.resonance);
-            if (gui::drag_int("", "%X", v, 0, 15)) row.resonance = v;
+            gui::drag_int("", "%X", row.resonance, 0, 15);
 
 
             // operation
@@ -844,9 +852,7 @@ void instrument_view() {
             // cutoff
             gui::same_line();
             gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
-            v = row.value;
-            gui::id(&row.value);
-            if (gui::drag_int("", "%02X", v, 0, 31)) row.value = v;
+            gui::drag_int("", "%02X", row.value, 0, 31);
         }
 
         gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
@@ -955,8 +961,9 @@ void effect_view() {
 
 
 bool init() {
-    m_pref_path = SDL_GetPrefPath("sdl", "insidious");
-    if (!m_pref_path) return false;
+#ifdef __ANDROID__
+    if (char const* p = SDL_AndroidGetExternalStoragePath()) strcpy(m_song_path.data(), p);
+#endif
 
     init_song(player::song());
 
@@ -968,7 +975,6 @@ bool init() {
 
 void free() {
     SDL_CloseAudio();
-    SDL_free(m_pref_path);
 }
 
 

@@ -4,7 +4,10 @@
 enum { CLAVIER_WIDTH = 24 };
 
 namespace gui {
-    enum { PADDING = 2 };
+    enum {
+        PADDING = 2,
+        SEPARATOR_WIDTH = 6,
+    };
     bool process_event(const SDL_Event& e);
     Vec  cursor();
     void cursor(Vec const& c);
@@ -21,5 +24,15 @@ namespace gui {
     void block_touch();
     void input_text(char* str, int len);
     bool drag_int(char const* label, char const* fmt, int& value, int min, int max, int page = 1);
+    bool vertical_drag_int(char const* fmt, int& value, int min, int max, int page = 1);
     bool clavier(uint8_t& n, int offset, bool highlight);
+
+    template<class T>
+    bool drag_int(char const* label, char const* fmt, T& value, int min, int max, int page = 1) {
+        int v = value;
+        id(&value);
+        bool b = drag_int(label, fmt, v, min, max, page);
+        if (b) value = v;
+        return b;
+    }
 }

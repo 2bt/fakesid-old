@@ -142,7 +142,7 @@ void cursor(Vec const& c) {
 
 
 void id(void const* addr) {
-    m_id = addr;
+    if (!m_id) m_id = addr;
 }
 
 
@@ -179,15 +179,14 @@ void padding(Vec const& size) {
 }
 
 void separator() {
-    enum { WIDTH = 6 };
     gfx::color(color::separator);
     if (m_same_line) {
-        Box box = item_box({ WIDTH, m_cursor_max.y - m_cursor_min.y - PADDING });
+        Box box = item_box({ SEPARATOR_WIDTH, m_cursor_max.y - m_cursor_min.y - PADDING });
         m_same_line = true;
         gfx::rectangle(box.pos + Vec(0, -PADDING), box.size + Vec(0, PADDING * 2), 0);
     }
     else {
-        Box box = item_box({ m_cursor_max.x - m_cursor_min.x - PADDING, WIDTH });
+        Box box = item_box({ m_cursor_max.x - m_cursor_min.x - PADDING, SEPARATOR_WIDTH });
         gfx::rectangle(box.pos + Vec(-PADDING, 0), box.size + Vec(PADDING * 2, 0), 0);
     }
 }
@@ -324,7 +323,7 @@ bool drag_int(char const* label, char const* fmt, int& value, int min, int max, 
     int handle_w = box.size.x * page / (range + page);
     int handle_x = range == 0 ? 0 : (value - min) * (box.size.x - handle_w) / range;
 
-    void const* id = get_id(label);
+    void const* id = get_id(&value);
     if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
         m_active_item = id;
     }
@@ -353,6 +352,41 @@ bool drag_int(char const* label, char const* fmt, int& value, int min, int max, 
 
     return value != old_value;
 }
+
+bool vertical_drag_int(char const* fmt, int& value, int min, int max, int page) {
+    gfx::font(FONT_MONO);
+    print_to_text_buffer(fmt, value);
+    Vec s = gfx::text_size(m_text_buffer.data());
+    Box box = item_box(s);
+    int range = max - min;
+    int handle_h = box.size.y * page / (range + page);
+    int handle_y = range == 0 ? 0 : (value - min) * (box.size.y - handle_h) / range;
+
+    void const* id = get_id(&value);
+    if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
+        m_active_item = id;
+    }
+    int old_value = value;
+    if (m_active_item == id) {
+        int y = m_touch_pos.y - box.pos.y;
+        int v = min;
+        if (range > 0) v += (y - handle_h * (page - 1) / (2 * page)) * range / (box.size.y - handle_h);
+        value = glm::clamp(v, min, max);
+    }
+
+    gfx::color(color::drag);
+    gfx::rectangle(box.pos, box.size, 0);
+
+    gfx::color(m_active_item == id ? color::handle_active : color::handle_normal);
+    gfx::rectangle(box.pos + Vec(0, handle_y), { box.size.x, handle_h }, 0);
+
+//    gfx::font(FONT_MONO);
+//    gfx::color(color::text);
+//    gfx::print(box.pos + Vec(box.size.x - s2.x - 15, box.size.y / 2 - s2.y / 2), m_text_buffer.data());
+
+    return value != old_value;
+}
+
 
 
 bool clavier(uint8_t& n, int offset, bool highlight) {
