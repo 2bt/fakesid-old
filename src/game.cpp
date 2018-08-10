@@ -182,26 +182,33 @@ bool instrument_select() {
 
     for (int y = 0; y < INSTRUMENT_COUNT / 2; ++y) {
         for (int x = 0; x < 2; ++x) {
-            if (x) gui::same_line();
-
             int nr = y + x * (INSTRUMENT_COUNT / 2) + 1;
             Instrument const& inst = song.instruments[nr - 1];
 
-            Vec c = gui::cursor() + Vec(gui::PADDING);
+            Vec c1 = gui::cursor();
             gui::min_item_size({ widths[x], 65 });
             if (inst.length > 0) gui::highlight();
             if (gui::button("", nr == m_edit.instrument)) {
                 m_edit.instrument_select_active = false;
                 set_instrument(nr);
             }
+
+            gui::same_line();
+            Vec c2 = gui::cursor();
+            gui::cursor(c1);
+            gui::min_item_size({ 65, 65 });
             char str[2];
             sprint_inst_effect_id(str, nr);
             gfx::font(FONT_MONO);
-            gfx::print(c + Vec(65 / 2) - gfx::text_size(str) / 2, str);
-            char const* name = inst.name.data();
+            gui::text(str);
             gfx::font(FONT_DEFAULT);
-            gfx::print(c + Vec(65 + (widths[x] - 65) / 2, 65 / 2) - gfx::text_size(name) / 2, name);
+            gui::same_line();
+            gui::min_item_size({ widths[x] - 65 - gui::PADDING, 65 });
+            gui::text(inst.name.data());
+            gui::same_line();
+            gui::cursor(c2);
         }
+        gui::next_line();
     }
     gui::separator();
 
@@ -223,26 +230,33 @@ bool effect_select() {
 
     for (int y = 0; y < EFFECT_COUNT / 2; ++y) {
         for (int x = 0; x < 2; ++x) {
-            if (x) gui::same_line();
-
             int nr = y + x * (EFFECT_COUNT / 2) + 1;
             Effect const& effect = song.effects[nr - 1];
 
-            Vec c = gui::cursor() + Vec(gui::PADDING);
+            Vec c1 = gui::cursor();
             gui::min_item_size({ widths[x], 65 });
             if (effect.length > 0) gui::highlight();
             if (gui::button("", nr == m_edit.effect)) {
                 m_edit.effect_select_active = false;
                 set_effect(nr);
             }
+
+            gui::same_line();
+            Vec c2 = gui::cursor();
+            gui::cursor(c1);
+            gui::min_item_size({ 65, 65 });
             char str[2];
             sprint_inst_effect_id(str, nr);
             gfx::font(FONT_MONO);
-            gfx::print(c + Vec(65 / 2) - gfx::text_size(str) / 2, str);
-            char const* name = effect.name.data();
+            gui::text(str);
             gfx::font(FONT_DEFAULT);
-            gfx::print(c + Vec(65 + (widths[x] - 65) / 2, 65 / 2) - gfx::text_size(name) / 2, name);
+            gui::same_line();
+            gui::min_item_size({ widths[x] - 65 - gui::PADDING, 65 });
+            gui::text(effect.name.data());
+            gui::same_line();
+            gui::cursor(c2);
         }
+        gui::next_line();
     }
     gui::separator();
 
@@ -318,26 +332,15 @@ void init_file_names() {
 
 void project_view() {
 
-    enum {
-        PAGE_LENGTH = 8
-    };
-
-
     // file select
-    auto widths = calculate_column_widths({ -1, gui::SEPARATOR_WIDTH, 65 });
-    gui::min_item_size({ widths[0], 88 });
-    gui::input_text(m_edit.file_name.data(), m_edit.file_name.size() - 1);
-    gui::same_line();
-    gui::separator();
-    gui::padding({ widths[2], 0 });
-    gui::separator();
+    int max_scroll = std::max<int>(PAGE_LENGTH, m_edit.file_names.size()) - PAGE_LENGTH;
+    if (m_edit.file_scroll > max_scroll) m_edit.file_scroll = max_scroll;
+
     gui::same_line();
     Vec c1 = gui::cursor() + Vec(-65 - gui::PADDING, + gui::PADDING + gui::SEPARATOR_WIDTH);
     gui::next_line();
 
-    int max_scroll = std::max<int>(PAGE_LENGTH, m_edit.file_names.size()) - PAGE_LENGTH;
-    if (m_edit.file_scroll > max_scroll) m_edit.file_scroll = max_scroll;
-
+    auto widths = calculate_column_widths({ -1, gui::SEPARATOR_WIDTH, 65 });
     for (int i = 0; i < PAGE_LENGTH; ++i) {
         int nr = i + m_edit.file_scroll;
         gui::min_item_size({ widths[0], 65 });
@@ -355,7 +358,6 @@ void project_view() {
         gui::padding({ widths[2], 0 });
     }
 
-
     // scrollbar
     Vec c2 = gui::cursor();
     gui::cursor(c1);
@@ -363,6 +365,13 @@ void project_view() {
     gui::vertical_drag_int(m_edit.file_scroll, 0, max_scroll, PAGE_LENGTH);
     gui::cursor(c2);
     gui::separator();
+
+    // name
+    widths = calculate_column_widths({ -1 });
+    gui::min_item_size({ widths[0], 88 });
+    gui::input_text(m_edit.file_name.data(), m_edit.file_name.size() - 1);
+    gui::separator();
+
 
     // file buttons
     widths = calculate_column_widths({ -1, -1, -1 });
@@ -1042,7 +1051,6 @@ bool init() {
     if (stat(m_edit.dir_name.c_str(), &st) == -1) {
         mkdir(m_edit.dir_name.c_str(), 0700);
     }
-    strcpy(m_edit.file_name.data(), "my_song");
     init_file_names();
 
 
