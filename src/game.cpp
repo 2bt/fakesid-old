@@ -16,43 +16,6 @@ enum {
 char* m_pref_path;
 
 
-bool save_song(char const* name) {
-    if (!m_pref_path) return false;
-    static std::array<char, 1024> path;
-    snprintf(path.data(), path.size(), "%s%s", m_pref_path, name);
-    SDL_RWops* file = SDL_RWFromFile(path.data(), "wb");
-    if (!file) return false;
-    Song& s = player::song();
-    SDL_WriteU8(file, s.tempo);
-    SDL_WriteU8(file, s.swing);
-    SDL_RWwrite(file, s.tracks.data(), sizeof(Track), s.tracks.size());
-    SDL_RWwrite(file, s.instruments.data(), sizeof(Instrument), s.instruments.size());
-    SDL_RWwrite(file, s.effects.data(), sizeof(Effect), s.effects.size());
-    SDL_WriteLE16(file, s.table_length);
-    SDL_RWwrite(file, s.table.data(), sizeof(Song::Block), s.table_length);
-    SDL_RWclose(file);
-    return true;
-}
-
-
-bool load_song(char const* name) {
-    if (!m_pref_path) return false;
-    static std::array<char, 1024> path;
-    snprintf(path.data(), path.size(), "%s%s", m_pref_path, name);
-    SDL_RWops* file = SDL_RWFromFile(path.data(), "rb");
-    if (!file) return false;
-    Song& s = player::song();
-    s.tempo = SDL_ReadU8(file);
-    s.swing = SDL_ReadU8(file);
-    SDL_RWread(file, s.tracks.data(), sizeof(Track), s.tracks.size());
-    SDL_RWread(file, s.instruments.data(), sizeof(Instrument), s.instruments.size());
-    SDL_RWread(file, s.effects.data(), sizeof(Effect), s.effects.size());
-    s.table_length = SDL_ReadLE16(file);
-    SDL_RWread(file, s.table.data(), sizeof(Song::Block), s.table_length);
-    SDL_RWclose(file);
-    return true;
-}
-
 
 void audio_callback(void* userdata, Uint8* stream, int len) {
     player::fill_buffer((short*) stream, len / 2);
@@ -346,14 +309,27 @@ bool track_select() {
 
 void project_view() {
 
+
     auto widths = calculate_column_widths({ -1, -1 });
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ widths[0], 88 });
-    if (gui::button("Load")) load_song("song");
-    gui::same_line();
-    gui::min_item_size({ widths[1], 88 });
-    if (gui::button("Save")) save_song("song");
-
+    {
+        static std::array<char, 1024> path;
+        if (gui::button("Load")) {
+            if (m_pref_path) {
+                snprintf(path.data(), path.size(), "%ssong", m_pref_path);
+                load_song(player::song(), path.data());
+            }
+        }
+        gui::same_line();
+        gui::min_item_size({ widths[1], 88 });
+        if (gui::button("Save")) {
+            if (m_pref_path) {
+                snprintf(path.data(), path.size(), "%ssong", m_pref_path);
+                save_song(player::song(), path.data());
+            }
+        }
+    }
 
     // TODO: make it incremental
     gui::min_item_size({ widths[0], 88 });
@@ -368,13 +344,13 @@ void project_view() {
         player::block(0);
         player::block_loop(false);
 
-
         Song const& song = player::song();
+
         int samples = SAMPLES_PER_FRAME;
         samples *= TRACK_LENGTH * song.tempo + TRACK_LENGTH / 2 * song.swing;
         samples *= song.table_length;
 
-        std::array<short, 1024> buffer;
+        static std::array<short, 1024> buffer;
 
         wavelog::init(MIXRATE);
         while (samples > 0) {
@@ -978,147 +954,11 @@ void effect_view() {
 } // namespace
 
 
-void init_song() {
-    Song& s = player::song();
-
-    // instruments
-
-    // bass
-    {
-        Instrument& i = s.instruments[0];
-        strcpy(i.name.data(), "bass");
-        i.hard_restart = 1;
-        i.adsr = { 1, 8, 8, 8 };
-        i.rows[0] = { NOISE | GATE, OP_SET, 13 };
-        i.rows[1] = { PULSE | GATE, OP_INC, 3 };
-        i.length = 2;
-        i.loop = 1;
-        i.filter.routing = 1;
-        i.filter.rows[0] = { FILTER_LOW, 13, OP_SET, 12 };
-        i.filter.rows[1] = { FILTER_LOW, 13, OP_DEC, 8 };
-        i.filter.length = 2;
-        i.filter.loop = 1;
-    }
-
-    // kick
-    {
-        Instrument& i = s.instruments[1];
-        strcpy(i.name.data(), "kick");
-        i.adsr = { 1, 8, 8, 8 };
-        i.hard_restart = 1;
-        i.rows[0] = { NOISE | GATE, OP_SET, 13 };
-        i.rows[1] = { PULSE | GATE, OP_INC, 3 };
-        i.length = 2;
-        i.loop = 1;
-        i.filter.routing = 1;
-        i.filter.rows[0] = { FILTER_LOW, 13, OP_SET, 13 };
-        i.filter.rows[1] = { FILTER_LOW, 13, OP_SET, 20 };
-        i.filter.rows[2] = { FILTER_LOW, 13, OP_SET, 5 };
-        i.filter.length = 3;
-        i.filter.loop = 2;
-    }
-
-    // snare
-    {
-        Instrument& i = s.instruments[2];
-        strcpy(i.name.data(), "snare");
-        i.hard_restart = 1;
-        i.adsr = { 1, 1, 7, 9 };
-        i.rows[0] = { NOISE | GATE, OP_SET, 0x8 };
-        i.rows[1] = { NOISE | GATE, OP_INC, 0x0 };
-        i.rows[2] = { PULSE | GATE, OP_INC, 0x0 };
-        i.rows[3] = { PULSE | GATE, OP_INC, 0x0 };
-        i.rows[4] = { NOISE, OP_INC, 0x0 };
-        i.length = 5;
-        i.loop = 4;
-        i.filter.routing = 1;
-        i.filter.rows[0] = { FILTER_LOW, 13, OP_SET, 13 };
-        i.filter.rows[1] = { FILTER_LOW, 13, OP_DEC, 3 };
-        i.filter.length = 2;
-        i.filter.loop = 1;
-    }
-
-
-    // effects
-
-
-    {
-        // bass
-        Effect& e = s.effects[0];
-        strcpy(e.name.data(), "bass");
-        e.rows[0] = 0x80 - 4 * 12;
-        e.length = 1;
-        e.loop = 0;
-    }
-    {
-        // kick
-        Effect& e = s.effects[1];
-        strcpy(e.name.data(), "kick");
-        e.rows[0] = 0x80 + 4 * 12;
-        e.rows[1] = 0x80 + 4 * 4;
-        e.rows[2] = 0x80 - 4 * 4;
-        e.rows[3] = 0x80 - 4 * 12;
-        e.length = 4;
-        e.loop = 3;
-    }
-    {
-        // snare
-        Effect& e = s.effects[2];
-        strcpy(e.name.data(), "snare");
-        e.rows[0] = 0x80 + 4 * 13;
-        e.rows[1] = 0x80 + 4 * 13;
-        e.rows[2] = 0x80 - 4 * 6;
-        e.rows[3] = 0x80 - 4 * 11;
-        e.rows[4] = 0x80 + 4 * 9;
-        e.rows[5] = 0x80 + 4 * 13;
-        e.length = 6;
-        e.loop = 4;
-    }
-
-
-    {
-        // vibrato
-        Effect& e = s.effects[INSTRUMENT_COUNT - 1];
-        strcpy(e.name.data(), "vibrato");
-        e.rows[0] = 0x80;
-        e.rows[1] = 0x81;
-        e.rows[2] = 0x82;
-        e.rows[3] = 0x82;
-        e.rows[4] = 0x81;
-        e.rows[5] = 0x80;
-        e.rows[6] = 0x7f;
-        e.rows[7] = 0x7e;
-        e.rows[8] = 0x7e;
-        e.rows[9] = 0x7f;
-        e.length = 10;
-        e.loop = 0;
-    }
-
-
-    s.tempo = 5;
-    s.table_length = 1;
-    s.table = { { 1, 0, 0, 0 } };
-    Track& track = s.tracks[0];
-    track.rows[0] = { 2, 2, 37 };
-    track.rows[2] = { 1, 1, 37 };
-    track.rows[4] = { 0, 0, 255 };
-    track.rows[6] = { 1, 1, 37 };
-    track.rows[8] = { 3, 3, 49 };
-    track.rows[10] = { 1, 1, 25 };
-    track.rows[12] = { 1, 1, 37 };
-    track.rows[14] = { 0, 0, 255 };
-    track.rows[16] = { 2, 2, 37 };
-    track.rows[18] = { 0, 0, 255 };
-    track.rows[24] = { 3, 3, 49 };
-    track.rows[28] = { 1, 1, 35 };
-}
-
-
 bool init() {
     m_pref_path = SDL_GetPrefPath("sdl", "insidious");
     if (!m_pref_path) return false;
 
-    init_song();
+    init_song(player::song());
 
     SDL_AudioSpec spec = { MIXRATE, AUDIO_S16, 1, 0, 1024, 0, 0, audio_callback };
     SDL_OpenAudio(&spec, nullptr);

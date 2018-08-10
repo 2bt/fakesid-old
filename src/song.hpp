@@ -107,3 +107,6 @@ struct Song {
     uint16_t                                 table_length;
 };
 
+void init_song(Song& song);
+bool load_song(Song& song, char const* name);
+bool save_song(Song const& song, char const* name);

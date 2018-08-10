@@ -24,8 +24,6 @@ namespace color {
     const SDL_Color button_normal = make(0x505050);
     const SDL_Color button_active = make(0x55a049);
     const SDL_Color button_hover = make(0x94e089);
-//    const SDL_Color button_hover  = make(0xb86962);
-//    const SDL_Color button_active = make(0x883932);
 
     const SDL_Color input_text_normal = make(0x222222);
     const SDL_Color input_text_hover  = button_hover;
@@ -211,6 +209,7 @@ void highlight() { m_highlight = true; }
 
 
 bool button(char const* label, bool active) {
+    enum { HOLD_TIME = 20 };
     m_hold = false;
     Vec s = gfx::text_size(label);
     Box box = item_box(s + Vec(30, 10));
@@ -219,7 +218,7 @@ bool button(char const* label, bool active) {
     if (m_active_item == nullptr && box.touched()) {
         color = color::button_hover;
         if (box.contains(m_prev_touch_pos)) {
-            if (++m_hold_count > 20) m_hold = true;
+            if (++m_hold_count > HOLD_TIME) m_hold = true;
         }
         else m_hold_count = 0;
         if (input::just_released()) clicked = true;
