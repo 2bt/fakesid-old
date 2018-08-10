@@ -7,6 +7,12 @@ Also, I added a fourth voice (but you don't have to use it if you don't want to,
 
 The tracker is highly inspired by [lft's Blackbird](https://csdb.dk/release/?id=161554).
 
+![image](screenshot-0.png)
+![image](screenshot-1.png)
+![image](screenshot-2.png)
+![image](screenshot-3.png)
+![image](screenshot-4.png)
+
 In order to compile for android the following setup is prerequisite:
 
     $ ls ..
