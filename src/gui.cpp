@@ -358,11 +358,8 @@ bool drag_int(char const* label, char const* fmt, int& value, int min, int max, 
     return value != old_value;
 }
 
-bool vertical_drag_int(char const* fmt, int& value, int min, int max, int page) {
-    gfx::font(FONT_MONO);
-    print_to_text_buffer(fmt, value);
-    Vec s = gfx::text_size(m_text_buffer.data());
-    Box box = item_box(s);
+bool vertical_drag_int(int& value, int min, int max, int page) {
+    Box box = item_box({});
     int range = max - min;
     int handle_h = box.size.y * page / (range + page);
     int handle_y = range == 0 ? 0 : (value - min) * (box.size.y - handle_h) / range;
@@ -384,10 +381,6 @@ bool vertical_drag_int(char const* fmt, int& value, int min, int max, int page) 
 
     gfx::color(m_active_item == id ? color::handle_active : color::handle_normal);
     gfx::rectangle(box.pos + Vec(0, handle_y), { box.size.x, handle_h }, 0);
-
-//    gfx::font(FONT_MONO);
-//    gfx::color(color::text);
-//    gfx::print(box.pos + Vec(box.size.x - s2.x - 15, box.size.y / 2 - s2.y / 2), m_text_buffer.data());
 
     return value != old_value;
 }

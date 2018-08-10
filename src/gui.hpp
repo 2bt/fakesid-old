@@ -25,7 +25,7 @@ namespace gui {
     void block_touch();
     void input_text(char* str, int len);
     bool drag_int(char const* label, char const* fmt, int& value, int min, int max, int page = 1);
-    bool vertical_drag_int(char const* fmt, int& value, int min, int max, int page = 1);
+    bool vertical_drag_int(int& value, int min, int max, int page = 1);
     bool clavier(uint8_t& n, int offset, bool highlight);
 
     template<class T>

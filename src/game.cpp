@@ -472,7 +472,7 @@ void song_view() {
     Vec c2 = gui::cursor();
     gui::cursor(c1);
     gui::min_item_size({ 65, c2.y - c1.y - gui::PADDING });
-    gui::vertical_drag_int("%X", m_edit.song_scroll, 0, max_scroll, PAGE_LENGTH);
+    gui::vertical_drag_int(m_edit.song_scroll, 0, max_scroll, PAGE_LENGTH);
     gui::cursor(c2);
 
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
@@ -572,7 +572,7 @@ void track_view() {
     gui::separator();
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
-    gui::drag_int("Clavier", "", m_edit.clavier_offset, 0, 96 - CLAVIER_WIDTH, CLAVIER_WIDTH);
+    gui::drag_int("", "", m_edit.clavier_offset, 0, 96 - CLAVIER_WIDTH, CLAVIER_WIDTH);
 
     gui::same_line();
     Vec c1 = gui::cursor() + Vec(-65 - gui::PADDING, 65 + gui::PADDING * 2 + gui::SEPARATOR_WIDTH);
@@ -658,7 +658,7 @@ void track_view() {
     Vec c2 = gui::cursor();
     gui::cursor(c1);
     gui::min_item_size({ 65, c2.y - c1.y - gui::PADDING });
-    gui::vertical_drag_int("%X", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
+    gui::vertical_drag_int(m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
     gui::cursor(c2);
 
 

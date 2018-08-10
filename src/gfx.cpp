@@ -46,7 +46,7 @@ bool init() {
     }
 
 #ifndef __ANDROID__
-//    SDL_RenderSetLogicalSize(m_renderer, m_screensize.x, m_screensize.y);
+    SDL_RenderSetLogicalSize(m_renderer, m_screensize.x, m_screensize.y);
 #endif
 
     if (!resource::init()) return false;
