@@ -464,7 +464,7 @@ void song_view() {
 
         gui::same_line();
         gui::separator();
-        gui::padding({});
+        gui::next_line();
 
     }
 
@@ -574,8 +574,11 @@ void track_view() {
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
     gui::drag_int("Clavier", "", m_edit.clavier_offset, 0, 96 - CLAVIER_WIDTH, CLAVIER_WIDTH);
 
-    int player_row = player::row();
+    gui::same_line();
+    Vec c1 = gui::cursor() + Vec(-65 - gui::PADDING, 65 + gui::PADDING * 2 + gui::SEPARATOR_WIDTH);
+    gui::next_line();
 
+    int player_row = player::row();
     gfx::font(FONT_MONO);
     for (int i = 0; i < PAGE_LENGTH; ++i) {
         if (i % 4 == 0) gui::separator();
@@ -636,6 +639,8 @@ void track_view() {
         // clavier
         gui::same_line();
         gui::separator();
+        int w = gfx::screensize().x - gui::cursor().x - gui::PADDING * 4 - 65 - gui::SEPARATOR_WIDTH;
+        gui::min_item_size({ w, 65 });
         if (gui::clavier(row.note, m_edit.clavier_offset, highlight)) {
             if (row.note == 0) row = {};
             else {
@@ -643,12 +648,19 @@ void track_view() {
                 row.effect     = m_edit.effect;
             }
         }
+
+        gui::same_line();
+        gui::separator();
+        gui::next_line();
     }
-    gui::separator();
 
     // track pages
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
-    gui::drag_int("Page", "%X", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
+    Vec c2 = gui::cursor();
+    gui::cursor(c1);
+    gui::min_item_size({ 65, c2.y - c1.y - gui::PADDING });
+    gui::vertical_drag_int("%X", m_edit.track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
+    gui::cursor(c2);
+
 
     // cache
     gui::separator();

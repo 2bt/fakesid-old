@@ -151,6 +151,11 @@ void same_line() {
 }
 
 
+void next_line() {
+    m_same_line = false;
+}
+
+
 void min_item_size(Vec const& s) {
     m_min_item_size = s;
 }
@@ -390,8 +395,7 @@ bool vertical_drag_int(char const* fmt, int& value, int min, int max, int page) 
 
 
 bool clavier(uint8_t& n, int offset, bool highlight) {
-    int w = gfx::screensize().x - PADDING - m_cursor_max.x;
-    Box box = item_box({ w, 65 });
+    Box box = item_box({ 100, 65 });
 
     void const* id = get_id(&n);
     if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
@@ -403,7 +407,7 @@ bool clavier(uint8_t& n, int offset, bool highlight) {
     int x0 = 0;
     bool just_pressed = input::just_pressed();
     for (int i = 0; i < CLAVIER_WIDTH; ++i) {
-        int x1 = w * (i + 1) / CLAVIER_WIDTH;
+        int x1 = (box.size.x - (CLAVIER_WIDTH - 1) * PADDING) * (i + 1) / CLAVIER_WIDTH + (i + 1) * PADDING;
         int nn = i + 1 + offset;
         Box b = {
             { box.pos.x + x0, box.pos.y },

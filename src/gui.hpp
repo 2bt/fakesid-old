@@ -14,6 +14,7 @@ namespace gui {
     void begin_frame();
     void id(void const* addr);
     void same_line();
+    void next_line();
     void min_item_size(Vec const& s);
     void padding(Vec const& size);
     void separator();
