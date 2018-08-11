@@ -272,7 +272,7 @@ bool process_event(const SDL_Event& e) {
         if (!m_input_text_str) return false;
         m_input_cursor_blink = 0;
         c = e.text.text[0];
-        if (c >= 32 && c < 127 && m_input_text_pos < m_input_text_len) {
+        if ((isalnum(c) || strchr("_-.", c)) && m_input_text_pos < m_input_text_len) {
             m_input_text_str[m_input_text_pos++] = c;
         }
         return true;
