@@ -4,11 +4,22 @@
 
 void init_song(Song& song) {
 
-    // instruments
+    song.tempo = 5;
+    song.table_length = 1;
+
+    // preset some instruments/effects
+
+    enum {
+        BASS     = 27,
+        KICK     = 28,
+        SNARE    = 29,
+        GLIDE_UP = 46,
+        VIBRATO  = 47,
+    };
 
     // bass
     {
-        Instrument& i = song.instruments[0];
+        Instrument& i = song.instruments[BASS];
         strcpy(i.name.data(), "bass");
         i.hard_restart = 1;
         i.adsr = { 1, 8, 8, 8 };
@@ -21,11 +32,17 @@ void init_song(Song& song) {
         i.filter.rows[1] = { FILTER_LOW, 13, OP_DEC, 8 };
         i.filter.length = 2;
         i.filter.loop = 1;
+
+        Effect& e = song.effects[BASS];
+        strcpy(e.name.data(), "bass");
+        e.rows[0] = 0x80 - 4 * 12;
+        e.length = 1;
+        e.loop = 0;
     }
 
     // kick
     {
-        Instrument& i = song.instruments[1];
+        Instrument& i = song.instruments[KICK];
         strcpy(i.name.data(), "kick");
         i.adsr = { 1, 8, 8, 8 };
         i.hard_restart = 1;
@@ -39,11 +56,20 @@ void init_song(Song& song) {
         i.filter.rows[2] = { FILTER_LOW, 13, OP_SET, 5 };
         i.filter.length = 3;
         i.filter.loop = 2;
+
+        Effect& e = song.effects[KICK];
+        strcpy(e.name.data(), "kick");
+        e.rows[0] = 0x80 + 4 * 12;
+        e.rows[1] = 0x80 + 4 * 4;
+        e.rows[2] = 0x80 - 4 * 4;
+        e.rows[3] = 0x80 - 4 * 12;
+        e.length = 4;
+        e.loop = 3;
     }
 
     // snare
     {
-        Instrument& i = song.instruments[2];
+        Instrument& i = song.instruments[SNARE];
         strcpy(i.name.data(), "snare");
         i.hard_restart = 1;
         i.adsr = { 1, 1, 7, 9 };
@@ -55,38 +81,12 @@ void init_song(Song& song) {
         i.length = 5;
         i.loop = 4;
         i.filter.routing = 1;
-        i.filter.rows[0] = { FILTER_LOW, 13, OP_SET, 13 };
-        i.filter.rows[1] = { FILTER_LOW, 13, OP_DEC, 3 };
+        i.filter.rows[0] = { FILTER_LOW, 15, OP_SET, 20 };
+        i.filter.rows[1] = { FILTER_LOW, 15, OP_DEC, 3 };
         i.filter.length = 2;
         i.filter.loop = 1;
-    }
 
-
-    // effects
-
-
-    {
-        // bass
-        Effect& e = song.effects[0];
-        strcpy(e.name.data(), "bass");
-        e.rows[0] = 0x80 - 4 * 12;
-        e.length = 1;
-        e.loop = 0;
-    }
-    {
-        // kick
-        Effect& e = song.effects[1];
-        strcpy(e.name.data(), "kick");
-        e.rows[0] = 0x80 + 4 * 12;
-        e.rows[1] = 0x80 + 4 * 4;
-        e.rows[2] = 0x80 - 4 * 4;
-        e.rows[3] = 0x80 - 4 * 12;
-        e.length = 4;
-        e.loop = 3;
-    }
-    {
-        // snare
-        Effect& e = song.effects[2];
+        Effect& e = song.effects[SNARE];
         strcpy(e.name.data(), "snare");
         e.rows[0] = 0x80 + 4 * 13;
         e.rows[1] = 0x80 + 4 * 13;
@@ -98,10 +98,22 @@ void init_song(Song& song) {
         e.loop = 4;
     }
 
-
+    // glide up
     {
-        // vibrato
-        Effect& e = song.effects[INSTRUMENT_COUNT - 1];
+        Effect& e = song.effects[GLIDE_UP];
+        strcpy(e.name.data(), "glide up");
+        e.rows[0] = 0x7c;
+        e.rows[1] = 0x7d;
+        e.rows[2] = 0x7e;
+        e.rows[3] = 0x7f;
+        e.rows[4] = 0x80;
+        e.length = 5;
+        e.loop = 4;
+    }
+
+    // vibrato
+    {
+        Effect& e = song.effects[VIBRATO];
         strcpy(e.name.data(), "vibrato");
         e.rows[0] = 0x80;
         e.rows[1] = 0x81;
@@ -116,24 +128,6 @@ void init_song(Song& song) {
         e.length = 10;
         e.loop = 0;
     }
-
-
-    song.tempo = 5;
-    song.table_length = 1;
-    song.table = { { 1, 0, 0, 0 } };
-    Track& track = song.tracks[0];
-    track.rows[0] = { 2, 2, 37 };
-    track.rows[2] = { 1, 1, 37 };
-    track.rows[4] = { 0, 0, 255 };
-    track.rows[6] = { 1, 1, 37 };
-    track.rows[8] = { 3, 3, 49 };
-    track.rows[10] = { 1, 1, 25 };
-    track.rows[12] = { 1, 1, 37 };
-    track.rows[14] = { 0, 0, 255 };
-    track.rows[16] = { 2, 2, 37 };
-    track.rows[18] = { 0, 0, 255 };
-    track.rows[24] = { 3, 3, 49 };
-    track.rows[28] = { 1, 1, 35 };
 }
 
 

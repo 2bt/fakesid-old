@@ -57,6 +57,9 @@ struct Cache {
     struct Entry {
         uint32_t age;
         int      data;
+        bool operator<(Entry const& rhs) const {
+            return data < rhs.data;
+        }
     };
     std::array<Entry, SIZE> entries;
     void insert(int data) {
@@ -70,6 +73,7 @@ struct Cache {
         }
         f->data = data;
         f->age = 0;
+        std::sort(entries.begin(), entries.end());
     }
 };
 
@@ -151,7 +155,7 @@ void sprint_track_id(char* dst, int nr) {
 void sprint_inst_effect_id(char* dst, int nr) {
     dst[0] = " "
         "ABCDEFGHIJKLMNOPQRSTUVWX"
-        "YZ@0123456789#$*+=<>!?#~"[nr];
+        "YZ@0123456789#$*+=<>!?^~"[nr];
     dst[1] = '\0';
 }
 
@@ -800,7 +804,7 @@ void instrument_view() {
         for (int i = 0; i < 2; ++i) {
             if (i > 0) gui::same_line();
             gui::min_item_size({ widths[i], 65 });
-            gui::drag_int(labels[i], "%X", inst.adsr[i + 2], 0, 15);
+            gui::drag_int(labels[i + 2], "%X", inst.adsr[i + 2], 0, 15);
         };
 
 
