@@ -506,6 +506,7 @@ void song_view() {
         if (highlight) gui::highlight();
         if (gui::button(str, block_nr == m_edit.block)) {
             m_edit.block = block_nr;
+            if (!m_edit.is_playing) player::block(m_edit.block);
         }
         gui::same_line();
         gui::separator();
