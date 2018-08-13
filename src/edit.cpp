@@ -22,79 +22,24 @@ void audio_callback(void* userdata, Uint8* stream, int len) {
 }
 
 
-struct Cache {
-    Cache() {
-        for (int i = 0; i < SIZE; ++i) {
-            entries[i].age  = i;
-            entries[i].data = i + 1;
-        }
-    }
-    enum { SIZE = 12 };
-    struct Entry {
-        uint32_t age;
-        int      data;
-        bool operator<(Entry const& rhs) const {
-            return data < rhs.data;
-        }
-    };
-    std::array<Entry, SIZE> entries;
-    void insert(int data) {
-        Entry* f = &entries[0];
-        for (Entry& e : entries) {
-            if (e.data == data) e.age = -1;
-            else ++e.age;
-            if (e.age > f->age) {
-                f = &e;
-            }
-        }
-        f->data = data;
-        f->age = 0;
-        std::sort(entries.begin(), entries.end());
-    }
-};
+EView      m_view;
+bool       m_filter_mode;
+bool       m_instrument_select_active;
+bool       m_effect_select_active;
+bool       m_is_playing;
 
-
-
-void draw_instrument_view();
-void draw_effect_view();
-
-struct View {
-    char const* name;
-    void (*draw)(void);
-};
-
-struct Edit {
-    EView view;
-
-    int     instrument     = 1;
-    int     effect         = 1;
-    bool    filter_mode    = false;
-
-
-    Instrument copy_inst;
-    Effect     copy_effect;
-
-    Cache      inst_cache;
-    Cache      effect_cache;
-
-
-
-    bool instrument_select_active;
-    bool effect_select_active;
-
-    bool is_playing = false;
-
-} m_edit;
+Instrument m_copy_inst;
+Effect     m_copy_effect;
 
 
 bool draw_instrument_select() {
-    if (!m_edit.instrument_select_active) return false;
+    if (!m_instrument_select_active) return false;
 
     gfx::font(FONT_DEFAULT);
     auto widths = calculate_column_widths({ -1, -1 });
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("Cancel")) {
-        m_edit.instrument_select_active = false;
+        m_instrument_select_active = false;
     }
     gui::separator();
 
@@ -108,8 +53,8 @@ bool draw_instrument_select() {
             Vec c1 = gui::cursor();
             gui::min_item_size({ widths[x], 65 });
             if (inst.length > 0) gui::highlight();
-            if (gui::button("", nr == m_edit.instrument)) {
-                m_edit.instrument_select_active = false;
+            if (gui::button("", nr == selected_instrument())) {
+                m_instrument_select_active = false;
                 select_instrument(nr);
             }
 
@@ -136,13 +81,13 @@ bool draw_instrument_select() {
 }
 // XXX: this is a copy of instrument_select with s/instrument/effect/g :(
 bool draw_effect_select() {
-    if (!m_edit.effect_select_active) return false;
+    if (!m_effect_select_active) return false;
 
     gfx::font(FONT_DEFAULT);
     auto widths = calculate_column_widths({ -1, -1 });
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("Cancel")) {
-        m_edit.effect_select_active = false;
+        m_effect_select_active = false;
     }
     gui::separator();
 
@@ -156,8 +101,8 @@ bool draw_effect_select() {
             Vec c1 = gui::cursor();
             gui::min_item_size({ widths[x], 65 });
             if (effect.length > 0) gui::highlight();
-            if (gui::button("", nr == m_edit.effect)) {
-                m_edit.effect_select_active = false;
+            if (gui::button("", nr == selected_effect())) {
+                m_effect_select_active = false;
                 select_effect(nr);
             }
 
@@ -188,21 +133,6 @@ enum {
     PAGE_LENGTH = 16
 };
 
-void draw_cache(Cache& cache, int& data) {
-    gfx::font(FONT_MONO);
-    auto widths = calculate_column_widths(std::vector<int>(Cache::SIZE, -1));
-    for (int i = 0; i < Cache::SIZE; ++i) {
-        if (i) gui::same_line();
-        auto const& e = cache.entries[i];
-        char str[2];
-        sprint_inst_effect_id(str, e.data);
-        gui::min_item_size({ widths[i], 88 });
-        if (gui::button(str, e.data == data)) {
-            data = e.data;
-            cache.insert(data);
-        }
-    }
-}
 
 void draw_instrument_view() {
 
@@ -211,7 +141,7 @@ void draw_instrument_view() {
     gui::separator();
 
     Song& song = player::song();
-    Instrument& inst = song.instruments[m_edit.instrument - 1];
+    Instrument& inst = song.instruments[selected_instrument() - 1];
 
     // name
     auto widths = calculate_column_widths({ -1, 88, 88 });
@@ -223,10 +153,10 @@ void draw_instrument_view() {
     gfx::font(FONT_MONO);
     gui::same_line();
     gui::min_item_size({ 88, 88 });
-    if (gui::button("C")) m_edit.copy_inst = inst;
+    if (gui::button("C")) m_copy_inst = inst;
     gui::same_line();
     gui::min_item_size({ 88, 88 });
-    if (gui::button("P")) inst = m_edit.copy_inst;
+    if (gui::button("P")) inst = m_copy_inst;
     gui::separator();
 
 
@@ -234,14 +164,14 @@ void draw_instrument_view() {
     gfx::font(FONT_DEFAULT);
     widths = calculate_column_widths({ -1, -1 });
     gui::min_item_size({ widths[0], 88 });
-    if (gui::button("Wave", !m_edit.filter_mode)) m_edit.filter_mode = false;
+    if (gui::button("Wave", !m_filter_mode)) m_filter_mode = false;
     gui::same_line();
     gui::min_item_size({ widths[1], 88 });
-    if (gui::button("Filter", m_edit.filter_mode)) m_edit.filter_mode = true;
+    if (gui::button("Filter", m_filter_mode)) m_filter_mode = true;
     gui::separator();
 
 
-    if (!m_edit.filter_mode) {
+    if (!m_filter_mode) {
 
         // adsr
         constexpr char const* labels[] = { "Attack", "Decay", "Sustain", "Release" };
@@ -432,7 +362,7 @@ void draw_effect_view() {
 
 
     Song& song = player::song();
-    Effect& effect = song.effects[m_edit.effect - 1];
+    Effect& effect = song.effects[selected_effect() - 1];
 
     // name
     auto widths = calculate_column_widths({ -1, 88, 88 });
@@ -444,10 +374,10 @@ void draw_effect_view() {
     gfx::font(FONT_MONO);
     gui::same_line();
     gui::min_item_size({ 88, 88 });
-    if (gui::button("C")) m_edit.copy_effect = effect;
+    if (gui::button("C")) m_copy_effect = effect;
     gui::same_line();
     gui::min_item_size({ 88, 88 });
-    if (gui::button("P")) effect = m_edit.copy_effect;
+    if (gui::button("P")) effect = m_copy_effect;
 
     gui::separator();
 
@@ -506,46 +436,17 @@ void draw_effect_view() {
 } // namespace
 
 
-bool is_playing() { return m_edit.is_playing; }
+bool is_playing() { return m_is_playing; }
 
 void set_playing(bool p) {
-    if (p == m_edit.is_playing) return;
+    if (p == m_is_playing) return;
     SDL_PauseAudio(!p);
-    m_edit.is_playing = p;
+    m_is_playing = p;
 }
 
 void set_view(EView v) {
-    m_edit.view = v;
-    if (m_edit.view == VIEW_PROJECT) init_file_names();
-}
-
-int     selected_instrument() { return m_edit.instrument; }
-void    select_instrument(int i) {
-    m_edit.instrument = i;
-    m_edit.inst_cache.insert(i);
-}
-int     selected_effect() { return m_edit.effect; }
-void    select_effect(int e) {
-    m_edit.effect = e;
-    m_edit.effect_cache.insert(e);
-}
-
-
-
-void draw_instrument_cache() {
-    draw_cache(m_edit.inst_cache, m_edit.instrument);
-}
-
-void draw_effect_cache() {
-    draw_cache(m_edit.effect_cache, m_edit.effect);
-}
-
-
-void sprint_inst_effect_id(char* dst, int nr) {
-    dst[0] = " "
-        "ABCDEFGHIJKLMNOPQRSTUVWX"
-        "YZ@0123456789#$*+=<>!?^~"[nr];
-    dst[1] = '\0';
+    m_view = v;
+    if (m_view == VIEW_PROJECT) init_file_names();
 }
 
 
@@ -575,6 +476,10 @@ void draw() {
         gfx::font(FONT_DEFAULT);
 
         // view select buttons
+        struct View {
+            char const* name;
+            void (*draw)(void);
+        };
         constexpr std::array<View, 5> views = {
             View{ "Project", draw_project_view },
             View{ "Song", draw_song_view },
@@ -587,20 +492,20 @@ void draw() {
         for (int i = 0; i < (int) views.size(); ++i) {
             if (i) gui::same_line();
             gui::min_item_size({ widths[i], 88 });
-            bool button = gui::button(views[i].name, m_edit.view == i);
+            bool button = gui::button(views[i].name, m_view == i);
             bool hold = gui::hold();
             if (button || hold) {
-                if (m_edit.view == i || hold) {
+                if (m_view == i || hold) {
                     // open select menu
                     switch (i) {
                     case VIEW_TRACK:
                         enter_track_select();
                         break;
                     case VIEW_INSTRUMENT:
-                        m_edit.instrument_select_active = true;
+                        m_instrument_select_active = true;
                         break;
                     case VIEW_EFFECT:
-                        m_edit.effect_select_active = true;
+                        m_effect_select_active = true;
                         break;
                     default: break;
                     }
@@ -612,7 +517,7 @@ void draw() {
         }
         gui::separator();
 
-        views[m_edit.view].draw();
+        views[m_view].draw();
 
         gui::cursor({ 0, gfx::screensize().y  - gui::PADDING * 2 - 88 });
         gfx::font(FONT_DEFAULT);

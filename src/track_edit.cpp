@@ -6,6 +6,56 @@
 
 namespace {
 
+
+struct Cache {
+    Cache() {
+        for (int i = 0; i < SIZE; ++i) {
+            entries[i].age  = i;
+            entries[i].data = i + 1;
+        }
+    }
+    enum { SIZE = 12 };
+    struct Entry {
+        uint32_t age;
+        int      data;
+        bool operator<(Entry const& rhs) const {
+            return data < rhs.data;
+        }
+    };
+    std::array<Entry, SIZE> entries;
+    void insert(int data) {
+        Entry* f = &entries[0];
+        for (Entry& e : entries) {
+            if (e.data == data) e.age = -1;
+            else ++e.age;
+            if (e.age > f->age) {
+                f = &e;
+            }
+        }
+        f->data = data;
+        f->age = 0;
+        std::sort(entries.begin(), entries.end());
+    }
+};
+
+
+void draw_cache(Cache& cache, int& data) {
+    gfx::font(FONT_MONO);
+    auto widths = calculate_column_widths(std::vector<int>(Cache::SIZE, -1));
+    for (int i = 0; i < Cache::SIZE; ++i) {
+        if (i) gui::same_line();
+        auto const& e = cache.entries[i];
+        char str[2];
+        sprint_inst_effect_id(str, e.data);
+        gui::min_item_size({ widths[i], 88 });
+        if (gui::button(str, e.data == data)) {
+            data = e.data;
+            cache.insert(data);
+        }
+    }
+}
+
+
 bool     m_track_select_active;
 bool     m_track_select_allow_nil;
 uint8_t* m_track_select_value;
@@ -23,6 +73,12 @@ void enter_track_select(uint8_t& dst, bool allow_nil) {
 }
 
 
+Cache m_inst_cache;
+Cache m_effect_cache;
+int   m_instrument     = 1;
+int   m_effect         = 1;
+
+
 } // namespace
 
 
@@ -36,7 +92,16 @@ void enter_track_select() {
 
 void    select_track(uint8_t t) { m_track = t; }
 uint8_t selected_track() { return m_track; }
-
+int     selected_instrument() { return m_instrument; }
+void    select_instrument(int i) {
+    m_instrument = i;
+    m_inst_cache.insert(i);
+}
+int     selected_effect() { return m_effect; }
+void    select_effect(int e) {
+    m_effect = e;
+    m_effect_cache.insert(e);
+}
 
 
 void sprint_track_id(char* dst, int nr) {
@@ -50,6 +115,24 @@ void sprint_track_id(char* dst, int nr) {
         dst[1] = '0' + y + (y > 9) * 7;
     }
     dst[2] = '\0';
+}
+
+
+void sprint_inst_effect_id(char* dst, int nr) {
+    dst[0] = " "
+        "ABCDEFGHIJKLMNOPQRSTUVWX"
+        "YZ@0123456789#$*+=<>!?^~"[nr];
+    dst[1] = '\0';
+}
+
+
+void draw_instrument_cache() {
+    draw_cache(m_inst_cache, m_instrument);
+}
+
+
+void draw_effect_cache() {
+    draw_cache(m_effect_cache, m_effect);
 }
 
 
@@ -160,28 +243,28 @@ void draw_track_view() {
         char str[4];
 
         // instrument
-        edit::sprint_inst_effect_id(str, row.instrument);
+        sprint_inst_effect_id(str, row.instrument);
         gui::min_item_size({ 65, 65 });
         if (highlight) gui::highlight();
         if (gui::button(str)) {
             if (row.instrument > 0) row.instrument = 0;
-            else row.instrument = edit::selected_instrument();
+            else row.instrument = selected_instrument();
         }
         if (row.instrument > 0 && gui::hold()) {
-            edit::select_instrument(row.instrument);
+            select_instrument(row.instrument);
         }
 
         // effect
-        edit::sprint_inst_effect_id(str, row.effect);
+        sprint_inst_effect_id(str, row.effect);
         gui::same_line();
         gui::min_item_size({ 65, 65 });
         if (highlight) gui::highlight();
         if (gui::button(str)) {
             if (row.effect > 0) row.effect = 0;
-            else row.effect = edit::selected_effect();
+            else row.effect = selected_effect();
         }
         if (row.effect > 0 && gui::hold()) {
-            edit::select_effect(row.effect);
+            select_effect(row.effect);
         }
 
 
@@ -214,8 +297,8 @@ void draw_track_view() {
         if (gui::clavier(row.note, m_clavier_offset, highlight)) {
             if (row.note == 0) row = {};
             else if (row.instrument == 0 && row.effect == 0) {
-                row.instrument = edit::selected_instrument();
-                row.effect     = edit::selected_effect();
+                row.instrument = selected_instrument();
+                row.effect     = selected_effect();
             }
         }
 
@@ -234,9 +317,9 @@ void draw_track_view() {
 
     // cache
     gui::separator();
-    edit::draw_instrument_cache();
+    draw_instrument_cache();
     gui::separator();
-    edit::draw_effect_cache();
+    draw_effect_cache();
     gui::separator();
 }
 

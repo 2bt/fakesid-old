@@ -13,15 +13,6 @@ namespace edit {
     bool is_playing();
     void set_view(EView v);
 
-    void    select_instrument(int i);
-    int     selected_instrument();
-    void    select_effect(int e);
-    int     selected_effect();
-
-    void draw_instrument_cache();
-    void draw_effect_cache();
-
-    void sprint_inst_effect_id(char* dst, int nr);
 
 
     bool init();
