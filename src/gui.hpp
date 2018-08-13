@@ -37,3 +37,33 @@ namespace gui {
         return b;
     }
 }
+
+
+#include <vector>
+inline std::vector<int> calculate_column_widths(std::vector<int> weights) {
+    int absolute = gfx::screensize().x - gui::PADDING;
+    int relative = 0;
+    for (int w : weights) {
+        if (w > 0) {
+            absolute -= w + gui::PADDING;
+        }
+        else {
+            absolute -= gui::PADDING;
+            relative += -w;
+        }
+    }
+    std::vector<int> widths;
+    widths.reserve(weights.size());
+    for (int w : weights) {
+        if (w > 0) {
+            widths.emplace_back(w);
+        }
+        else {
+            int q = absolute * -w / relative;
+            absolute -= q;
+            relative += w;
+            widths.emplace_back(q);
+        }
+    }
+    return widths;
+}

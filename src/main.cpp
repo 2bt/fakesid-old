@@ -1,4 +1,4 @@
-#include "game.hpp"
+#include "edit.hpp"
 #include "input.hpp"
 #include "gui.hpp"
 #include <cstdio>
@@ -9,7 +9,7 @@
 int main(int argc, char** args) {
 
     if (!gfx::init()) return 1;
-    if (!game::init()) return 1;
+    if (!edit::init()) return 1;
 
 
     SDL_Event e;
@@ -58,12 +58,12 @@ int main(int argc, char** args) {
         }
 
 
-        game::draw();
+        edit::draw();
 
         input::post_update();
     }
 
-    game::free();
+    edit::free();
     gfx::free();
 
     return 0;
