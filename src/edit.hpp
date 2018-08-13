@@ -9,11 +9,9 @@ enum EView {
 };
 
 namespace edit {
-    void set_playing(bool p);
     bool is_playing();
+    void set_playing(bool p);
     void set_view(EView v);
-
-
 
     bool init();
     void draw();
