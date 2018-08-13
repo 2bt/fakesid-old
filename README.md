@@ -9,11 +9,17 @@ The tracker is highly inspired by [lft's Blackbird](https://csdb.dk/release/?id=
 
 Get the APK [here](http://www.langnerd.de/insidious/insidious.apk)!
 
+
+### Screeshots
+
 ![image](screenshot-0.png)
 ![image](screenshot-1.png)
 ![image](screenshot-2.png)
 ![image](screenshot-3.png)
 ![image](screenshot-4.png)
+
+
+### How to build
 
 In order to compile for android the following setup is prerequisite:
 
@@ -28,3 +34,10 @@ In order to compile for android the following setup is prerequisite:
 Once you have that, run `make` like so:
 
 	make android-install
+
+
+### TODO
+
++ OGG export
++ variable track length
++ documentation
