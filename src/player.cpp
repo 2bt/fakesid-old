@@ -262,7 +262,6 @@ void mix(short* buffer, int length) {
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
             Channel& chan = m_channels[c];
             Channel& prev_chan = m_channels[c == 0 ? CHANNEL_COUNT - 1 : c - 1];
-            if (!chan.active) continue;
 
             bool gate = chan.gate && (chan.flags & GATE);
             if (gate && chan.state == RELEASE) chan.state = ATTACK;
@@ -306,6 +305,8 @@ void mix(short* buffer, int length) {
                     chan.phase = prev_chan.phase * chan.freq / prev_chan.freq;
                 }
             }
+
+            if (!chan.active) continue;
 
             // waveforms
             uint8_t tri   = ((chan.phase < 0x8000000 ? chan.phase : ~chan.phase) >> 19) & 0xff;
