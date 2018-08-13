@@ -319,13 +319,18 @@ enum {
 };
 
 
+#define FILE_SUFFIX ".sng"
+
 
 void init_file_names() {
     m_edit.file_names.clear();
     if (DIR* dir = opendir(m_edit.dir_name.c_str())) {
         while (struct dirent* ent = readdir(dir)) {
             if (ent->d_type == DT_REG) {
-                m_edit.file_names.emplace_back(ent->d_name);
+                std::string name = ent->d_name;
+                if (name.size() > 4 && name.substr(name.size() - 4) == FILE_SUFFIX) {
+                    m_edit.file_names.emplace_back(name.substr(0, name.size() - 4));
+                }
             }
         }
         closedir(dir);
@@ -388,7 +393,7 @@ void project_view() {
     if (gui::button("Load")) {
         std::string name = m_edit.file_name.data();
         if (std::find(m_edit.file_names.begin(), m_edit.file_names.end(), name) != m_edit.file_names.end()) {
-            std::string path = m_edit.dir_name + name;
+            std::string path = m_edit.dir_name + name + FILE_SUFFIX;
             load_song(player::song(), path.c_str());
         }
     }
@@ -396,7 +401,7 @@ void project_view() {
     gui::min_item_size({ widths[1], 88 });
     if (gui::button("Save")) {
         std::string name = m_edit.file_name.data();
-        std::string path = m_edit.dir_name + name;
+        std::string path = m_edit.dir_name + name + FILE_SUFFIX;
         save_song(player::song(), path.c_str());
         init_file_names();
     }
@@ -405,7 +410,7 @@ void project_view() {
     if (gui::button("Delete")) {
         std::string name = m_edit.file_name.data();
         if (std::find(m_edit.file_names.begin(), m_edit.file_names.end(), name) != m_edit.file_names.end()) {
-            std::string path = m_edit.dir_name + name;
+            std::string path = m_edit.dir_name + name + FILE_SUFFIX;
             unlink(path.c_str());
             init_file_names();
         }
