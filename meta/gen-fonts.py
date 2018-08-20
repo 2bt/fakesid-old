@@ -217,6 +217,22 @@ for font, filename in [
 		x += W
 
 
+		# arrow left
+		w = W / 4
+		h = H / 4
+		cr.move_to(x + w, y - h)
+		cr.line_to(x - w, y)
+		cr.line_to(x + w, y + h)
+		cr.fill()
+		x += W
+		# arrow right
+		cr.move_to(x - w, y - h)
+		cr.line_to(x + w, y)
+		cr.line_to(x - w, y + h)
+		cr.fill()
+		x += W
+		x += W
+
 	cr.set_line_cap(cairo.LINE_CAP_BUTT)
 
 	# rounded corners

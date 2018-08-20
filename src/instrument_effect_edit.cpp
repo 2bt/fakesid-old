@@ -417,10 +417,10 @@ void draw_effect_view() {
 
         gui::same_line();
         gui::min_item_size({ 65, 65 });
-        if (gui::button("<")) row.value = std::max(row.value - 1, min_value);
+        if (gui::button("\x1b")) row.value = std::max(row.value - 1, min_value);
         gui::same_line();
         gui::min_item_size({ 65, 65 });
-        if (gui::button(">")) row.value = std::min(row.value + 1, max_value);
+        if (gui::button("\x1c")) row.value = std::min(row.value + 1, max_value);
 
 
     }
