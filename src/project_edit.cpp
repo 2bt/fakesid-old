@@ -11,26 +11,27 @@
 
 #define FILE_SUFFIX ".sng"
 
+// android
+std::string get_root_dir();
+
 namespace {
 
 int                      m_file_scroll;
-std::string              m_dir_name = ".";
+std::string              m_dir_name;
 std::array<char, 25>     m_file_name;
 std::vector<std::string> m_file_names;
 
 
 
-bool init() {
+bool init_dir_name() {
 
-#ifdef __ANDROID__
-    m_dir_name = SDL_AndroidGetExternalStoragePath();
-#endif
+    std::string root_dir = get_root_dir();
+    if (root_dir.empty()) return false;
 
-    m_dir_name += "/songs/";
+    m_dir_name = root_dir + "/songs/";
+
     struct stat st = {};
-    if (stat(m_dir_name.c_str(), &st) == -1) {
-        mkdir(m_dir_name.c_str(), 0700);
-    }
+    if (stat(m_dir_name.c_str(), &st) == -1) mkdir(m_dir_name.c_str(), 0700);
 
     return true;
 }
@@ -42,10 +43,10 @@ bool init() {
 
 void init_file_names() {
 
-    static bool init_done = false;
-    if (!init_done) {
-        init();
-        init_done = true;
+    static bool init_dir_name_done = false;
+    if (!init_dir_name_done) {
+        init_dir_name();
+        init_dir_name_done = true;
     }
 
     m_file_names.clear();

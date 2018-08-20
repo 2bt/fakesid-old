@@ -140,6 +140,7 @@ bool load_song(Song& song, char const* name) {
     SDL_RWread(file, song.instruments.data(), sizeof(Instrument), song.instruments.size());
     SDL_RWread(file, song.effects.data(), sizeof(Effect), song.effects.size());
     song.table_length = SDL_ReadLE16(file);
+    song.table = {};
     SDL_RWread(file, song.table.data(), sizeof(Song::Block), song.table_length);
     SDL_RWclose(file);
     return true;

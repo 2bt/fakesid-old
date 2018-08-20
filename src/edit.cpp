@@ -7,11 +7,6 @@
 #include "player.hpp"
 
 
-
-// android test
-//void test();
-//extern std::string test_path;
-
 namespace edit {
 namespace {
 
@@ -41,9 +36,6 @@ void set_view(EView v) {
 
 
 bool init() {
-
-//    test();
-
     set_view(VIEW_PROJECT);
 
     init_song(player::song());
