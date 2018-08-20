@@ -38,12 +38,6 @@ enum {
 };
 
 
-enum {
-    OP_INC,
-    OP_SET,
-    OP_DEC,
-};
-
 
 enum {
     FILTER_LOW  = 1,
@@ -53,6 +47,11 @@ enum {
 
 
 struct Filter {
+    enum {
+        OP_INC,
+        OP_SET,
+        OP_DEC,
+    };
     struct Row {
         uint8_t type;
         uint8_t resonance;
@@ -68,6 +67,10 @@ struct Filter {
 
 
 struct Instrument {
+    enum {
+        OP_INC,
+        OP_SET,
+    };
     struct Row {
         uint8_t flags;
         uint8_t operation;
@@ -87,10 +90,19 @@ struct Instrument {
 
 
 struct Effect {
-    std::array<char, MAX_NAME_LENGTH>      name;
-    uint8_t                                length;
-    uint8_t                                loop;
-    std::array<uint8_t, MAX_EFFECT_LENGTH> rows;
+    enum {
+        OP_RELATIVE,
+        OP_ABSOLUTE,
+        OP_DETUNE,
+    };
+    struct Row {
+        uint8_t operation;
+        uint8_t value;
+    };
+    std::array<char, MAX_NAME_LENGTH>  name;
+    uint8_t                            length;
+    uint8_t                            loop;
+    std::array<Row, MAX_EFFECT_LENGTH> rows;
 };
 
 

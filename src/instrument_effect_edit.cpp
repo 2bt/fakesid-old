@@ -248,7 +248,7 @@ void draw_instrument_view() {
         gui::same_line();
         gui::min_item_size({ 88, 88 });
         if (gui::button("+") && inst.length < MAX_INSTRUMENT_LENGTH) {
-            inst.rows[inst.length] = { GATE, OP_INC, 0 };
+            inst.rows[inst.length] = { GATE, Instrument::OP_INC, 0 };
             ++inst.length;
         }
     }
@@ -335,7 +335,7 @@ void draw_instrument_view() {
         gui::same_line();
         gui::min_item_size({ 88, 88 });
         if (gui::button("+") && filter.length < MAX_FILTER_LENGTH) {
-            filter.rows[filter.length] = { 0, 0, OP_SET, 0 };
+            filter.rows[filter.length] = { 0, 0, Filter::OP_SET, 0 };
             ++filter.length;
         }
     }
@@ -371,6 +371,8 @@ void draw_effect_view() {
 
     gui::separator();
 
+    widths = calculate_column_widths({ 65, gui::SEPARATOR_WIDTH, 65, -1, 65, 65 });
+
     // rows
     gfx::font(FONT_MONO);
     for (int i = 0; i < MAX_EFFECT_LENGTH; ++i) {
@@ -386,18 +388,41 @@ void draw_effect_view() {
             continue;
         }
 
-        int v = (effect.rows[i] >> 2) - 32;
-        gui::min_item_size({ gfx::screensize().x * 4 / 5, 65 });
-        gui::id(&effect.rows[i]);
-        if (gui::drag_int("", "%d", v, -16, 16)) effect.rows[i] = (effect.rows[i] & 0x03) | ((v + 32) << 2);
+        auto& row = effect.rows[i];
 
-        v = effect.rows[i] & 0x03;
-        gui::same_line();
-        gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
-        gui::id(&effect.rows[i + MAX_EFFECT_LENGTH]);
-        if (gui::drag_int("", "%d", v, 0, 3)) {
-            effect.rows[i] = (effect.rows[i] & 0xfc) | v;
+        str[0] = "+=~"[row.operation];
+        gui::min_item_size({ 65, 65 });
+        if (gui::button(str)) {
+            row.operation = (row.operation + 1) % 3;
+            row.value = 0x30;
         }
+
+        int min_value;
+        int max_value;
+
+        gui::same_line();
+        gui::min_item_size({ widths[3], 65 });
+        if (row.operation == Effect::OP_RELATIVE || row.operation == Effect::OP_DETUNE) {
+            int v = row.value - 0x30;
+            gui::id(&row.value);
+            if (gui::drag_int("", "%d", v, -24, 24)) row.value = v + 0x30;
+            min_value = 0x30 - 24;
+            max_value = 0x30 + 24;
+        }
+        else {
+            min_value = 0;
+            max_value = 96;
+            gui::drag_int("", "%d", row.value, min_value, max_value, 2);
+        }
+
+        gui::same_line();
+        gui::min_item_size({ 65, 65 });
+        if (gui::button("<")) row.value = std::max(row.value - 1, min_value);
+        gui::same_line();
+        gui::min_item_size({ 65, 65 });
+        if (gui::button(">")) row.value = std::min(row.value + 1, max_value);
+
+
     }
 
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
@@ -415,7 +440,7 @@ void draw_effect_view() {
     gui::same_line();
     gui::min_item_size({ widths[1], 88 });
     if (gui::button("+") && effect.length < MAX_EFFECT_LENGTH) {
-        effect.rows[effect.length] = 0x80;
+        effect.rows[effect.length] = { Effect::OP_RELATIVE, 0x30 };
         ++effect.length;
     }
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });

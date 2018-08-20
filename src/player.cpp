@@ -148,13 +148,13 @@ void tick() {
             if (chan.inst_row >= inst.length) {
                 chan.inst_row = std::min<int>(inst.loop, inst.length - 1);
             }
-            Instrument::Row const& row = inst.rows[chan.inst_row++];
+            Instrument::Row row = inst.rows[chan.inst_row++];
             chan.flags = row.flags;
             switch (row.operation) {
-            case OP_SET:
+            case Instrument::OP_SET:
                 chan.pulsewidth_acc = row.value * 0x10;
                 break;
-            case OP_INC:
+            case Instrument::OP_INC:
                 chan.pulsewidth_acc += row.value;
                 chan.pulsewidth_acc &= 0x1ff;
                 break;
@@ -171,8 +171,22 @@ void tick() {
             if (chan.effect_row >= effect.length) {
                 chan.effect_row = std::min<int>(effect.loop, effect.length - 1);
             }
-            int offset = effect.rows[chan.effect_row++] - 0x80;
-            chan.freq = exp2f((chan.note - 58 + offset * 0.25f) / 12.0f) * (1 << 28) * 440 / MIXRATE;
+            Effect::Row row = effect.rows[chan.effect_row++];
+            float n = 0;
+            switch (row.operation) {
+            case Effect::OP_RELATIVE:
+                n = chan.note - 58 + row.value - 0x30;
+                break;
+            case Effect::OP_ABSOLUTE:
+                n = 1         - 58 + row.value;
+                break;
+            case Effect::OP_DETUNE:
+                n = chan.note - 58 + (row.value - 0x30) * 0.25;
+                break;
+            default:
+                break;
+            }
+            chan.freq = exp2f(n / 12.0f) * (1 << 28) * 440 / MIXRATE;
         }
     }
 
@@ -182,16 +196,16 @@ void tick() {
         if (m_filter.row >= filter.length) {
             m_filter.row = std::min<int>(filter.loop, filter.length - 1);
         }
-        auto& row = filter.rows[m_filter.row++];
+        Filter::Row row = filter.rows[m_filter.row++];
         m_filter.type = row.type;
         switch (row.operation) {
-        case OP_SET:
+        case Filter::OP_SET:
             m_filter.freq_acc = row.value * 66;
             break;
-        case OP_DEC:
+        case Filter::OP_DEC:
             m_filter.freq_acc = std::max(0, m_filter.freq_acc - row.value * 4);
             break;
-        case OP_INC:
+        case Filter::OP_INC:
             m_filter.freq_acc = std::min(0x7ff, m_filter.freq_acc + row.value * 4);
             break;
         default:

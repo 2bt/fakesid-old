@@ -194,7 +194,7 @@ void draw_track_view() {
     // track select
     gfx::font(FONT_MONO);
     gui::min_item_size({ 88, 88 });
-    if (gui::button("-")) m_track = std::max(1, m_track - 1);
+    if (gui::button("<")) m_track = std::max(1, m_track - 1);
     char str[3];
     sprint_track_id(str, m_track);
     gui::min_item_size({ 88, 88 });
@@ -202,7 +202,7 @@ void draw_track_view() {
     if (gui::button(str)) enter_track_select();
     gui::min_item_size({ 88, 88 });
     gui::same_line();
-    if (gui::button("+")) m_track = std::min<int>(TRACK_COUNT, m_track + 1);
+    if (gui::button(">")) m_track = std::min<int>(TRACK_COUNT, m_track + 1);
 
     assert(m_track > 0);
     Track& track = player::song().tracks[m_track - 1];

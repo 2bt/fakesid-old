@@ -213,7 +213,7 @@ void highlight() { m_highlight = true; }
 
 
 bool button(char const* label, bool active) {
-    enum { HOLD_TIME = 20 };
+    enum { HOLD_TIME = 10 };
     m_hold = false;
     Vec s = gfx::text_size(label);
     Box box = item_box(s + Vec(30, 10));
