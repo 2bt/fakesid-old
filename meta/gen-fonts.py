@@ -220,18 +220,49 @@ for font, filename in [
 		# arrow left
 		w = W / 4
 		h = H / 4
-		cr.move_to(x + w, y - h)
-		cr.line_to(x - w, y)
-		cr.line_to(x + w, y + h)
+		cr.translate(x - w / 3, y)
+		cr.move_to(w, -h)
+		cr.line_to(-w, 0)
+		cr.line_to(w, h)
 		cr.fill()
+		cr.identity_matrix()
 		x += W
 		# arrow right
-		cr.move_to(x - w, y - h)
-		cr.line_to(x + w, y)
-		cr.line_to(x - w, y + h)
+		cr.translate(x + w / 3, y)
+		cr.move_to(-w, -h)
+		cr.line_to(w, 0)
+		cr.line_to(-w, h)
 		cr.fill()
+		cr.identity_matrix()
 		x += W
+
+		# copy
+		cr.set_line_cap(cairo.LINE_CAP_BUTT)
+		w = W * 0.225
+		h = W * 0.3
+		def path(ps):
+			for i, p in enumerate(ps):
+				if i == 0: cr.move_to(p // 16 * w, p % 16 * h)
+				else: cr.line_to(p // 16 * w, p % 16 * h)
+		cr.translate(x - w * 2, y - h * 2)
+		path([ 0x31, 0x30, 0x00, 0x03, 0x13 ])
+		cr.stroke()
+		path([ 0x11, 0x41, 0x44, 0x14])
+		cr.close_path()
+		cr.stroke()
+		cr.identity_matrix()
 		x += W
+		# paste
+		cr.translate(x - w * 2, y - h * 2)
+		path([ 0x31, 0x30, 0x00, 0x03, 0x13 ])
+		cr.stroke()
+		path([ 0x11, 0x41, 0x44, 0x14])
+		cr.close_path()
+		cr.fill_preserve()
+		cr.stroke()
+		cr.identity_matrix()
+		x += W
+
 
 	cr.set_line_cap(cairo.LINE_CAP_BUTT)
 

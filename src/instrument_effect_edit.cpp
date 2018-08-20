@@ -143,10 +143,10 @@ void draw_instrument_view() {
     gfx::font(FONT_MONO);
     gui::same_line();
     gui::min_item_size({ 88, 88 });
-    if (gui::button("C")) m_copy_inst = inst;
+    if (gui::button("\x1d")) m_copy_inst = inst;
     gui::same_line();
     gui::min_item_size({ 88, 88 });
-    if (gui::button("P")) inst = m_copy_inst;
+    if (gui::button("\x1e")) inst = m_copy_inst;
     gui::separator();
 
 
@@ -364,10 +364,10 @@ void draw_effect_view() {
     gfx::font(FONT_MONO);
     gui::same_line();
     gui::min_item_size({ 88, 88 });
-    if (gui::button("C")) m_copy_effect = effect;
+    if (gui::button("\x1d")) m_copy_effect = effect;
     gui::same_line();
     gui::min_item_size({ 88, 88 });
-    if (gui::button("P")) effect = m_copy_effect;
+    if (gui::button("\x1e")) effect = m_copy_effect;
 
     gui::separator();
 

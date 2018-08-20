@@ -214,10 +214,10 @@ void draw_track_view() {
     gfx::font(FONT_MONO);
     gui::same_line();
     gui::min_item_size({ 88, 88 });
-    if (gui::button("C")) m_copy_track = track;
+    if (gui::button("\x1d")) m_copy_track = track;
     gui::same_line();
     gui::min_item_size({ 88, 88 });
-    if (gui::button("P")) track = m_copy_track;
+    if (gui::button("\x1e")) track = m_copy_track;
 
 
 
