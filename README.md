@@ -38,6 +38,7 @@ Once you have that, run `make` like so:
 
 ### TODO
 
-+ OGG export
++ confirm load/save/delete
++ OGG export on android
 + variable track length
 + documentation
