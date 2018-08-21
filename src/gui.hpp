@@ -8,6 +8,8 @@ namespace gui {
         PADDING = 2,
         SEPARATOR_WIDTH = 6,
     };
+    enum Align { CENTER, LEFT, RIGHT };
+
     bool process_event(const SDL_Event& e);
     Vec  cursor();
     void cursor(Vec const& c);
@@ -15,6 +17,7 @@ namespace gui {
     void id(void const* addr);
     void same_line();
     void next_line();
+    void align(Align a);
     void min_item_size(Vec const& s);
     void padding(Vec const& size);
     void separator();

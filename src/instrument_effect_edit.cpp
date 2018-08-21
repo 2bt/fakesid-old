@@ -59,7 +59,9 @@ bool draw_instrument_select() {
             gfx::font(FONT_DEFAULT);
             gui::same_line();
             gui::min_item_size({ widths[x] - 65 - gui::PADDING, 65 });
+            gui::align(gui::LEFT);
             gui::text(inst.name.data());
+            gui::align(gui::CENTER);
             gui::same_line();
             gui::cursor(c2);
         }
@@ -107,7 +109,9 @@ bool draw_effect_select() {
             gfx::font(FONT_DEFAULT);
             gui::same_line();
             gui::min_item_size({ widths[x] - 65 - gui::PADDING, 65 });
+            gui::align(gui::LEFT);
             gui::text(effect.name.data());
+            gui::align(gui::CENTER);
             gui::same_line();
             gui::cursor(c2);
         }
@@ -137,7 +141,9 @@ void draw_instrument_view() {
     auto widths = calculate_column_widths({ -1, 88, 88 });
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ widths[0], 88 });
+    gui::align(gui::LEFT);
     gui::input_text(inst.name.data(), inst.name.size() - 1);
+    gui::align(gui::CENTER);
 
     // copy & paste
     gfx::font(FONT_MONO);
@@ -358,7 +364,9 @@ void draw_effect_view() {
     auto widths = calculate_column_widths({ -1, 88, 88 });
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ widths[0], 88 });
+    gui::align(gui::LEFT);
     gui::input_text(effect.name.data(), effect.name.size() - 1);
+    gui::align(gui::CENTER);
 
     // copy & paste
     gfx::font(FONT_MONO);

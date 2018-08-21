@@ -93,7 +93,7 @@ void ogg_close() {
 
 int                      m_file_scroll;
 std::string              m_dir_name;
-std::array<char, 25>     m_file_name;
+std::array<char, 28>     m_file_name;
 std::vector<std::string> m_file_names;
 std::string              m_export_dir;
 std::string              m_status_msg;
@@ -208,16 +208,17 @@ void draw_project_view() {
     Song& song = player::song();
 
     // meta
-    auto widths = calculate_column_widths({ 180, -1 });
+    auto widths = calculate_column_widths({ 170, -1 });
+    gui::align(gui::LEFT);
     gui::min_item_size({ widths[0], 88 });
-    gui::text("Title:");
+    gui::text("Title");
     gui::same_line();
     gui::min_item_size({ widths[1], 88 });
     gui::input_text(song.title.data(), song.title.size() - 1);
     gui::separator();
 
     gui::min_item_size({ widths[0], 88 });
-    gui::text("Author:");
+    gui::text("Author");
     gui::same_line();
     gui::min_item_size({ widths[1], 88 });
     gui::input_text(song.author.data(), song.author.size() - 1);
@@ -226,9 +227,7 @@ void draw_project_view() {
     // length
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ widths[0], 65 });
-    gui::text("Length:");
-    gui::same_line();
-    gui::padding({ 10, 0 });
+    gui::text("Length");
     gui::same_line();
     gfx::font(FONT_MONO);
     int frames = (TRACK_LENGTH * song.tempo + TRACK_LENGTH / 2 * song.swing) * song.table_length;
@@ -282,6 +281,7 @@ void draw_project_view() {
         gui::separator();
         gui::padding({ widths[2], 0 });
     }
+    gui::align(gui::CENTER);
 
     // scrollbar
     Vec c2 = gui::cursor();

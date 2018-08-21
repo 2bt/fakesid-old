@@ -73,6 +73,7 @@ char*       m_input_text_str = nullptr;
 int         m_input_text_len;
 int         m_input_text_pos;
 int         m_input_cursor_blink = 0;
+Align       m_align = CENTER;
 
 std::array<char, 1024> m_text_buffer;
 
@@ -121,6 +122,13 @@ void print_to_text_buffer(const char* fmt, ...) {
 }
 
 
+Vec print_pos(Box const& box, Vec const& s) {
+    if      (m_align == CENTER) return box.pos + box.size / 2 - s / 2;
+    else if (m_align == LEFT)   return box.pos + Vec(15, (box.size.y - s.y) / 2);
+    else                        return box.pos + Vec(box.size.x - s.x - 15, box.size.y - s.y / 2);
+}
+
+
 } // namespace
 
 
@@ -153,6 +161,11 @@ void same_line() {
 
 void next_line() {
     m_same_line = false;
+}
+
+
+void align(Align a) {
+    m_align = a;
 }
 
 
@@ -205,7 +218,7 @@ void text(char const* fmt, ...) {
     Vec s = gfx::text_size(m_text_buffer.data());
     Box box = item_box(s);
     gfx::color(color::text);
-    gfx::print(box.pos + box.size / 2 - s / 2, m_text_buffer.data());
+    gfx::print(print_pos(box, s), m_text_buffer.data());
 }
 
 
@@ -235,7 +248,7 @@ bool button(char const* label, bool active) {
     gfx::color(color);
     gfx::rectangle(box.pos, box.size, 2);
     gfx::color(color::text);
-    gfx::print(box.pos + box.size / 2 - s / 2, label);
+    gfx::print(print_pos(box, s), label);
     return clicked;
 }
 
@@ -308,10 +321,12 @@ void input_text(char* str, int len) {
     gfx::color(color);
     gfx::rectangle(box.pos, box.size, 4);
     gfx::color(color::text);
-    gfx::print(box.pos + box.size / 2 - s / 2, str);
+
+    Vec p = print_pos(box, s);
+    gfx::print(p, str);
     // cursor
     if (m_input_text_str == str && m_input_cursor_blink % 16 < 8) {
-        gfx::print(box.pos + box.size / 2 + Vec(s.x, -s.y) / 2, "_");
+        gfx::print(p + Vec(s.x, 0), "_");
     }
 }
 
