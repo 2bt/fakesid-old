@@ -5,11 +5,6 @@
 namespace player {
 namespace {
 
-int pfloat_ConvertFromInt(int i) { return i << 16; }
-int pfloat_ConvertFromFloat(float f) { return (int)(f * (1 << 16)); }
-int pfloat_Multiply(int a, int b) { return (a >> 8) * (b >> 8); }
-int pfloat_ConvertToInt(int i) { return i >> 16; }
-
 
 constexpr Filter     null_filter     = {};
 constexpr Instrument null_instrument = {};
@@ -64,12 +59,12 @@ struct {
     int           freq_acc;
 
     uint8_t       type;
-    int           resonance;
-    int           freq;
+    float         resonance;
+    float         freq;
 
-    int           high;
-    int           band;
-    int           low;
+    float         high;
+    float         band;
+    float         low;
 
 } m_filter;
 
@@ -186,7 +181,7 @@ void tick() {
             default:
                 break;
             }
-            chan.freq = exp2f(n / 12.0f) * (1 << 28) * 440 / MIXRATE;
+            chan.freq = exp2f(n / 12) * (1 << 28) * 440 / MIXRATE;
         }
     }
 
@@ -212,8 +207,8 @@ void tick() {
             break;
         }
 
-        m_filter.freq = m_filter.freq_acc * (pfloat_ConvertFromFloat(21.5332031f) / MIXRATE);
-        m_filter.resonance = pfloat_ConvertFromFloat(1.2f) - pfloat_ConvertFromFloat(0.04f) * row.resonance;
+        m_filter.freq = m_filter.freq_acc * (21.5332031 / MIXRATE);
+        m_filter.resonance = 1.2 - 0.04 * row.resonance;
     }
 
 
@@ -356,17 +351,16 @@ void mix(short* buffer, int length) {
         }
 
 
-
         // filter
-        m_filter.high = pfloat_ConvertFromInt(out[1]) - pfloat_Multiply(m_filter.band, m_filter.resonance) - m_filter.low;
-        m_filter.band += pfloat_Multiply(m_filter.freq, m_filter.high);
-        m_filter.low  += pfloat_Multiply(m_filter.freq, m_filter.band);
+        m_filter.high = out[1] - m_filter.band * m_filter.resonance - m_filter.low;
+        m_filter.band += m_filter.freq * m_filter.high;
+        m_filter.low  += m_filter.freq * m_filter.band;
         int f = 0;
-        if (m_filter.type & FILTER_LOW)  f += pfloat_ConvertToInt(m_filter.low);
-        if (m_filter.type & FILTER_BAND) f += pfloat_ConvertToInt(m_filter.band);
-        if (m_filter.type & FILTER_HIGH) f += pfloat_ConvertToInt(m_filter.high);
+        if (m_filter.type & FILTER_LOW)  f += m_filter.low;
+        if (m_filter.type & FILTER_BAND) f += m_filter.band;
+        if (m_filter.type & FILTER_HIGH) f += m_filter.high;
 
-        int sample = (out[0] + f) >> 1;
+        int sample = out[0] + f;
         buffer[i] = std::max(-32768, std::min<int>(sample, 32767));
     }
 }
