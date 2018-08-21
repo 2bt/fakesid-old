@@ -8,7 +8,7 @@ namespace {
 
 SDL_Window*   m_window     = nullptr;
 SDL_Renderer* m_renderer   = nullptr;
-Vec           m_screensize = { 1080, 1920 };
+Vec           m_screensize = { 1080, 1920 - 115 };
 FontID        m_font       = FONT_DEFAULT;
 
 
