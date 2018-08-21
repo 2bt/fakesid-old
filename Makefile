@@ -22,8 +22,12 @@ clean:
 	rm -rf obj/ $(TRG)
 
 
+
+#### android
+NDK = $(realpath ../android-ndk-r16)
+
 android:
-	cd android-project && ../../android-ndk-r16/ndk-build
+	cd android-project && $(NDK)/ndk-build
 
 android-install: android
 	cd android-project && ant debug install

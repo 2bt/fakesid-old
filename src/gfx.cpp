@@ -1,6 +1,10 @@
 #include "gfx.hpp"
 #include <cstdarg>
 
+//#ifndef __ANDROID__
+#define DOWNSCALE
+//#endif
+
 
 namespace gfx {
 namespace {
@@ -45,7 +49,7 @@ bool init() {
         return false;
     }
 
-#ifndef __ANDROID__
+#ifdef DOWNSCALE
     SDL_RenderSetLogicalSize(m_renderer, m_screensize.x, m_screensize.y);
 #endif
 
@@ -65,7 +69,7 @@ void free() {
 
 bool process_event(const SDL_Event& e) {
     switch (e.type) {
-#ifdef __ANDROID__
+#ifndef DOWNSCALE
     case SDL_WINDOWEVENT:
         if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
             m_screensize = { e.window.data1, e.window.data2 };
@@ -79,14 +83,14 @@ bool process_event(const SDL_Event& e) {
 
 
 void clear() {
-#ifdef __ANDROID__
-    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
-    SDL_RenderClear(m_renderer);
-#else
+#ifdef DOWNSCALE
     SDL_SetRenderDrawColor(m_renderer, 40, 40, 40, 255);
     SDL_RenderClear(m_renderer);
     SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
     SDL_RenderFillRect(m_renderer, nullptr);
+#else
+    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+    SDL_RenderClear(m_renderer);
 #endif
 }
 

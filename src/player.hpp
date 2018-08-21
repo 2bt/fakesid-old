@@ -4,7 +4,8 @@
 
 enum {
     MIXRATE               = 44100,
-    SAMPLES_PER_FRAME     = MIXRATE / 50,
+    FRAMES_PER_SECOND     = 50,
+    SAMPLES_PER_FRAME     = MIXRATE / FRAMES_PER_SECOND,
 };
 
 

@@ -8,10 +8,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-enum {
-    PAGE_LENGTH = 16
-};
-
 namespace {
 
 int  m_song_scroll    = 0;
@@ -23,20 +19,17 @@ int  m_block          = 0;
 int get_selected_block() { return m_block; }
 
 void draw_song_view() {
+
+    enum {
+        PAGE_LENGTH = 21
+    };
+
     Song& song = player::song();
 
 
-    // tempo and swing
-    auto widths = calculate_column_widths({ -9, -5 });
-    gui::min_item_size({ widths[0], 0 });
-    gui::drag_int("Tempo", "%X", song.tempo, 4, 12);
-    gui::same_line();
-    gui::min_item_size({ widths[1], 0 });
-    gui::drag_int("Swing", "%X", song.swing, 0, 4);
-    gui::separator();
 
     // mute buttons
-    widths = calculate_column_widths({ 88, gui::SEPARATOR_WIDTH, -1, -1, -1, -1, gui::SEPARATOR_WIDTH, 65 });
+    auto widths = calculate_column_widths({ 88, gui::SEPARATOR_WIDTH, -1, -1, -1, -1, gui::SEPARATOR_WIDTH, 65 });
     gui::padding({ widths[0], 65 });
     gui::same_line();
     gui::separator();

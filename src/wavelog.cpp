@@ -1,13 +1,5 @@
-#ifdef __ANDROID__
-namespace wavelog {
-    bool init(int mixrate) { return true; }
-    void write(short const* buffer, int len) {}
-    void free() {}
-}
-#else
-
-
 #include "wavelog.hpp"
+#include "player.hpp"
 #include <SDL.h>
 #include <sndfile.h>
 
@@ -47,12 +39,12 @@ SNDFILE*   m_sndfile;
 } // namespace
 
 
-bool init(int mixrate) {
+bool open(char const* name) {
 
-    m_file = SDL_RWFromFile("log.ogg", "wb");
+    m_file = SDL_RWFromFile(name, "wb");
     if (!m_file) return false;
 
-    SF_INFO info = { 0, mixrate, 1, SF_FORMAT_OGG | SF_FORMAT_VORBIS };
+    SF_INFO info = { 0, MIXRATE, 1, SF_FORMAT_OGG | SF_FORMAT_VORBIS };
 
     SF_VIRTUAL_IO vio = {
         sf_vio_get_filelen,
@@ -63,6 +55,12 @@ bool init(int mixrate) {
     };
 
     m_sndfile = sf_open_virtual(&vio, SFM_WRITE, &info, m_file);
+    if (!m_sndfile) {
+        SDL_RWclose(m_file);
+        m_file = nullptr;
+        return false;
+    }
+
     double quality = 0.95;
     sf_command(m_sndfile, SFC_SET_VBR_ENCODING_QUALITY, &quality, sizeof(quality));
 
@@ -71,17 +69,18 @@ bool init(int mixrate) {
 
 
 void write(short const* buffer, int len) {
-	sf_writef_short(m_sndfile, buffer, len);
+    if (m_sndfile) sf_writef_short(m_sndfile, buffer, len);
 }
 
 
-void free() {
+void close() {
     sf_close(m_sndfile);
     SDL_RWclose(m_file);
+    m_sndfile = nullptr;
+    m_file = nullptr;
 }
 
 
 } // namespace
 
 
-#endif

@@ -109,6 +109,9 @@ struct Effect {
 struct Song {
     using Block = std::array<uint8_t, CHANNEL_COUNT>;
 
+    std::array<char, 32>                     title;
+    std::array<char, 32>                     author;
+
     uint8_t tempo; // 4 to F
     uint8_t swing; // 0 to 4
 

@@ -1,7 +1,7 @@
 #pragma once
 
 namespace wavelog {
-    bool init(int mixrate);
+    bool open(char const* name);
     void write(short const* buffer, int len);
-    void free();
+    void close();
 }

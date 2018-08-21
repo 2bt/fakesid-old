@@ -50,6 +50,8 @@ void init_song(Song& song) {
 bool load_song(Song& song, char const* name) {
     SDL_RWops* file = SDL_RWFromFile(name, "rb");
     if (!file) return false;
+    SDL_RWread(file, song.title.data(), sizeof(char), song.title.size());
+    SDL_RWread(file, song.author.data(), sizeof(char), song.author.size());
     song.tempo = SDL_ReadU8(file);
     song.swing = SDL_ReadU8(file);
     SDL_RWread(file, song.tracks.data(), sizeof(Track), song.tracks.size());
@@ -66,6 +68,8 @@ bool load_song(Song& song, char const* name) {
 bool save_song(Song const& song, char const* name) {
     SDL_RWops* file = SDL_RWFromFile(name, "wb");
     if (!file) return false;
+    SDL_RWwrite(file, song.title.data(), sizeof(char), song.title.size());
+    SDL_RWwrite(file, song.author.data(), sizeof(char), song.author.size());
     SDL_WriteU8(file, song.tempo);
     SDL_WriteU8(file, song.swing);
     SDL_RWwrite(file, song.tracks.data(), sizeof(Track), song.tracks.size());
