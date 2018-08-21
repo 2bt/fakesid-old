@@ -348,7 +348,6 @@ void draw_project_view() {
     gui::separator();
 
 
-
     // status
     if (!m_status_msg.empty()) {
         gui::padding({ 15, 0 });
@@ -360,6 +359,4 @@ void draw_project_view() {
     }
 
 }
-
-
 
