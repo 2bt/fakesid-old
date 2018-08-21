@@ -182,9 +182,6 @@ bool draw_track_select() {
 }
 
 
-enum {
-    PAGE_LENGTH = 16
-};
 
 
 void draw_track_view() {
@@ -231,12 +228,21 @@ void draw_track_view() {
     Vec c1 = gui::cursor() + Vec(-65 - gui::PADDING, 65 + gui::PADDING * 2 + gui::SEPARATOR_WIDTH);
     gui::next_line();
 
+    enum {
+        PAGE_LENGTH = 16
+    };
+
     int player_row = player::row();
     gfx::font(FONT_MONO);
     for (int i = 0; i < PAGE_LENGTH; ++i) {
         if (i % 4 == 0) gui::separator();
 
         int row_nr = m_track_page * PAGE_LENGTH + i;
+        if (row_nr >= (int) track.rows.size()) {
+            gui::padding({ 0, 65 });
+            continue;
+        }
+
         bool highlight = row_nr == player_row;
         Track::Row& row = track.rows[row_nr];
 
@@ -311,7 +317,7 @@ void draw_track_view() {
     Vec c2 = gui::cursor();
     gui::cursor(c1);
     gui::min_item_size({ 65, c2.y - c1.y - gui::PADDING });
-    gui::vertical_drag_int(m_track_page, 0, TRACK_LENGTH / PAGE_LENGTH - 1);
+    gui::vertical_drag_int(m_track_page, 0, (TRACK_LENGTH + PAGE_LENGTH - 1) / PAGE_LENGTH - 1);
     gui::cursor(c2);
 
 

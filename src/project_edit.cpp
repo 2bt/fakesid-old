@@ -246,6 +246,10 @@ void draw_project_view() {
     gui::drag_int("Swing", "%X", song.swing, 0, 4);
     gui::separator();
 
+
+    // TODO: track length
+    // 24, 32, 36
+
     // name
     widths = calculate_column_widths({ -1 });
     gfx::font(FONT_DEFAULT);
