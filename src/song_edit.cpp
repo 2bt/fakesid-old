@@ -56,7 +56,7 @@ void draw_song_view() {
     gui::separator();
 
     // prepare scrollbar
-    int max_scroll = std::max<int>(PAGE_LENGTH, song.table_length) - PAGE_LENGTH;
+    int max_scroll = std::max<int>(PAGE_LENGTH, song.table_length + 1) - PAGE_LENGTH;
     if (m_song_scroll > max_scroll) m_song_scroll = max_scroll;
     Vec c1 = gui::cursor() + Vec(0, 65 + gui::PADDING * 2 + gui::SEPARATOR_WIDTH);
 

@@ -200,7 +200,7 @@ void tick() {
         m_filter.type = row.type;
         switch (row.operation) {
         case Filter::OP_SET:
-            m_filter.freq_acc = row.value * 66;
+            m_filter.freq_acc = 1 + row.value * 66;
             break;
         case Filter::OP_DEC:
             m_filter.freq_acc = std::max(0, m_filter.freq_acc - row.value * 4);
@@ -366,7 +366,7 @@ void mix(short* buffer, int length) {
         if (m_filter.type & FILTER_BAND) f += pfloat_ConvertToInt(m_filter.band);
         if (m_filter.type & FILTER_HIGH) f += pfloat_ConvertToInt(m_filter.high);
 
-        int sample = (out[0] + f);
+        int sample = (out[0] + f) >> 1;
         buffer[i] = std::max(-32768, std::min<int>(sample, 32767));
     }
 }
@@ -393,6 +393,7 @@ void reset() {
     m_frame = 0;
     m_row = 0;
     m_block = 0;
+    m_filter = {};
     for (Channel& chan : m_channels) {
         // i'm lazy
         bool a = chan.active;
