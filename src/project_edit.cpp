@@ -350,11 +350,11 @@ void draw_project_view() {
 
     // status
     if (!m_status_msg.empty()) {
-        gui::padding({ 15, 0 });
-        gui::same_line();
-        gui::min_item_size({ 0, 88 });
+        widths = calculate_column_widths({ -1 });
+        gui::min_item_size({ widths[0], 88 });
+        gui::align(gui::LEFT);
         gui::text(m_status_msg.c_str());
-        gui::min_item_size({ 0, 88 });
+        gui::align(gui::CENTER);
         if (++m_status_age > 100) m_status_msg = "";
     }
 
