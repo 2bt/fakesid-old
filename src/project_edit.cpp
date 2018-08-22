@@ -106,6 +106,35 @@ void status(std::string const& msg) {
 }
 
 
+bool copy_demo_song() {
+
+    std::string demo = m_dir_name + "demo" FILE_SUFFIX;
+    struct stat st;
+    if (stat(demo.c_str(), &st) != -1) return true;
+
+    SDL_RWops* src = SDL_RWFromFile("res/demo" FILE_SUFFIX, "rb");
+    if (!src) return false;
+
+    SDL_RWops* dst = SDL_RWFromFile(demo.c_str(), "wb");
+    if (!dst) {
+        SDL_RWclose(src);
+        return false;
+    }
+
+    int len = SDL_RWseek(src, 0, RW_SEEK_END);
+    SDL_RWseek(src, 0, RW_SEEK_SET);
+    std::vector<uint8_t> buffer(len);
+
+    SDL_RWread(src, buffer.data(), sizeof(uint8_t), buffer.size());
+    SDL_RWwrite(dst, buffer.data(), sizeof(uint8_t), buffer.size());
+
+    SDL_RWclose(dst);
+    SDL_RWclose(src);
+
+    return true;
+}
+
+
 bool init_dir_name() {
 
     std::string root_dir = get_root_dir();
@@ -118,6 +147,8 @@ bool init_dir_name() {
 
     m_export_dir = root_dir + "/exports/";
     if (stat(m_export_dir.c_str(), &st) == -1) mkdir(m_export_dir.c_str(), 0700);
+
+    copy_demo_song();
 
     return true;
 }
@@ -202,13 +233,9 @@ void init_file_names() {
 
 void draw_project_view() {
 
-    enum {
-        PAGE_LENGTH = 8
-    };
-
     Song& song = player::song();
 
-    // meta
+    // title and author
     auto widths = calculate_column_widths({ 270, -1 });
     gui::align(gui::LEFT);
     gui::min_item_size({ widths[0], 88 });
@@ -216,7 +243,6 @@ void draw_project_view() {
     gui::same_line();
     gui::min_item_size({ widths[1], 88 });
     gui::input_text(song.title.data(), song.title.size() - 1);
-
     gui::min_item_size({ widths[0], 88 });
     gui::text("Author");
     gui::same_line();
@@ -259,9 +285,6 @@ void draw_project_view() {
     gui::separator();
 
 
-    // TODO: track length
-    // 24, 32
-
     // name
     widths = calculate_column_widths({ -1 });
     gfx::font(FONT_DEFAULT);
@@ -269,16 +292,13 @@ void draw_project_view() {
     gui::input_text(m_file_name.data(), m_file_name.size() - 1);
     gui::separator();
 
-
-
     // file select
+    enum { PAGE_LENGTH = 10 };
     int max_scroll = std::max<int>(PAGE_LENGTH, m_file_names.size()) - PAGE_LENGTH;
     if (m_file_scroll > max_scroll) m_file_scroll = max_scroll;
-
     gui::same_line();
     Vec c1 = gui::cursor() + Vec(-65 - gui::PADDING, + gui::PADDING + gui::SEPARATOR_WIDTH);
     gui::next_line();
-
     gfx::font(FONT_DEFAULT);
     widths = calculate_column_widths({ -1, gui::SEPARATOR_WIDTH, 65 });
     for (int i = 0; i < PAGE_LENGTH; ++i) {

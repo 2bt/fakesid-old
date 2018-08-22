@@ -77,7 +77,7 @@ void draw() {
             bool button = gui::button(views[i].name, m_view == i);
             bool hold = gui::hold();
             if (button || hold) {
-                gui::block_touch();
+                if (i >= VIEW_TRACK) gui::block_touch();
                 if (m_view == i || hold) {
                     // open select menu
                     switch (i) {
