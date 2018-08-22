@@ -5,6 +5,7 @@
 void init_song(Song& song) {
 
     song.tempo = 5;
+    song.track_length = 32;
     song.table_length = 1;
 
     // preset some instruments/effects
@@ -54,6 +55,7 @@ bool load_song(Song& song, char const* name) {
     SDL_RWread(file, song.author.data(), sizeof(char), song.author.size());
     song.tempo = SDL_ReadU8(file);
     song.swing = SDL_ReadU8(file);
+    song.track_length = SDL_ReadU8(file);
     SDL_RWread(file, song.tracks.data(), sizeof(Track), song.tracks.size());
     SDL_RWread(file, song.instruments.data(), sizeof(Instrument), song.instruments.size());
     SDL_RWread(file, song.effects.data(), sizeof(Effect), song.effects.size());
@@ -72,6 +74,7 @@ bool save_song(Song const& song, char const* name) {
     SDL_RWwrite(file, song.author.data(), sizeof(char), song.author.size());
     SDL_WriteU8(file, song.tempo);
     SDL_WriteU8(file, song.swing);
+    SDL_WriteU8(file, song.track_length);
     SDL_RWwrite(file, song.tracks.data(), sizeof(Track), song.tracks.size());
     SDL_RWwrite(file, song.instruments.data(), sizeof(Instrument), song.instruments.size());
     SDL_RWwrite(file, song.effects.data(), sizeof(Effect), song.effects.size());

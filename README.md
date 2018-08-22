@@ -40,5 +40,4 @@ Once you have that, run `make` like so:
 
 + confirm load/save/delete
 + incremental OGG export
-+ variable track length
 + documentation

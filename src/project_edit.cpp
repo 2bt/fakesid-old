@@ -124,6 +124,7 @@ bool init_dir_name() {
 
 
 void ogg_export() {
+
     // stop
     edit::set_playing(false);
     //TODO: ensure that the callback has exited
@@ -154,7 +155,7 @@ void ogg_export() {
 
     static std::array<short, 1024> buffer;
 
-    int frames = (TRACK_LENGTH * song.tempo + TRACK_LENGTH / 2 * song.swing) * song.table_length;
+    int frames = (song.track_length * song.tempo + song.track_length / 2 * song.swing) * song.table_length;
     int samples = frames * SAMPLES_PER_FRAME;
 
     while (samples > 0) {
@@ -208,47 +209,58 @@ void draw_project_view() {
     Song& song = player::song();
 
     // meta
-    auto widths = calculate_column_widths({ 170, -1 });
+    auto widths = calculate_column_widths({ 270, -1 });
     gui::align(gui::LEFT);
     gui::min_item_size({ widths[0], 88 });
     gui::text("Title");
     gui::same_line();
     gui::min_item_size({ widths[1], 88 });
     gui::input_text(song.title.data(), song.title.size() - 1);
-    gui::separator();
 
     gui::min_item_size({ widths[0], 88 });
     gui::text("Author");
     gui::same_line();
     gui::min_item_size({ widths[1], 88 });
     gui::input_text(song.author.data(), song.author.size() - 1);
-    gui::separator();
+
+    // track length
+    auto widths2 = calculate_column_widths({ 270, -1, -1 });
+    gfx::font(FONT_DEFAULT);
+    gui::min_item_size({ widths[0], 88 });
+    gui::text("Track length");
+    gfx::font(FONT_MONO);
+    gui::same_line();
+    gui::align(gui::CENTER);
+    gui::min_item_size({ widths2[1], 88 });
+    if (gui::button("24", song.track_length == 24)) song.track_length = 24;
+    gui::same_line();
+    gui::min_item_size({ widths2[2], 88 });
+    if (gui::button("32", song.track_length == 32)) song.track_length = 32;
+    gui::align(gui::LEFT);
 
     // length
     gfx::font(FONT_DEFAULT);
-    gui::min_item_size({ widths[0], 65 });
-    gui::text("Length");
+    gui::min_item_size({ widths[0], 88 });
+    gui::text("Song length");
     gui::same_line();
     gfx::font(FONT_MONO);
-    int frames = (TRACK_LENGTH * song.tempo + TRACK_LENGTH / 2 * song.swing) * song.table_length;
+    gui::min_item_size({ widths[1], 88 });
+    int frames = (song.track_length * song.tempo + song.track_length / 2 * song.swing) * song.table_length;
     int seconds = frames / FRAMES_PER_SECOND;
     gui::text("%d:%02d", seconds / 60, seconds % 60);
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 0 });
-    gui::separator();
-
 
     // tempo and swing
     widths = calculate_column_widths({ -9, -5 });
-    gui::min_item_size({ widths[0], 0 });
+    gui::min_item_size({ widths[0], 65 });
     gui::drag_int("Tempo", "%X", song.tempo, 4, 12);
     gui::same_line();
-    gui::min_item_size({ widths[1], 0 });
+    gui::min_item_size({ widths[1], 65 });
     gui::drag_int("Swing", "%X", song.swing, 0, 4);
     gui::separator();
 
 
     // TODO: track length
-    // 24, 32, 36
+    // 24, 32
 
     // name
     widths = calculate_column_widths({ -1 });

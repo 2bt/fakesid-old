@@ -4,7 +4,7 @@
 
 enum {
     CHANNEL_COUNT         = 4,
-    TRACK_LENGTH          = 32,
+    MAX_TRACK_LENGTH      = 32,
     TRACK_COUNT           = 21 * 12,
     INSTRUMENT_COUNT      = 48,
     EFFECT_COUNT          = INSTRUMENT_COUNT,
@@ -22,8 +22,7 @@ struct Track {
         uint8_t effect;
         uint8_t note;
     };
-    std::array<Row, TRACK_LENGTH> rows;
-//    uint8_t length;
+    std::array<Row, MAX_TRACK_LENGTH> rows;
 };
 
 
@@ -114,6 +113,7 @@ struct Song {
 
     uint8_t tempo; // 4 to F
     uint8_t swing; // 0 to 4
+    uint8_t track_length;
 
     std::array<Track, TRACK_COUNT>           tracks;
     std::array<Instrument, INSTRUMENT_COUNT> instruments;

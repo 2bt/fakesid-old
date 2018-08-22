@@ -212,8 +212,6 @@ void tick() {
     }
 
 
-
-
     int frames_per_row = m_song.tempo;
     if (m_row % 2 == 0) frames_per_row += m_song.swing;
 
@@ -222,7 +220,7 @@ void tick() {
     if (m_frame == frames_per_row - 2) {
         int block_nr = m_block;
         int row_nr   = m_row + 1;
-        if (row_nr >= TRACK_LENGTH) {
+        if (row_nr >= m_song.track_length) {
             row_nr = 0;
             if (!m_block_loop && ++block_nr >= m_song.table_length) {
                 block_nr = 0;
@@ -253,7 +251,7 @@ void tick() {
     // advance
     if (++m_frame >= frames_per_row) {
         m_frame = 0;
-        if (++m_row >= TRACK_LENGTH) {
+        if (++m_row >= m_song.track_length) {
             m_row = 0;
             if (!m_block_loop && ++m_block >= m_song.table_length) {
                 m_block = 0;

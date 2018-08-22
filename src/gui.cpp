@@ -285,7 +285,7 @@ bool process_event(const SDL_Event& e) {
         if (!m_input_text_str) return false;
         m_input_cursor_blink = 0;
         c = e.text.text[0];
-        if ((isalnum(c) || (m_input_text_pos > 0 && strchr(" _-.+", c))) &&
+        if ((isalnum(c) || (m_input_text_pos > 0 && strchr(" _-.+()", c))) &&
             m_input_text_pos < m_input_text_len)
         {
             m_input_text_str[m_input_text_pos++] = c;
@@ -317,9 +317,9 @@ void input_text(char* str, int len) {
     }
 
     gfx::color(color::input_text_normal);
-    gfx::rectangle(box.pos, box.size, 0);
+    gfx::rectangle(box.pos, box.size, 1);
     gfx::color(color);
-    gfx::rectangle(box.pos, box.size, 4);
+    gfx::rectangle(box.pos, box.size, 5);
     gfx::color(color::text);
 
     Vec p = print_pos(box, s);

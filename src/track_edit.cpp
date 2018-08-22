@@ -88,8 +88,8 @@ void enter_track_select(uint8_t& dst, bool allow_nil) {
 
 Cache m_inst_cache;
 Cache m_effect_cache;
-int   m_instrument     = 1;
-int   m_effect         = 1;
+int   m_instrument = 1;
+int   m_effect     = 1;
 
 
 } // namespace
@@ -216,8 +216,10 @@ void draw_track_view() {
     gui::same_line();
     if (gui::button("\x1c")) m_track = std::min<int>(TRACK_COUNT, m_track + 1);
 
+
     assert(m_track > 0);
-    Track& track = player::song().tracks[m_track - 1];
+    Song& song = player::song();
+    Track& track = song.tracks[m_track - 1];
 
     gui::same_line();
     gui::padding({ widths[3], 0 });
@@ -230,7 +232,6 @@ void draw_track_view() {
     gui::same_line();
     gui::min_item_size({ 88, 88 });
     if (gui::button("\x1e")) track = m_copy_track;
-
 
 
     // clavier slider
@@ -253,7 +254,7 @@ void draw_track_view() {
         if (i % 4 == 0) gui::separator();
 
         int row_nr = m_track_page * PAGE_LENGTH + i;
-        if (row_nr >= (int) track.rows.size()) {
+        if (row_nr >= song.track_length) {
             gui::padding({ 0, 65 });
             continue;
         }
@@ -334,7 +335,7 @@ void draw_track_view() {
     Vec c2 = gui::cursor();
     gui::cursor(c1);
     gui::min_item_size({ 65, c2.y - c1.y - gui::PADDING });
-    gui::vertical_drag_int(m_track_page, 0, (TRACK_LENGTH + PAGE_LENGTH - 1) / PAGE_LENGTH - 1);
+    gui::vertical_drag_int(m_track_page, 0, (song.track_length + PAGE_LENGTH - 1) / PAGE_LENGTH - 1);
     gui::cursor(c2);
 
 
