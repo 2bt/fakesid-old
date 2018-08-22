@@ -66,10 +66,23 @@ int      m_track_page     = 0;
 
 Track    m_copy_track;
 
+std::array<bool, TRACK_COUNT> m_empty_tracks;
+
 void enter_track_select(uint8_t& dst, bool allow_nil) {
     m_track_select_active = true;
     m_track_select_value = &dst;
     m_track_select_allow_nil = allow_nil;
+
+    Song const& song = player::song();
+    for (int i = 0; i < (int) m_empty_tracks.size(); ++i) {
+        m_empty_tracks[i] = true;
+        for (Track::Row const& row : song.tracks[i].rows) {
+            if (row.note || row.instrument || row.effect) {
+                m_empty_tracks[i] = false;
+                break;
+            }
+        }
+    }
 }
 
 
@@ -171,6 +184,8 @@ bool draw_track_select() {
             gui::min_item_size({ widths[x], 65 });
             char str[3] = "  ";
             sprint_track_id(str, n);
+
+            if (!m_empty_tracks[n - 1]) gui::highlight();
             if (gui::button(str, n == track_nr)) {
                 *m_track_select_value = n;
                 m_track_select_active = false;
@@ -257,6 +272,7 @@ void draw_track_view() {
             else row.instrument = selected_instrument();
         }
         if (row.instrument > 0 && gui::hold()) {
+            gui::block_touch();
             select_instrument(row.instrument);
         }
 
@@ -270,6 +286,7 @@ void draw_track_view() {
             else row.effect = selected_effect();
         }
         if (row.effect > 0 && gui::hold()) {
+            gui::block_touch();
             select_effect(row.effect);
         }
 
