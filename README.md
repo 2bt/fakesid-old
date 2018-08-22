@@ -12,24 +12,26 @@ Get the APK [here](http://www.langnerd.de/insidious/insidious.apk)!
 
 ### Screeshots
 
-![image](screenshot-0.png)
-![image](screenshot-1.png)
-![image](screenshot-2.png)
-![image](screenshot-3.png)
-![image](screenshot-4.png)
+![image](screenshots/0.png)
+![image](screenshots/1.png)
+![image](screenshots/2.png)
+![image](screenshots/3.png)
+![image](screenshots/4.png)
+![image](screenshots/5.png)
 
 
 ### How to build
 
 In order to compile for android the following setup is prerequisite:
 
-    $ ls ..
+	$ ls ..
 	android-ndk-r16     # android NDK
-    insidious           # the project folder; its name doesn't matter
-    SDL2-2.0.7          # SDL source
-    SDL2_image-2.0.2    # SDL image source
-    SDL2_mixer-2.0.2    # SDL mixer source
-    tools_r25.2.5-linux # android SDK
+	insidious           # the project folder
+	libsndfile          # libsndfile source (TODO: provide Android.mk)
+	SDL2-2.0.7          # SDL source
+	SDL2_image-2.0.2    # SDL image source
+	SDL2_mixer-2.0.2    # SDL mixer source
+	tools_r25.2.5-linux # android SDK
 
 Once you have that, run `make` like so:
 
