@@ -1,4 +1,4 @@
-# Insidious
+# Fake SID
 
 This is a chiptune tracker for android that's trying to sound a lot like the MOS Technology SID.
 The synth code is based on TinySID by Tammo Hinrichs (kb).
@@ -7,7 +7,7 @@ Also, I added a fourth voice (but you don't have to use it if you don't want to,
 
 The tracker is highly inspired by [lft's Blackbird](https://csdb.dk/release/?id=161554).
 
-Get the APK [here](http://www.langnerd.de/insidious/insidious.apk)!
+Get the APK [here](http://www.langnerd.de/fakesid/fakesid.apk)!
 
 
 ### Screeshots
@@ -26,7 +26,7 @@ In order to compile for android the following setup is prerequisite:
 
 	$ ls ..
 	android-ndk-r16     # android NDK
-	insidious           # the project folder
+	fakesid             # the project folder
 	libsndfile          # libsndfile source (TODO: provide Android.mk)
 	SDL2-2.0.7          # SDL source
 	SDL2_image-2.0.2    # SDL image source

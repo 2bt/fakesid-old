@@ -1,4 +1,4 @@
-package com.sdl.insidious;
+package com.sdl.fakesid;
 
 import org.libsdl.app.SDLActivity;
 

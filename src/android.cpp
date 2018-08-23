@@ -30,7 +30,7 @@ std::string get_root_dir() {
     std::string root_dir = str;
     j_env->ReleaseStringUTFChars(j_path, str);
 
-    root_dir += "/insidious";
+    root_dir += "/fakesid";
 
     struct stat st = {};
     if (stat(root_dir.c_str(), &st) == -1) mkdir(root_dir.c_str(), 0700);
