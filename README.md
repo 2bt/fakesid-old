@@ -7,7 +7,9 @@ Also, I added a fourth voice (but you don't have to use it if you don't want to,
 
 The tracker is highly inspired by [lft's Blackbird](https://csdb.dk/release/?id=161554).
 
-Get the APK [here](http://www.langnerd.de/fakesid/fakesid.apk)!
+Get the APK [here](http://www.langnerd.de/fakesid/fakesid.apk).
+
+Listen to the demo songs on [soundcloud](https://soundcloud.com/daniel-langner-150098802/sets/fake-sid-demo-songs).
 
 
 ### Screeshots
