@@ -77,7 +77,7 @@ uint8_t*                      m_track_select_value;
 void draw_track_select() {
 
     gfx::font(FONT_DEFAULT);
-    auto widths = calculate_column_widths({ -1, -1 });
+    auto widths = m_track_select_allow_nil ? calculate_column_widths({ -1, -1 }) : calculate_column_widths({ -1 });
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("Cancel")) {
         edit::set_popup(nullptr);

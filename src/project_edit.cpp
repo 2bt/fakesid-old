@@ -159,7 +159,57 @@ bool init_dirs() {
 }
 
 
-void ogg_export() {
+SDL_Thread* m_export_thread;
+bool        m_export_canceled;
+bool        m_export_done;
+float       m_export_progress;
+
+
+int export_thread_func(void*) {
+
+    Song& song = player::song();
+    static std::array<short, 1024> buffer;
+
+    int frames = (song.track_length * song.tempo + song.track_length / 2 * song.swing) * song.table_length;
+    const int samples = frames * SAMPLES_PER_FRAME;
+    int samples_left = samples;
+
+    while (samples_left > 0 && !m_export_canceled) {
+        int len = std::min<int>(samples_left, buffer.size());
+        samples_left -= len;
+        player::fill_buffer(buffer.data(), len);
+        ogg_write(buffer.data(), len);
+        m_export_progress = float(samples - samples_left) / samples;
+    }
+    ogg_close();
+
+    player::reset();
+
+    m_export_done = true;
+
+    return 0;
+}
+
+
+void draw_export_progress() {
+    gfx::font(FONT_DEFAULT);
+    auto widths = calculate_column_widths({ -1 });
+    gui::min_item_size({ widths[0], 88 });
+    if (gui::button("Cancel")) m_export_canceled = true;
+
+    gfx::font(FONT_MONO);
+    gui::min_item_size({ widths[0], 88 });
+    gui::text("%3d %%", int(m_export_progress * 100));
+
+    if (m_export_done) {
+        edit::set_popup(nullptr);
+        if (m_export_canceled) status("Song export was canceled");
+        else status("Song was exported");
+    }
+}
+
+
+void init_export() {
 
     // stop
     edit::set_playing(false);
@@ -183,28 +233,19 @@ void ogg_export() {
         return;
     }
 
-    Song& song = player::song();
-
     // set meta info
+    Song& song = player::song();
     sf_set_string(m_sndfile, SF_STR_TITLE, song.title.data());
     sf_set_string(m_sndfile, SF_STR_ARTIST, song.author.data());
 
-    static std::array<short, 1024> buffer;
+    // start thread
+    m_export_canceled = false;
+    m_export_done     = false;
+    m_export_progress = 0;
+    m_export_thread   = SDL_CreateThread(export_thread_func, "song export", nullptr);
 
-    int frames = (song.track_length * song.tempo + song.track_length / 2 * song.swing) * song.table_length;
-    int samples = frames * SAMPLES_PER_FRAME;
-
-    while (samples > 0) {
-        int len = std::min<int>(samples, buffer.size());
-        samples -= len;
-        player::fill_buffer(buffer.data(), len);
-        ogg_write(buffer.data(), len);
-    }
-    ogg_close();
-
-    player::reset();
-
-    status("Song was exported");
+    // popup
+    edit::set_popup(draw_export_progress);
 }
 
 
@@ -386,7 +427,7 @@ void draw_project_view() {
     // TODO: make it incremental
     gui::same_line();
     gui::min_item_size({ widths[3], 88 });
-    if (gui::button("Export")) ogg_export();
+    if (gui::button("Export")) init_export();
 
     gui::separator();
 

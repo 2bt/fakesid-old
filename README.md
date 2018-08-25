@@ -41,5 +41,4 @@ Once you have that, run `make` like so:
 ### TODO
 
 + confirm load/save/delete
-+ incremental OGG export
 + documentation

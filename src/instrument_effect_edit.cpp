@@ -13,7 +13,7 @@ Effect     m_copy_effect;
 void draw_instrument_select() {
 
     gfx::font(FONT_DEFAULT);
-    auto widths = calculate_column_widths({ -1, -1 });
+    auto widths = calculate_column_widths({ -1 });
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("Cancel")) edit::set_popup(nullptr);
     gui::separator();
@@ -52,13 +52,12 @@ void draw_instrument_select() {
         }
         gui::next_line();
     }
-    gui::separator();
 }
 // XXX: this is a copy of instrument_select with s/instrument/effect/g :(
 void draw_effect_select() {
 
     gfx::font(FONT_DEFAULT);
-    auto widths = calculate_column_widths({ -1, -1 });
+    auto widths = calculate_column_widths({ -1 });
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("Cancel")) edit::set_popup(nullptr);
     gui::separator();
@@ -97,7 +96,6 @@ void draw_effect_select() {
         }
         gui::next_line();
     }
-    gui::separator();
 }
 
 
