@@ -35,6 +35,7 @@ bool init() {
     m_window = SDL_CreateWindow("fakesid",
                                 SDL_WINDOWPOS_UNDEFINED,
                                 SDL_WINDOWPOS_UNDEFINED,
+//                                m_screensize.x / 2, m_screensize.y / 2, 0);
                                 m_screensize.x, m_screensize.y,
                                 SDL_WINDOW_RESIZABLE);
     if (!m_window) {

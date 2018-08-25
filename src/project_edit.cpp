@@ -2,8 +2,8 @@
 #include "edit.hpp"
 #include "gui.hpp"
 #include "player.hpp"
-#include "wavelog.hpp"
 #include <algorithm>
+#include <string>
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -165,6 +165,8 @@ void draw_export_progress() {
     gui::text("%3d %%", int(m_export_progress * 100));
 
     if (m_export_done) {
+        int ret;
+        SDL_WaitThread(m_export_thread, &ret);
         edit::set_popup(nullptr);
         if (m_export_canceled) status("Song export was canceled");
         else status("Song was exported");
