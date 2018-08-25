@@ -1,36 +1,21 @@
 #include "track_edit.hpp"
 #include "gui.hpp"
 #include "player.hpp"
+#include "edit.hpp"
 
 
 namespace {
 
 bool       m_filter_mode;
-bool       m_instrument_select_active;
-bool       m_effect_select_active;
 Instrument m_copy_inst;
 Effect     m_copy_effect;
 
-} // namespace
-
-
-void enter_instrument_select() {
-    m_instrument_select_active = true;
-}
-
-void enter_effect_select() {
-    m_effect_select_active = true;
-}
-
-bool draw_instrument_select() {
-    if (!m_instrument_select_active) return false;
+void draw_instrument_select() {
 
     gfx::font(FONT_DEFAULT);
     auto widths = calculate_column_widths({ -1, -1 });
     gui::min_item_size({ widths[0], 88 });
-    if (gui::button("Cancel")) {
-        m_instrument_select_active = false;
-    }
+    if (gui::button("Cancel")) edit::set_popup(nullptr);
     gui::separator();
 
     Song& song = player::song();
@@ -44,7 +29,7 @@ bool draw_instrument_select() {
             gui::min_item_size({ widths[x], 65 });
             if (inst.length > 0) gui::highlight();
             if (gui::button("", nr == selected_instrument())) {
-                m_instrument_select_active = false;
+                edit::set_popup(nullptr);
                 select_instrument(nr);
             }
 
@@ -68,19 +53,14 @@ bool draw_instrument_select() {
         gui::next_line();
     }
     gui::separator();
-
-    return true;
 }
 // XXX: this is a copy of instrument_select with s/instrument/effect/g :(
-bool draw_effect_select() {
-    if (!m_effect_select_active) return false;
+void draw_effect_select() {
 
     gfx::font(FONT_DEFAULT);
     auto widths = calculate_column_widths({ -1, -1 });
     gui::min_item_size({ widths[0], 88 });
-    if (gui::button("Cancel")) {
-        m_effect_select_active = false;
-    }
+    if (gui::button("Cancel")) edit::set_popup(nullptr);
     gui::separator();
 
     Song& song = player::song();
@@ -94,7 +74,7 @@ bool draw_effect_select() {
             gui::min_item_size({ widths[x], 65 });
             if (effect.length > 0) gui::highlight();
             if (gui::button("", nr == selected_effect())) {
-                m_effect_select_active = false;
+                edit::set_popup(nullptr);
                 select_effect(nr);
             }
 
@@ -118,8 +98,18 @@ bool draw_effect_select() {
         gui::next_line();
     }
     gui::separator();
+}
 
-    return true;
+
+} // namespace
+
+
+void enter_instrument_select() {
+    edit::set_popup(draw_instrument_select);
+}
+
+void enter_effect_select() {
+    edit::set_popup(draw_effect_select);
 }
 
 

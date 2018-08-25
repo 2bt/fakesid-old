@@ -1,4 +1,4 @@
 #pragma once
 
-void init_file_names();
+void init_project_view();
 void draw_project_view();

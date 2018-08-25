@@ -56,9 +56,6 @@ void draw_cache(Cache& cache, int& data) {
 }
 
 
-bool     m_track_select_active;
-bool     m_track_select_allow_nil;
-uint8_t* m_track_select_value;
 
 uint8_t  m_track          = 1;
 int      m_clavier_offset = 36;
@@ -66,10 +63,64 @@ int      m_track_page     = 0;
 
 Track    m_copy_track;
 
+Cache    m_inst_cache;
+Cache    m_effect_cache;
+int      m_instrument = 1;
+int      m_effect     = 1;
+
+
 std::array<bool, TRACK_COUNT> m_empty_tracks;
+bool                          m_track_select_allow_nil;
+uint8_t*                      m_track_select_value;
+
+
+void draw_track_select() {
+
+    gfx::font(FONT_DEFAULT);
+    auto widths = calculate_column_widths({ -1, -1 });
+    gui::min_item_size({ widths[0], 88 });
+    if (gui::button("Cancel")) {
+        edit::set_popup(nullptr);
+    }
+    gui::same_line();
+    if (m_track_select_allow_nil) {
+        gui::min_item_size({ widths[1], 88 });
+        if (gui::button("Clear")) {
+            edit::set_popup(nullptr);
+            *m_track_select_value = 0;
+        }
+    }
+    else {
+        gui::padding({});
+    }
+
+    gui::separator();
+
+    gfx::font(FONT_MONO);
+    widths = calculate_column_widths(std::vector<int>(12, -1));
+    int track_nr = *m_track_select_value;
+
+    for (int y = 0; y < 21; ++y) {
+        for (int x = 0; x < 12; ++x) {
+            if (x > 0) gui::same_line();
+            int n = x * 21 + y + 1;
+
+            gui::min_item_size({ widths[x], 65 });
+            char str[3] = "  ";
+            sprint_track_id(str, n);
+
+            if (!m_empty_tracks[n - 1]) gui::highlight();
+            if (gui::button(str, n == track_nr)) {
+                *m_track_select_value = n;
+                edit::set_popup(nullptr);
+            }
+        }
+    }
+}
+
 
 void enter_track_select(uint8_t& dst, bool allow_nil) {
-    m_track_select_active = true;
+    edit::set_popup(draw_track_select);
     m_track_select_value = &dst;
     m_track_select_allow_nil = allow_nil;
 
@@ -84,12 +135,6 @@ void enter_track_select(uint8_t& dst, bool allow_nil) {
         }
     }
 }
-
-
-Cache m_inst_cache;
-Cache m_effect_cache;
-int   m_instrument = 1;
-int   m_effect     = 1;
 
 
 } // namespace
@@ -147,56 +192,6 @@ void draw_instrument_cache() {
 void draw_effect_cache() {
     draw_cache(m_effect_cache, m_effect);
 }
-
-
-bool draw_track_select() {
-    if (!m_track_select_active) return false;
-
-    gfx::font(FONT_DEFAULT);
-    auto widths = calculate_column_widths({ -1, -1 });
-    gui::min_item_size({ widths[0], 88 });
-    if (gui::button("Cancel")) {
-        m_track_select_active = false;
-    }
-    gui::same_line();
-    if (m_track_select_allow_nil) {
-        gui::min_item_size({ widths[1], 88 });
-        if (gui::button("Clear")) {
-            m_track_select_active = false;
-            *m_track_select_value = 0;
-        }
-    }
-    else {
-        gui::padding({});
-    }
-
-    gui::separator();
-
-    gfx::font(FONT_MONO);
-    widths = calculate_column_widths(std::vector<int>(12, -1));
-    int track_nr = *m_track_select_value;
-
-    for (int y = 0; y < 21; ++y) {
-        for (int x = 0; x < 12; ++x) {
-            if (x > 0) gui::same_line();
-            int n = x * 21 + y + 1;
-
-            gui::min_item_size({ widths[x], 65 });
-            char str[3] = "  ";
-            sprint_track_id(str, n);
-
-            if (!m_empty_tracks[n - 1]) gui::highlight();
-            if (gui::button(str, n == track_nr)) {
-                *m_track_select_value = n;
-                m_track_select_active = false;
-            }
-        }
-    }
-
-    return true;
-}
-
-
 
 
 void draw_track_view() {
@@ -273,7 +268,6 @@ void draw_track_view() {
             else row.instrument = selected_instrument();
         }
         if (row.instrument > 0 && gui::hold()) {
-            gui::block_touch();
             select_instrument(row.instrument);
         }
 
@@ -287,7 +281,6 @@ void draw_track_view() {
             else row.effect = selected_effect();
         }
         if (row.effect > 0 && gui::hold()) {
-            gui::block_touch();
             select_effect(row.effect);
         }
 

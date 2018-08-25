@@ -93,7 +93,6 @@ void draw_song_view() {
                     enter_track_select(block[c]);
                 }
                 if (block[c] > 0 && gui::hold()) {
-                    gui::block_touch();
                     select_track(block[c]);
                     edit::set_view(VIEW_TRACK);
                 }

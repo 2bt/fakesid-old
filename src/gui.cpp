@@ -253,11 +253,9 @@ bool button(char const* label, bool active) {
 }
 
 
-bool hold() { return m_hold; }
-
-
-void block_touch() {
-    m_active_item = (void const*) -1;
+bool hold() {
+    if (m_hold) m_active_item = (void const*) -1;
+    return m_hold;
 }
 
 

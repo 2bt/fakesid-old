@@ -137,7 +137,9 @@ bool copy_demo_song(const char* name) {
 }
 
 
-bool init_dir_name() {
+bool init_dirs() {
+
+    if (++m_status_age > 100) m_status_msg = "";
 
     std::string root_dir = get_root_dir();
     if (root_dir.empty()) return false;
@@ -210,12 +212,12 @@ void ogg_export() {
 
 
 
-void init_file_names() {
+void init_project_view() {
 
-    static bool init_dir_name_done = false;
-    if (!init_dir_name_done) {
-        init_dir_name();
-        init_dir_name_done = true;
+    static bool init_dirs_done = false;
+    if (!init_dirs_done) {
+        init_dirs();
+        init_dirs_done = true;
     }
 
     m_file_names.clear();
@@ -231,6 +233,8 @@ void init_file_names() {
         closedir(dir);
         std::sort(m_file_names.begin(), m_file_names.end());
     }
+
+    m_status_msg = "";
 }
 
 
@@ -357,9 +361,9 @@ void draw_project_view() {
             status("Save error: ?");
         }
         else {
+            init_project_view();
             status("Song was saved");
         }
-        init_file_names();
     }
     gui::same_line();
     gui::min_item_size({ widths[2], 88 });
@@ -374,7 +378,7 @@ void draw_project_view() {
         else {
             std::string path = m_dir_name + name + FILE_SUFFIX;
             unlink(path.c_str());
-            init_file_names();
+            init_project_view();
             status("Song was deleted");
         }
     }
@@ -388,14 +392,11 @@ void draw_project_view() {
 
 
     // status
-    if (!m_status_msg.empty()) {
-        widths = calculate_column_widths({ -1 });
-        gui::min_item_size({ widths[0], 88 });
-        gui::align(gui::LEFT);
-        gui::text(m_status_msg.c_str());
-        gui::align(gui::CENTER);
-        if (++m_status_age > 100) m_status_msg = "";
-    }
-
+    widths = calculate_column_widths({ -1 });
+    gui::min_item_size({ widths[0], 88 });
+    gui::align(gui::LEFT);
+    gui::text(m_status_msg.c_str());
+    gui::align(gui::CENTER);
+    if (++m_status_age > 100) m_status_msg = "";
 }
 

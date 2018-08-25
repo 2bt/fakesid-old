@@ -16,6 +16,7 @@ void audio_callback(void* userdata, Uint8* stream, int len) {
 
 EView m_view;
 bool  m_is_playing;
+void (*m_popup_func)(void);
 
 
 } // namespace
@@ -31,7 +32,12 @@ void set_playing(bool p) {
 
 void set_view(EView v) {
     m_view = v;
-    if (m_view == VIEW_PROJECT) init_file_names();
+    if (m_view == VIEW_PROJECT) init_project_view();
+}
+
+
+void set_popup(void (*func)(void)) {
+    m_popup_func = func;
 }
 
 
@@ -45,7 +51,6 @@ bool init() {
     return true;
 }
 
-
 void free() {
     SDL_CloseAudio();
 }
@@ -54,7 +59,8 @@ void draw() {
     gfx::clear();
     gui::begin_frame();
 
-    if (!draw_track_select() && !draw_instrument_select() && !draw_effect_select()) {
+    if (m_popup_func) m_popup_func();
+    else {
         gfx::font(FONT_DEFAULT);
 
         // view select buttons
@@ -75,9 +81,8 @@ void draw() {
             if (i) gui::same_line();
             gui::min_item_size({ widths[i], 88 });
             bool button = gui::button(views[i].name, m_view == i);
-            bool hold = gui::hold();
+            bool hold = i > VIEW_TRACK && gui::hold();
             if (button || hold) {
-                if (i >= VIEW_TRACK) gui::block_touch();
                 if (m_view == i || hold) {
                     // open select menu
                     switch (i) {

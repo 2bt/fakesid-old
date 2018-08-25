@@ -16,5 +16,4 @@ int     selected_effect();
 
 void    draw_instrument_cache();
 void    draw_effect_cache();
-bool    draw_track_select();
 void    draw_track_view();
