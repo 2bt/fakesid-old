@@ -44,52 +44,6 @@ sf_count_t sf_vio_tell(void* user_data) {
 }
 
 
-SDL_RWops* m_file;
-SNDFILE*   m_sndfile;
-
-
-bool ogg_open(char const* name) {
-
-    m_file = SDL_RWFromFile(name, "wb");
-    if (!m_file) return false;
-
-    SF_INFO info = { 0, MIXRATE, 1, SF_FORMAT_OGG | SF_FORMAT_VORBIS };
-
-    SF_VIRTUAL_IO vio = {
-        sf_vio_get_filelen,
-        sf_vio_seek,
-        sf_vio_read,
-        sf_vio_write,
-        sf_vio_tell,
-    };
-
-    m_sndfile = sf_open_virtual(&vio, SFM_WRITE, &info, m_file);
-    if (!m_sndfile) {
-        SDL_RWclose(m_file);
-        m_file = nullptr;
-        return false;
-    }
-
-    double quality = 0.95;
-    sf_command(m_sndfile, SFC_SET_VBR_ENCODING_QUALITY, &quality, sizeof(quality));
-
-    return m_sndfile != nullptr;
-}
-
-
-void ogg_write(short const* buffer, int len) {
-    if (m_sndfile) sf_writef_short(m_sndfile, buffer, len);
-}
-
-
-void ogg_close() {
-    sf_close(m_sndfile);
-    SDL_RWclose(m_file);
-    m_sndfile = nullptr;
-    m_file = nullptr;
-}
-
-
 
 int                      m_file_scroll;
 std::string              m_dir_name;
@@ -159,10 +113,15 @@ bool init_dirs() {
 }
 
 
-SDL_Thread* m_export_thread;
-bool        m_export_canceled;
-bool        m_export_done;
-float       m_export_progress;
+enum ExportFormat { EF_OGG, EF_WAV };
+
+ExportFormat m_export_format = EF_OGG;
+SDL_Thread*  m_export_thread;
+bool         m_export_canceled;
+bool         m_export_done;
+float        m_export_progress;
+SDL_RWops*   m_export_file;
+SNDFILE*     m_export_sndfile;
 
 
 int export_thread_func(void*) {
@@ -178,10 +137,14 @@ int export_thread_func(void*) {
         int len = std::min<int>(samples_left, buffer.size());
         samples_left -= len;
         player::fill_buffer(buffer.data(), len);
-        ogg_write(buffer.data(), len);
+        sf_writef_short(m_export_sndfile, buffer.data(), len);
         m_export_progress = float(samples - samples_left) / samples;
     }
-    ogg_close();
+
+    sf_close(m_export_sndfile);
+    SDL_RWclose(m_export_file);
+    m_export_sndfile = nullptr;
+    m_export_file    = nullptr;
 
     player::reset();
 
@@ -209,6 +172,45 @@ void draw_export_progress() {
 }
 
 
+bool open_export_file(std::string const& name) {
+
+    SF_INFO info = { 0, MIXRATE, 1 };
+    std::string path = m_export_dir + name;
+    if (m_export_format == EF_OGG) {
+        info.format = SF_FORMAT_OGG | SF_FORMAT_VORBIS;
+        path += ".ogg";
+    }
+    else {
+        info.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
+        path += ".wav";
+    }
+
+    m_export_file = SDL_RWFromFile(path.c_str(), "wb");
+    if (!m_export_file) return false;
+
+    SF_VIRTUAL_IO vio = {
+        sf_vio_get_filelen,
+        sf_vio_seek,
+        sf_vio_read,
+        sf_vio_write,
+        sf_vio_tell,
+    };
+
+    m_export_sndfile = sf_open_virtual(&vio, SFM_WRITE, &info, m_export_file);
+    if (!m_export_sndfile) {
+        SDL_RWclose(m_export_file);
+        m_export_file = nullptr;
+        return false;
+    }
+
+    // TODO: set quality
+    //double quality = 0.8;
+    //sf_command(m_export_sndfile, SFC_SET_VBR_ENCODING_QUALITY, &quality, sizeof(quality));
+
+    return m_export_sndfile != nullptr;
+}
+
+
 void init_export() {
 
     // stop
@@ -226,17 +228,15 @@ void init_export() {
         return;
     }
 
-    std::string path = m_export_dir + name + ".ogg";
-
-    if (!ogg_open(path.c_str())) {
+    if (!open_export_file(name)) {
         status("Export error: couldn't open file");
         return;
     }
 
     // set meta info
     Song& song = player::song();
-    sf_set_string(m_sndfile, SF_STR_TITLE, song.title.data());
-    sf_set_string(m_sndfile, SF_STR_ARTIST, song.author.data());
+    sf_set_string(m_export_sndfile, SF_STR_TITLE, song.title.data());
+    sf_set_string(m_export_sndfile, SF_STR_ARTIST, song.author.data());
 
     // start thread
     m_export_canceled = false;
@@ -298,7 +298,7 @@ void draw_project_view() {
     gui::input_text(song.author.data(), song.author.size() - 1);
 
     // track length
-    auto widths2 = calculate_column_widths({ 270, -1, -1 });
+    auto widths2 = calculate_column_widths({ widths[0], -1, -1 });
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ widths[0], 88 });
     gui::text("Track length");
@@ -377,7 +377,7 @@ void draw_project_view() {
 
 
     // file buttons
-    widths = calculate_column_widths({ -1, -1, -1, -1 });
+    widths = calculate_column_widths({ -1, -1, -1 });
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("Load")) {
         std::string name = m_file_name.data();
@@ -421,13 +421,29 @@ void draw_project_view() {
         }
     }
 
-    // TODO: make it incremental
-    gui::same_line();
-    gui::min_item_size({ widths[3], 88 });
-    if (gui::button("Export")) init_export();
 
     gui::separator();
 
+
+    widths = calculate_column_widths({ widths2[0], -1, -1, gui::SEPARATOR_WIDTH, widths[2] });
+
+    gui::min_item_size({ widths2[0], 88 });
+    gui::align(gui::LEFT);
+    gui::text("Format");
+    gui::align(gui::CENTER);
+    gui::same_line();
+
+    gui::min_item_size({ widths[1], 88 });
+    if (gui::button("OGG", m_export_format == EF_OGG)) m_export_format = EF_OGG;
+    gui::same_line();
+    gui::min_item_size({ widths[2], 88 });
+    if (gui::button("WAV", m_export_format == EF_WAV)) m_export_format = EF_WAV;
+    gui::same_line();
+    gui::separator();
+
+    gui::min_item_size({ widths[4], 88 });
+    if (gui::button("Export")) init_export();
+    gui::separator();
 
     // status
     widths = calculate_column_widths({ -1 });
