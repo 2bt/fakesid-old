@@ -4,7 +4,7 @@
 
 void init_song(Song& song) {
 
-    song.tempo = 5;
+    song.tempo = 6;
     song.track_length = 32;
     song.table_length = 1;
 

@@ -106,16 +106,18 @@ void status(std::string const& msg) {
 }
 
 
-bool copy_demo_song() {
+bool copy_demo_song(const char* name) {
 
-    std::string demo = m_dir_name + "demo" FILE_SUFFIX;
+    std::string dst_name = m_dir_name + name;
+    std::string src_name = std::string("res/") + name;
+
     struct stat st;
-    if (stat(demo.c_str(), &st) != -1) return true;
+    if (stat(dst_name.c_str(), &st) != -1) return true;
 
-    SDL_RWops* src = SDL_RWFromFile("res/demo" FILE_SUFFIX, "rb");
+    SDL_RWops* src = SDL_RWFromFile(src_name.c_str(), "rb");
     if (!src) return false;
 
-    SDL_RWops* dst = SDL_RWFromFile(demo.c_str(), "wb");
+    SDL_RWops* dst = SDL_RWFromFile(dst_name.c_str(), "wb");
     if (!dst) {
         SDL_RWclose(src);
         return false;
@@ -148,7 +150,8 @@ bool init_dir_name() {
     m_export_dir = root_dir + "/exports/";
     if (stat(m_export_dir.c_str(), &st) == -1) mkdir(m_export_dir.c_str(), 0700);
 
-    copy_demo_song();
+    copy_demo_song("demo1" FILE_SUFFIX);
+    copy_demo_song("demo2" FILE_SUFFIX);
 
     return true;
 }
