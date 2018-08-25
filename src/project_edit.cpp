@@ -222,7 +222,7 @@ void init_export() {
     std::string name = m_file_name.data();
 
     if (name.empty()) {
-        status("Export error: empty file name");
+        status("Export error: empty song name");
         return;
     }
 
@@ -381,10 +381,7 @@ void draw_project_view() {
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("Load")) {
         std::string name = m_file_name.data();
-        if (name.empty()) {
-            status("Load error: empty song name");
-        }
-        else if (std::find(m_file_names.begin(), m_file_names.end(), name) == m_file_names.end()) {
+        if (std::find(m_file_names.begin(), m_file_names.end(), name) == m_file_names.end()) {
             status("Load error: song not listed");
         }
         else {
@@ -398,7 +395,10 @@ void draw_project_view() {
     if (gui::button("Save")) {
         std::string name = m_file_name.data();
         std::string path = m_dir_name + name + FILE_SUFFIX;
-        if (!save_song(song, path.c_str())) {
+        if (name.empty()) {
+            status("Save error: empty song name");
+        }
+        else if (!save_song(song, path.c_str())) {
             status("Save error: ?");
         }
         else {
@@ -410,10 +410,7 @@ void draw_project_view() {
     gui::min_item_size({ widths[2], 88 });
     if (gui::button("Delete")) {
         std::string name = m_file_name.data();
-        if (name.empty()) {
-            status("Delete error: empty song name");
-        }
-        else if (std::find(m_file_names.begin(), m_file_names.end(), name) == m_file_names.end()) {
+        if (std::find(m_file_names.begin(), m_file_names.end(), name) == m_file_names.end()) {
             status("Delete error: song not listed");
         }
         else {
