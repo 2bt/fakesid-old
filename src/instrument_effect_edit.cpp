@@ -20,6 +20,7 @@ void draw_instrument_select() {
 
     Song& song = player::song();
 
+    widths = calculate_column_widths({ -1, -1 });
     for (int y = 0; y < INSTRUMENT_COUNT / 2; ++y) {
         for (int x = 0; x < 2; ++x) {
             int nr = y + x * (INSTRUMENT_COUNT / 2) + 1;
@@ -64,6 +65,7 @@ void draw_effect_select() {
 
     Song& song = player::song();
 
+    widths = calculate_column_widths({ -1, -1 });
     for (int y = 0; y < EFFECT_COUNT / 2; ++y) {
         for (int x = 0; x < 2; ++x) {
             int nr = y + x * (EFFECT_COUNT / 2) + 1;
