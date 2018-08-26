@@ -8,9 +8,9 @@
 /build
 /captures
 .externalNativeBuild
-
-
 /app/build
+/app/release
+
 /linux/obj
 /linux/fakesid
 /linux/songs
