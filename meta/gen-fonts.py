@@ -289,7 +289,7 @@ for font, filename in [
 
 	cr.identity_matrix()
 
-	surface.write_to_png("../res/" + filename)
+	surface.write_to_png(filename)
 
 	enum = "TEX_" + filename[:-4].replace("-", "_").upper()
 	print("{")
