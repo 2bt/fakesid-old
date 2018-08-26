@@ -63,17 +63,6 @@
        cx="38.100002"
        cy="258.89999"
        r="37.041668" />
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="27.395128"
-       y="232.98894"
-       id="text4512"><tspan
-         sodipodi:role="line"
-         id="tspan4510"
-         x="27.395128"
-         y="242.35271"
-         style="stroke-width:0.26458332" /></text>
     <path
        inkscape:connector-curvature="0"
        id="path4668"
@@ -104,17 +93,6 @@
        d="M -39.720423,273.86599 H 110.27958 v 2.345 H -39.720423"
        style="fill:#7869c4;fill-opacity:1;stroke-width:1.53133774"
        sodipodi:nodetypes="cccc" />
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="64.812859"
-       y="266.79852"
-       id="text4753"><tspan
-         sodipodi:role="line"
-         id="tspan4751"
-         x="64.812859"
-         y="276.16229"
-         style="stroke-width:0.26458332" /></text>
     <flowRoot
        xml:space="preserve"
        id="flowRoot4755"

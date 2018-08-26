@@ -383,12 +383,14 @@ void draw_project_view() {
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("Load")) {
         std::string name = m_file_name.data();
+        std::string path = m_dir_name + name + FILE_SUFFIX;
         if (std::find(m_file_names.begin(), m_file_names.end(), name) == m_file_names.end()) {
             status("Load error: song not listed");
         }
+        else if (!load_song(player::song(), path.c_str())) {
+            status("Load error: ?");
+        }
         else {
-            std::string path = m_dir_name + name + FILE_SUFFIX;
-            load_song(player::song(), path.c_str());
             status("Song was loaded");
         }
     }
