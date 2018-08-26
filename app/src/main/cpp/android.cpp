@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <jni.h>
 
-std::string get_root_dir() {
+std::string get_storage_dir() {
 
     JNIEnv* j_env = (JNIEnv*) SDL_AndroidGetJNIEnv();
 
@@ -24,16 +24,11 @@ std::string get_root_dir() {
     std::string root_dir = str;
     j_env->ReleaseStringUTFChars(j_path, str);
 
-    root_dir += "/fakesid";
-
-    struct stat st = {};
-    if (stat(root_dir.c_str(), &st) == -1) mkdir(root_dir.c_str(), 0700);
-
     return root_dir;
 }
 
 #else
 
-std::string get_root_dir() { return "."; }
+std::string get_storage_dir() { return "."; }
 
 #endif

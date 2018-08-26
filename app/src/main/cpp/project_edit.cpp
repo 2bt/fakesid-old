@@ -14,7 +14,7 @@
 
 
 // android
-std::string get_root_dir();
+std::string get_storage_dir();
 
 
 namespace {
@@ -46,10 +46,11 @@ sf_count_t tell(void* user_data) {
 
 
 int                      m_file_scroll;
-std::string              m_dir_name;
 std::array<char, 28>     m_file_name;
 std::vector<std::string> m_file_names;
-std::string              m_export_dir;
+std::string              m_root_dir;
+std::string              m_songs_dir;
+std::string              m_exports_dir;
 std::string              m_status_msg;
 int                      m_status_age;
 
@@ -62,7 +63,7 @@ void status(std::string const& msg) {
 
 bool copy_demo_song(const char* name) {
 
-    std::string dst_name = m_dir_name + name;
+    std::string dst_name = m_songs_dir + name;
     std::string src_name = name;
 
     struct stat st;
@@ -93,18 +94,20 @@ bool copy_demo_song(const char* name) {
 
 bool init_dirs() {
 
-    if (++m_status_age > 100) m_status_msg = "";
+    if (m_root_dir.empty()) {
+        m_root_dir = get_storage_dir();
+        if (m_root_dir.empty()) return false;
+        m_root_dir += "/fakesid";
+    }
 
-    std::string root_dir = get_root_dir();
-    if (root_dir.empty()) return false;
+    struct stat st = {};
 
-    m_dir_name = root_dir + "/songs/";
+    m_songs_dir   = m_root_dir + "/songs/";
+    m_exports_dir = m_root_dir + "/exports/";
 
-    struct stat st;
-    if (stat(m_dir_name.c_str(), &st) == -1) mkdir(m_dir_name.c_str(), 0700);
-
-    m_export_dir = root_dir + "/exports/";
-    if (stat(m_export_dir.c_str(), &st) == -1) mkdir(m_export_dir.c_str(), 0700);
+    if (stat(m_root_dir.c_str(), &st) == -1)    mkdir(m_root_dir.c_str(), 0700);
+    if (stat(m_songs_dir.c_str(), &st) == -1)   mkdir(m_songs_dir.c_str(), 0700);
+    if (stat(m_exports_dir.c_str(), &st) == -1) mkdir(m_exports_dir.c_str(), 0700);
 
     copy_demo_song("demo1" FILE_SUFFIX);
     copy_demo_song("demo2" FILE_SUFFIX);
@@ -177,7 +180,7 @@ void draw_export_progress() {
 bool open_export_file(std::string const& name) {
 
     SF_INFO info = { 0, MIXRATE, 1 };
-    std::string path = m_export_dir + name;
+    std::string path = m_exports_dir + name;
     if (m_export_format == EF_OGG) {
         info.format = SF_FORMAT_OGG | SF_FORMAT_VORBIS;
         path += ".ogg";
@@ -264,7 +267,7 @@ void init_project_view() {
     }
 
     m_file_names.clear();
-    if (DIR* dir = opendir(m_dir_name.c_str())) {
+    if (DIR* dir = opendir(m_songs_dir.c_str())) {
 
         while (struct dirent* ent = readdir(dir)) {
             if (ent->d_type == DT_REG) {
@@ -384,7 +387,7 @@ void draw_project_view() {
     gui::min_item_size({ widths[0], 88 });
     if (gui::button("Load")) {
         std::string name = m_file_name.data();
-        std::string path = m_dir_name + name + FILE_SUFFIX;
+        std::string path = m_songs_dir + name + FILE_SUFFIX;
         if (std::find(m_file_names.begin(), m_file_names.end(), name) == m_file_names.end()) {
             status("Load error: song not listed");
         }
@@ -399,7 +402,7 @@ void draw_project_view() {
     gui::min_item_size({ widths[1], 88 });
     if (gui::button("Save")) {
         std::string name = m_file_name.data();
-        std::string path = m_dir_name + name + FILE_SUFFIX;
+        std::string path = m_songs_dir + name + FILE_SUFFIX;
         if (name.empty()) {
             status("Save error: empty song name");
         }
@@ -419,7 +422,7 @@ void draw_project_view() {
             status("Delete error: song not listed");
         }
         else {
-            std::string path = m_dir_name + name + FILE_SUFFIX;
+            std::string path = m_songs_dir + name + FILE_SUFFIX;
             unlink(path.c_str());
             init_project_view();
             status("Song was deleted");
