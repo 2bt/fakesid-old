@@ -103,6 +103,13 @@ void render(TextureID tex, SDL_Rect const& src, SDL_Rect const& dst, int flip) {
 }
 
 
+int glyph_width(char c) {
+    FontSpec const& spec = resource::font_spec(m_font);
+    int i = glm::clamp((int) c, 16, 127);
+    return c < 32 ? spec.width - 1 : spec.spacing[i - 32];
+}
+
+
 Vec text_size(char const* str) {
     FontSpec const& spec = resource::font_spec(m_font);
     Vec size = { 0, spec.height };
@@ -113,8 +120,7 @@ Vec text_size(char const* str) {
             width = 0;
             continue;
         }
-        int i = glm::clamp(c, 16, 127);
-        width += c < 32 ? spec.width - 1 : spec.spacing[i - 32];
+        width += glyph_width(c);
         size.x = std::max(size.x, width);
     }
     return size;
@@ -132,8 +138,8 @@ void print(Vec const& pos, char const* str) {
             continue;
         }
         int i = glm::clamp(c, 16, 127);
-        int width = dst.w = c < 32 ? spec.width - 1 : spec.spacing[i - 32];
-        src.w     = dst.w = c < 32 ? spec.width     : spec.spacing[i - 32];
+        int width = glyph_width(c);
+        src.w     = dst.w = c < 32 ? spec.width : spec.spacing[i - 32];
         src.x = i % 16 * spec.width;
         src.y = i / 16 * spec.height;
         render(spec.texture, src, dst);
@@ -157,6 +163,16 @@ void color(SDL_Color color) {
     SDL_Texture* t = resource::texture(spec.texture);
     SDL_SetTextureColorMod(t, color.r, color.g, color.b);
     SDL_SetTextureAlphaMod(t, color.a);
+}
+
+void clip_rectangle(Vec const& pos, Vec const& size) {
+    SDL_Rect rect = { pos.x, pos.y, size.x, size.y };
+    SDL_RenderSetClipRect(m_renderer, &rect);
+}
+
+
+void clear_clip_rectangle() {
+    SDL_RenderSetClipRect(m_renderer, nullptr);
 }
 
 

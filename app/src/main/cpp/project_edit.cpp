@@ -348,7 +348,7 @@ void draw_project_view() {
 
     // file select
     enum { PAGE_LENGTH = 10 };
-    int max_scroll = std::max<int>(PAGE_LENGTH, m_file_names.size()) - PAGE_LENGTH;
+    int max_scroll = std::max<int>(0, m_file_names.size() - PAGE_LENGTH);
     if (m_file_scroll > max_scroll) m_file_scroll = max_scroll;
     gui::same_line();
     Vec c1 = gui::cursor() + Vec(-65 - gui::PADDING, + gui::PADDING + gui::SEPARATOR_WIDTH);

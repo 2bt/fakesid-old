@@ -21,8 +21,11 @@ namespace gfx {
 
     void font(FontID font);
     void color(SDL_Color color);
+    int  glyph_width(char c);
+    Vec  text_size(char const* str);
     void print(Vec const& pos, char const* str);
     void printf(Vec const& pos, char const* fmt, ...);
-    Vec text_size(char const* str);
     void rectangle(Vec const& pos, Vec const& size, int style);
+    void clip_rectangle(Vec const& pos, Vec const& size);
+    void clear_clip_rectangle();
 }

@@ -2,6 +2,7 @@
 #include "project_edit.hpp"
 #include "song_edit.hpp"
 #include "track_edit.hpp"
+#include "help.hpp"
 #include "instrument_effect_edit.hpp"
 #include "gui.hpp"
 #include "player.hpp"
@@ -59,29 +60,32 @@ void draw() {
     gfx::clear();
     gui::begin_frame();
 
+    // view select buttons
+    struct View {
+        char const* name;
+        void (*draw)(void);
+    };
+    constexpr std::array<View, 6> views = {
+        View{ "Project", draw_project_view },
+        View{ "Song", draw_song_view },
+        View{ "Track", draw_track_view },
+        View{ "Instrum.", draw_instrument_view },
+        View{ "Effect", draw_effect_view },
+        View{ "?", draw_help_view },
+    };
+    std::vector<int> weights = std::vector<int>(views.size() - 1, -1);
+    weights.push_back(88);
+    auto widths = calculate_column_widths(weights);
+
     if (m_popup_func) m_popup_func();
     else {
+
         gfx::font(FONT_DEFAULT);
-
-        // view select buttons
-        struct View {
-            char const* name;
-            void (*draw)(void);
-        };
-        constexpr std::array<View, 5> views = {
-            View{ "Project", draw_project_view },
-            View{ "Song", draw_song_view },
-            View{ "Track", draw_track_view },
-            View{ "Instrum.", draw_instrument_view },
-            View{ "Effect", draw_effect_view },
-        };
-
-        auto widths = calculate_column_widths(std::vector<int>(views.size(), -1));
         for (int i = 0; i < (int) views.size(); ++i) {
             if (i) gui::same_line();
             gui::min_item_size({ widths[i], 88 });
             bool button = gui::button(views[i].name, m_view == i);
-            bool hold = i > VIEW_TRACK && gui::hold();
+            bool hold   = (i == VIEW_INSTRUMENT || i == VIEW_EFFECT) && gui::hold();
             if (button || hold) {
                 if (m_view == i || hold) {
                     // open select menu
