@@ -83,10 +83,10 @@ bool copy_demo_song(const char* name) {
     std::vector<uint8_t> buffer(len);
 
     SDL_RWread(src, buffer.data(), sizeof(uint8_t), buffer.size());
-    SDL_RWwrite(dst, buffer.data(), sizeof(uint8_t), buffer.size());
-
-    SDL_RWclose(dst);
     SDL_RWclose(src);
+
+    SDL_RWwrite(dst, buffer.data(), sizeof(uint8_t), buffer.size());
+    SDL_RWclose(dst);
 
     return true;
 }

@@ -1,69 +1,18 @@
 #include "gui.hpp"
 #include <vector>
 #include <string>
+#include <SDL.h>
 
 
 namespace {
 
 
-char const* m_raw_text = R"(
-*1. Introduction*
-
-Fake SID is a chiptune tracker that let's you create Commodore 64 music.
-Unlike other C64 trackers, songs made with Fake SID cannot be played on real C64 directly,
-but this is mainly an export issue.
-
-The original SID (the sound chip of the C64) has three voices, i.e. you can play three sounds simultaniously.
-In Fake SID you have a fourth voice at your disposal, although true purists abstain from using it.
-
-A *song* in Fake SID is basically a table with one column per voice.
-Table entries are references to so-called tracks.
-
-*Tracks* represent one bar of music for one voice.
-They contain notes and references to instruments and effects.
-
-*Instruments* control the volume and waveform of a voice.
-They may also control the filter.
-
-*Effects* - together with notes - control the pitch of a voice.
-
-At the top of the screen you find a tab for each of these categories.
-Let's go through each and discuss them in more detail.
-
-
-*2. Project*
-
-Here you set the title, author, track length, and tempo of the current song.
-Additionally, songs can be loaded, saved, and exported.
-
-
-*3. Song*
-
-The song tab shows you the 
-The song table contains references to tracks.
-
-
-*4. Track*
-
-
-*5. Instrument*
-
-Instruments pomprise volume control via *envelope*, the *wave* table and the optional *filter* table.
-
-
-
-*6. Effect*
-
-Effects control the pitch in correspondence with notes.
-An effect is a table of pitch offsets.
-
-
-
-End.)";
-
-
 struct Span {
-    enum Style { NORMAL, HIGHLIGHT };
+    enum Style {
+        NORMAL,
+        HIGHLIGHT,
+        HEADLINE
+    };
     Style       style;
     std::string text;
 };
@@ -75,6 +24,7 @@ struct Line {
 
 enum {
     LINE_HEIGHT       = 60,
+    HEADLINE_HEIGHT   = 75,
     PARAGRAPH_PADDING = 30,
 };
 
@@ -82,25 +32,44 @@ enum {
 std::vector<Line> m_lines;
 int               m_text_height;
 int               m_width;
+int               m_scroll;
+
+
+
+
+std::vector<char> read_help() {
+    SDL_RWops* file = SDL_RWFromFile("help.md", "r");
+    if (!file) {};
+    std::vector<char> buffer(SDL_RWseek(file, 0, RW_SEEK_END) + 1);
+    SDL_RWseek(file, 0, RW_SEEK_SET);
+    SDL_RWread(file, buffer.data(), sizeof(uint8_t), buffer.size());
+    SDL_RWclose(file);
+    return buffer;
+}
 
 
 void init() {
 
+    std::vector<char> buffer = read_help();
 
 
     m_width = calculate_column_widths({ -1, gui::SEPARATOR_WIDTH, 65 })[0];
 
-    Span::Style style = Span::NORMAL;
 
+    Span::Style style = Span::NORMAL;
     m_lines.emplace_back();
     m_lines.back().spans.push_back({ style });
 
     int width = 0;
     gfx::font(FONT_DEFAULT);
-    for (char const* p = m_raw_text; char c = *p++;) {
+    for (char const* p = buffer.data(); char c = *p;) {
+        ++p;
         if (c == '\n') {
             if (*p == '\n') {
-                m_lines.emplace_back();
+                while (*p == '\n') {
+                    ++p;
+                    m_lines.emplace_back();
+                }
                 m_lines.emplace_back();
                 m_lines.back().spans.push_back({ style });
                 width = 0;
@@ -110,6 +79,14 @@ void init() {
             c = ' ';
         }
 
+        if (c == '#') {
+            if (m_lines.back().spans.size() == 1 && m_lines.back().spans.front().text.empty()) {
+                while (*p == ' ') ++p;
+                m_lines.back().spans.front().style = Span::HEADLINE;
+                continue;
+            }
+        }
+
 
         if (c == '*') {
             if (*p != '*') {
@@ -117,6 +94,7 @@ void init() {
                 m_lines.back().spans.push_back({ style });
                 continue;
             }
+            ++p;
         }
 
         m_lines.back().spans.back().text += c;
@@ -149,15 +127,15 @@ void init() {
         if (line.spans.empty() || (line.spans.size() == 1 && line.spans.front().text.empty())) {
             line.height = PARAGRAPH_PADDING;
         }
+        else if (line.spans.front().style == Span::HEADLINE) {
+            line.height = HEADLINE_HEIGHT;
+        }
         else {
             line.height = LINE_HEIGHT;
         }
         m_text_height += line.height;
     }
 }
-
-
-int m_help_scroll;
 
 
 } // namespace
@@ -176,14 +154,14 @@ void draw_help_view() {
     int height = gfx::screensize().y - gui::SEPARATOR_WIDTH - gui::PADDING * 3 - 88 - pos.y;
 
     int max_scroll = std::max<int>(0, m_text_height) - height;
-    if (m_help_scroll > max_scroll) m_help_scroll = max_scroll;
+    if (m_scroll > max_scroll) m_scroll = max_scroll;
 
 
     gui::padding({ m_width, height });
     gui::same_line();
     gui::separator();
     gui::min_item_size({ 65, height });
-    gui::vertical_drag_int(m_help_scroll, 0, max_scroll, height);
+    gui::vertical_drag_int(m_scroll, 0, max_scroll, height);
 
     gui::separator();
 
@@ -192,7 +170,7 @@ void draw_help_view() {
     gui::align(gui::LEFT);
 
 
-    Vec offset = { 0, -m_help_scroll + 10 };
+    Vec offset = { 0, -m_scroll + 10 };
 
     gfx::clip_rectangle(pos, { m_width, height });
     for (Line const& line : m_lines) {
@@ -202,8 +180,15 @@ void draw_help_view() {
             for (Span const& span : line.spans) {
                 if (span.style == Span::NORMAL) gfx::color({ 255, 255, 255, 255 });
                 else gfx::color({ 0x55, 0xa0, 0x49, 255 });
+
+
                 gfx::print(pos + offset, span.text.c_str());
-                offset.x += gfx::text_size(span.text.c_str()).x;
+
+                int w = gfx::text_size(span.text.c_str()).x;
+                if (span.style == Span::HEADLINE) {
+                    gfx::rectangle(pos + offset + Vec(0, 60), { w, 8 }, 0);
+                }
+                offset.x += w;
             }
         }
         offset.y += line.height;
