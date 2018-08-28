@@ -6,14 +6,14 @@
 
 namespace {
 
+enum {
+    STYLE_HIGHLIGHT = 1,
+    STYLE_MONO      = 2,
+    STYLE_HEADLINE  = 4,
+};
 
 struct Span {
-    enum Style {
-        NORMAL,
-        HIGHLIGHT,
-        HEADLINE
-    };
-    Style       style;
+    int         style;
     std::string text;
 };
 
@@ -56,12 +56,13 @@ void init() {
     m_width = calculate_column_widths({ -1, gui::SEPARATOR_WIDTH, 65 })[0];
 
 
-    Span::Style style = Span::NORMAL;
+    int style = 0;
+    gfx::font(FONT_DEFAULT);
+
     m_lines.emplace_back();
     m_lines.back().spans.push_back({ style });
 
     int width = 0;
-    gfx::font(FONT_DEFAULT);
     for (char const* p = buffer.data(); char c = *p;) {
         ++p;
         if (c == '\n') {
@@ -82,15 +83,25 @@ void init() {
         if (c == '#') {
             if (m_lines.back().spans.size() == 1 && m_lines.back().spans.front().text.empty()) {
                 while (*p == ' ') ++p;
-                m_lines.back().spans.front().style = Span::HEADLINE;
+                m_lines.back().spans.front().style = STYLE_HEADLINE | STYLE_HIGHLIGHT;
                 continue;
             }
         }
 
 
+        if (c == '`') {
+            if (*p != '`') {
+                style ^= STYLE_MONO;
+                if (style & STYLE_MONO) gfx::font(FONT_MONO);
+                else gfx::font(FONT_DEFAULT);
+                m_lines.back().spans.push_back({ style });
+                continue;
+            }
+            ++p;
+        }
         if (c == '*') {
             if (*p != '*') {
-                style = style == Span::NORMAL ? Span::HIGHLIGHT : Span::NORMAL;
+                style ^= STYLE_HIGHLIGHT;
                 m_lines.back().spans.push_back({ style });
                 continue;
             }
@@ -127,7 +138,7 @@ void init() {
         if (line.spans.empty() || (line.spans.size() == 1 && line.spans.front().text.empty())) {
             line.height = PARAGRAPH_PADDING;
         }
-        else if (line.spans.front().style == Span::HEADLINE) {
+        else if (line.spans.front().style & STYLE_HEADLINE) {
             line.height = HEADLINE_HEIGHT;
         }
         else {
@@ -178,14 +189,17 @@ void draw_help_view() {
         if (offset.y > height) break;
         if (offset.y + line.height > 0) {
             for (Span const& span : line.spans) {
-                if (span.style == Span::NORMAL) gfx::color({ 255, 255, 255, 255 });
-                else gfx::color({ 0x55, 0xa0, 0x49, 255 });
 
+                if (span.style & STYLE_HIGHLIGHT) gfx::color({ 0x55, 0xa0, 0x49, 255 });
+                else gfx::color({ 255, 255, 255, 255 });
+
+                if (span.style & STYLE_MONO) gfx::font(FONT_MONO);
+                else gfx::font(FONT_DEFAULT);
 
                 gfx::print(pos + offset, span.text.c_str());
 
                 int w = gfx::text_size(span.text.c_str()).x;
-                if (span.style == Span::HEADLINE) {
+                if (span.style & STYLE_HEADLINE) {
                     gfx::rectangle(pos + offset + Vec(0, 60), { w, 8 }, 0);
                 }
                 offset.x += w;

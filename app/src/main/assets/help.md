@@ -15,7 +15,7 @@ They contain notes and references to instruments and effects.
 They may also control the filter.
 *Effects* control the pitch of a voice in combination with notes.
 
-At the top of the screen you find a tab for each of these categories.
+At the top of the screen you find certain tabs.
 Let's go through each and discuss them in more detail.
 
 
@@ -25,6 +25,7 @@ Here you set the title, author, track length, and tempo of the current song.
 Additionally, songs can be loaded, saved, deleted, and exported.
 
 *Track length* is the number of rows per track.
+All tracks of a song have the same length.
 As is common with most C64 trackers, time is split into slices of 1/50 of a second, called frames.
 *Tempo* is the number of frames spent per track row.
 *Swing* is the number additional frames for even-numbered track rows.
@@ -36,7 +37,7 @@ Note, that the current song will be lost.
 Press *Save* to save the current song, silently overriding the song with the same name, should there be one.
 Change the song name before saving if you don't want to override the song.
 Press *Delete* to delete the selected song.
-You may render the current song to WAV or OGG by first selecting the desired file format and then pressing *Export*.
+You may render the current song to *WAV* or *OGG* by first selecting the desired file format and then pressing *Export*.
 Song files and exported songs are stored in the directories `fakesid/songs/` and `fakesid/exports/`
 of your phone's internal shared storage.
 
@@ -48,7 +49,7 @@ The song table contains references to tracks.
 Assign a reference to a table cell by touching it.
 This will open up a screen with all available track references from `00` to `BK`.
 Non-empty tracks are highlighted.
-Choose the reference you wish to assign, or touch 'Clear' to clear the table cell.
+Choose the reference you wish to assign, or touch *Clear* to clear the table cell.
 
 
 To add or remove rows to the song table...
