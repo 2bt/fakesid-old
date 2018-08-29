@@ -311,6 +311,7 @@ void draw_confirmation() {
             break;
         case CT_NEW:
             init_song(player::song());
+            status("Song was reset");
             break;
         case CT_LOAD:
             if (!load_song(player::song(), path.c_str())) status("Load error: ?");
