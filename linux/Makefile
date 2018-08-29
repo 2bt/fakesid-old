@@ -1,7 +1,7 @@
 CF = -Wall --std=c++14 -Og -g -I/usr/include/glm -I/usr/include/SDL2
 LF = -Wall --std=c++14 -lSDL2 -lSDL2_image -lSDL2_mixer -lsndfile
 
-SRC_PATH=../app/src/main/cpp
+SRC_PATH=src
 
 CXX = g++
 SRC = $(wildcard $(SRC_PATH)/*.cpp)
