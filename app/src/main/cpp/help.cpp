@@ -66,6 +66,11 @@ void init() {
     for (char const* p = buffer.data(); char c = *p;) {
         ++p;
         if (c == '\n') {
+            // comment
+            if (*p == ';') {
+                while (*p && *p != '\n') ++p;
+                continue;
+            }
             if (*p == '\n') {
                 while (*p == '\n') {
                     ++p;
