@@ -75,15 +75,8 @@ bool process_event(const SDL_Event& e) {
 
 
 void clear() {
-#ifdef DOWNSCALE
-    SDL_SetRenderDrawColor(m_renderer, 40, 40, 40, 255);
-    SDL_RenderClear(m_renderer);
-    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
-    SDL_RenderFillRect(m_renderer, nullptr);
-#else
     SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
     SDL_RenderClear(m_renderer);
-#endif
 }
 
 
