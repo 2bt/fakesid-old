@@ -23,5 +23,4 @@ Get the app from the [Google Play Store](https://play.google.com/store/apps/deta
 
 ### TODO
 
-+ confirm load/save/delete
 + documentation
