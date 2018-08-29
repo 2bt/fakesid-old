@@ -311,9 +311,10 @@ void draw_track_view() {
         gui::separator();
         int w = gfx::screensize().x - gui::cursor().x - gui::PADDING * 4 - 65 - gui::SEPARATOR_WIDTH;
         gui::min_item_size({ w, 65 });
+        uint8_t old_note = row.note;
         if (gui::clavier(row.note, m_clavier_offset, highlight)) {
             if (row.note == 0) row = {};
-            else if (row.instrument == 0 && row.effect == 0) {
+            else if (old_note == 0) {
                 row.instrument = selected_instrument();
                 row.effect     = selected_effect();
             }
