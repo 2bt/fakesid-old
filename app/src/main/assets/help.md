@@ -95,14 +95,22 @@ To pick up an instrument or effect, press and hold the button instrument/effect 
 
 Each instrument has an envelope for volume control, a wavetable, and an optional filter table.
 
+TODO
 
-# 5.1 Wave
+
+## 5.1 Wave
+
+TODO
 
 
-# 5.2 Filter
+## 5.2 Filter
+
+TODO
 
 
 # 6. Effect
+
+TODO
 
 + arpeggio
 

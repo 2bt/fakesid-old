@@ -86,6 +86,7 @@ void init() {
         }
 
         if (c == '#') {
+            while (*p == '#') ++p;
             if (m_lines.back().spans.size() == 1 && m_lines.back().spans.front().text.empty()) {
                 while (*p == ' ') ++p;
                 m_lines.back().spans.front().style = STYLE_HEADLINE | STYLE_HIGHLIGHT;
