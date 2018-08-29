@@ -97,7 +97,9 @@ bool init_dirs() {
     if (m_root_dir.empty()) {
         m_root_dir = get_storage_dir();
         if (m_root_dir.empty()) return false;
+#ifdef __ANDROID__
         m_root_dir += "/fakesid";
+#endif
     }
 
     struct stat st = {};
@@ -254,6 +256,102 @@ void init_export() {
 }
 
 
+enum ConfirmationType {
+    CT_NEW,
+    CT_LOAD,
+    CT_SAVE,
+    CT_DELETE,
+};
+
+ConfirmationType m_confirmation_type;
+
+
+void save() {
+    std::string path = m_songs_dir + m_file_name.data() + FILE_SUFFIX;
+    if (!save_song(player::song(), path.c_str())) {
+        status("Save error: ?");
+    }
+    else {
+        init_project_view();
+        status("Song was saved");
+    }
+}
+
+
+void draw_confirmation() {
+    const char* text;
+    switch (m_confirmation_type) {
+    case CT_DELETE:
+        text = "Delete song?";
+        break;
+    case CT_SAVE:
+        text = "Override the existing song?";
+        break;
+    case CT_NEW:
+    case CT_LOAD:
+    default:
+        text = "Lose changes to the current song?";
+        break;
+    }
+    gui::min_item_size({calculate_column_widths({ -1 })[0], 88 });
+    gui::text(text);
+
+    auto widths = calculate_column_widths({ -1, -1 });
+    gui::min_item_size({ widths[0], 88 });
+    if (gui::button("OK")) {
+        std::string path = m_songs_dir + m_file_name.data() + FILE_SUFFIX;
+        switch (m_confirmation_type) {
+        case CT_DELETE:
+            unlink(path.c_str());
+            init_project_view();
+            status("Song was deleted");
+            break;
+        case CT_SAVE:
+            save();
+            break;
+        case CT_NEW:
+            init_song(player::song());
+            break;
+        case CT_LOAD:
+            if (!load_song(player::song(), path.c_str())) status("Load error: ?");
+            else status("Song was loaded");
+            break;
+        }
+        edit::set_popup(nullptr);
+    }
+    gui::same_line();
+    gui::min_item_size({ widths[1], 88 });
+    if (gui::button("Cancel")) edit::set_popup(nullptr);
+}
+
+
+void init_confirmation(ConfirmationType t) {
+    std::string name = m_file_name.data();
+    if (t == CT_LOAD || t == CT_DELETE) {
+        if (std::find(m_file_names.begin(), m_file_names.end(), name) == m_file_names.end()) {
+            if (t == CT_LOAD) status("Load error: song not listed");
+            else              status("Delete error: song not listed");
+            return;
+        }
+    }
+    if (t == CT_SAVE) {
+        if (name.empty()) {
+            status("Save error: empty song name");
+            return;
+        }
+        std::string path = m_songs_dir + name + FILE_SUFFIX;
+        struct stat st;
+        if (stat(path.c_str(), &st) == -1) {
+            // the file doesn't exist yet, so no confirmation needed
+            save();
+            return;
+        }
+    }
+    m_confirmation_type = t;
+    edit::set_popup(draw_confirmation);
+}
+
+
 } // namespace
 
 
@@ -383,53 +481,18 @@ void draw_project_view() {
 
 
     // file buttons
-    widths = calculate_column_widths({ -1, -1, -1 });
+    widths = calculate_column_widths({ -1, -1, -1, -1 });
     gui::min_item_size({ widths[0], 88 });
-    if (gui::button("Load")) {
-        std::string name = m_file_name.data();
-        std::string path = m_songs_dir + name + FILE_SUFFIX;
-        if (std::find(m_file_names.begin(), m_file_names.end(), name) == m_file_names.end()) {
-            status("Load error: song not listed");
-        }
-        else if (!load_song(player::song(), path.c_str())) {
-            status("Load error: ?");
-        }
-        else {
-            status("Song was loaded");
-        }
-    }
+    if (gui::button("New")) init_confirmation(CT_NEW);
     gui::same_line();
     gui::min_item_size({ widths[1], 88 });
-    if (gui::button("Save")) {
-        std::string name = m_file_name.data();
-        std::string path = m_songs_dir + name + FILE_SUFFIX;
-        if (name.empty()) {
-            status("Save error: empty song name");
-        }
-        else if (!save_song(song, path.c_str())) {
-            status("Save error: ?");
-        }
-        else {
-            init_project_view();
-            status("Song was saved");
-        }
-    }
+    if (gui::button("Load")) init_confirmation(CT_LOAD);
     gui::same_line();
     gui::min_item_size({ widths[2], 88 });
-    if (gui::button("Delete")) {
-        std::string name = m_file_name.data();
-        if (std::find(m_file_names.begin(), m_file_names.end(), name) == m_file_names.end()) {
-            status("Delete error: song not listed");
-        }
-        else {
-            std::string path = m_songs_dir + name + FILE_SUFFIX;
-            unlink(path.c_str());
-            init_project_view();
-            status("Song was deleted");
-        }
-    }
-
-
+    if (gui::button("Save")) init_confirmation(CT_SAVE);
+    gui::same_line();
+    gui::min_item_size({ widths[3], 88 });
+    if (gui::button("Delete")) init_confirmation(CT_DELETE);
     gui::separator();
 
 

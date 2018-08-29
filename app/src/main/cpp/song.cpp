@@ -3,6 +3,7 @@
 
 
 void init_song(Song& song) {
+    song = {};
 
     song.tempo = 6;
     song.track_length = 32;
