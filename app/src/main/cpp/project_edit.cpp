@@ -403,7 +403,7 @@ void draw_project_view() {
     gui::input_text(song.author.data(), song.author.size() - 1);
 
     // track length
-    auto widths2 = calculate_column_widths({ widths[0], -1, -1 });
+    auto widths2 = calculate_column_widths({ widths[0], -1, -1, -1 });
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ widths[0], 88 });
     gui::text("Track length");
@@ -411,9 +411,12 @@ void draw_project_view() {
     gui::same_line();
     gui::align(gui::CENTER);
     gui::min_item_size({ widths2[1], 88 });
-    if (gui::button("24", song.track_length == 24)) song.track_length = 24;
+    if (gui::button("16", song.track_length == 16)) song.track_length = 16;
     gui::same_line();
     gui::min_item_size({ widths2[2], 88 });
+    if (gui::button("24", song.track_length == 24)) song.track_length = 24;
+    gui::same_line();
+    gui::min_item_size({ widths2[3], 88 });
     if (gui::button("32", song.track_length == 32)) song.track_length = 32;
     gui::align(gui::LEFT);
 
@@ -429,12 +432,12 @@ void draw_project_view() {
     gui::text("%d:%02d", seconds / 60, seconds % 60);
 
     // tempo and swing
-    widths = calculate_column_widths({ -9, -5 });
+    widths = calculate_column_widths({ -13, -9 });
     gui::min_item_size({ widths[0], 65 });
-    gui::drag_int("Tempo", "%X", song.tempo, 4, 12);
+    gui::drag_int("Tempo", "%d", song.tempo, 4, 16);
     gui::same_line();
     gui::min_item_size({ widths[1], 65 });
-    gui::drag_int("Swing", "%X", song.swing, 0, 4);
+    gui::drag_int("Swing", "%d", song.swing, 0, 8);
     gui::separator();
 
 
