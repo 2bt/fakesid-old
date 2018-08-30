@@ -19,11 +19,11 @@ Let's go through each view and discuss them in more detail.
 Here you set the title, author, track length, and tempo of the current song.
 Additionally, songs can be loaded, saved, deleted, and exported.
 
-*Track length* is the number of rows per track.
+Track length is the number of rows per track.
 All tracks of a song have the same length.
 As is common with most C64 trackers, time is split into slices of 1/50 of a second, called frames.
-*Tempo* is the number of frames spent per track row.
-*Swing* is the number additional frames for even-numbered track rows.
+Tempo is the number of frames spent per track row.
+Swing is the number additional frames for even-numbered track rows.
 
 Pres *New* to reset the current song.
 To load a previously saved song, simply select a song from the song list.
@@ -45,21 +45,18 @@ In Fake SID you have a fourth voice at your disposal, although true purists abst
 
 You can mute and unmute voices by pressing the relevant buttons in the table header.
 
-Add and remove rows to the song table by respectively pressing `+` and `-`.
-The leftmost column of the table holds indices of the respective table row.
-
-You can set the position at which new rules are inserted and current rows are deleted
-by selecting the relevant row index.
+Add and remove rows to the song table by respectively pressing `+` and `-` below the table.
+You can set the position at which rows are inserted and deleted by selecting the relevant row index on the left.
 This will also set the player position, which is indicated with by highlighted row.
 
 Assign a reference to a table cell by touching it.
-This will open up the track select screen with all available track references from `00` to `BK`.
+This will open up the track select screen with all 252 available track references from `00` to `BK`.
 Non-empty tracks are highlighted.
-Choose the reference you wish to assign, or touch Clear to clear the table cell.
+Choose the reference you wish to assign, or touch *Clear* to clear the table cell.
 
 The three buttons at the bottom are visible in all views.
 The first button toggles looping.
-Looping will cause the player to repeat the current song row indefinitely.
+Looping causes the player to repeat the current song row indefinitely.
 The second button stops playback and resets the player position.
 The third button toggles playback.
 
@@ -74,10 +71,10 @@ The arrow buttons let you switch though tracks in sequence.
 On the top right are buttons for copying and pasting tracks.
 
 The two rows of buttons on the bottom list references to the most recently used instruments and effects, respectively.
-To select an instrument or effect, press the corresponding button.
+Press the corresponding button to select an instrument or effect.
 There are 48 slots for instruments and as many for effects.
 To select an instrument from among all available instruments,
-hold the Instrument tab to open up the instrument select screen.
+press and hold the Instrument tab to open up the instrument select screen.
 The same applies to effects.
 
 The main area of the screen shows the track table and the note matrix.
@@ -93,17 +90,35 @@ To pick up an instrument or effect, press and hold the button instrument/effect 
 
 # 5. Instrument
 
-Each instrument has an envelope for volume control, a wavetable, and an optional filter table.
+The row of buttons on the top lists references to the most recently used instruments.
+Press the corresponding button to select an instrument.
+There are 48 slots for instruments.
+To select an instrument from among all available instruments,
+press the Instrument tab to open up the instrument select screen.
 
-TODO
+Below, there is the instrument name input field.
+Right next to it are buttons for copying and pasting instruments.
+
+Select Wave to view the instrument's envelope settings and wavetable.
+Select Filter to view the filter table.
 
 
 ## 5.1 Wave
+
+
++ Envelope
+
++ Hard restart button
 
 TODO
 
 
 ## 5.2 Filter
+
+There's only one global filter.
+
+The active filter table is set any time an instrument with an non-empty filter table is triggered,
+replacing the previously active filter table.
 
 TODO
 
