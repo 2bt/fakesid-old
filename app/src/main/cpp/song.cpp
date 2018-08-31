@@ -3,7 +3,7 @@
 
 
 void init_song(Song& song) {
-    song = {};
+    memset(&song, 0, sizeof(song));
 
     song.tempo = 6;
     song.track_length = 32;

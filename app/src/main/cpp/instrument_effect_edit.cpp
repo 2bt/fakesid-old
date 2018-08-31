@@ -331,7 +331,7 @@ void draw_instrument_view() {
         gui::same_line();
         gui::min_item_size({ 88, 88 });
         if (gui::button("+") && filter.length < MAX_FILTER_LENGTH) {
-            filter.rows[filter.length] = { 0, 0, Filter::OP_SET, 0 };
+            filter.rows[filter.length] = { 0, 0xf, Filter::OP_SET, 0 };
             ++filter.length;
         }
     }

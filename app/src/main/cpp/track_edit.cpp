@@ -227,10 +227,16 @@ void draw_track_view() {
     gui::same_line();
     gui::min_item_size({ 88, 88 });
     if (gui::button("\x1e")) track = m_copy_track;
+    gui::separator();
+
+    // cache
+    draw_instrument_cache();
+    gui::separator();
+    draw_effect_cache();
+    gui::separator();
 
 
     // clavier slider
-    gui::separator();
     gfx::font(FONT_DEFAULT);
     gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
     gui::drag_int("", "", m_clavier_offset, 0, 96 - CLAVIER_WIDTH, CLAVIER_WIDTH);
@@ -331,14 +337,9 @@ void draw_track_view() {
     gui::min_item_size({ 65, c2.y - c1.y - gui::PADDING });
     gui::vertical_drag_int(m_track_page, 0, (song.track_length + PAGE_LENGTH - 1) / PAGE_LENGTH - 1);
     gui::cursor(c2);
+    gui::separator();
 
 
-    // cache
-    gui::separator();
-    draw_instrument_cache();
-    gui::separator();
-    draw_effect_cache();
-    gui::separator();
 }
 
 
