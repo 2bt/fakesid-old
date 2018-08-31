@@ -100,7 +100,10 @@ void init() {
                 style ^= STYLE_MONO;
                 if (style & STYLE_MONO) gfx::font(FONT_MONO);
                 else gfx::font(FONT_DEFAULT);
-                m_lines.back().spans.push_back({ style });
+                if (m_lines.back().spans.back().text.empty()) {
+                    m_lines.back().spans.back().style = style;
+                }
+                else m_lines.back().spans.push_back({ style });
                 continue;
             }
             ++p;
@@ -108,7 +111,11 @@ void init() {
         if (c == '*') {
             if (*p != '*') {
                 style ^= STYLE_HIGHLIGHT;
-                m_lines.back().spans.push_back({ style });
+                if (m_lines.back().spans.back().text.empty()) {
+                    m_lines.back().spans.back().style = style;
+                }
+                else m_lines.back().spans.push_back({ style });
+
                 continue;
             }
             ++p;
@@ -196,11 +203,11 @@ void draw_help_view() {
         if (offset.y + line.height > 0) {
             for (Span const& span : line.spans) {
 
-                if (span.style & STYLE_HIGHLIGHT) gfx::color({ 0x55, 0xa0, 0x49, 255 });
-                else gfx::color({ 255, 255, 255, 255 });
-
                 if (span.style & STYLE_MONO) gfx::font(FONT_MONO);
                 else gfx::font(FONT_DEFAULT);
+
+                if (span.style & STYLE_HIGHLIGHT) gfx::color({ 0x55, 0xa0, 0x49, 255 });
+                else gfx::color({ 255, 255, 255, 255 });
 
                 gfx::print(pos + offset, span.text.c_str());
 
