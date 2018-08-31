@@ -500,7 +500,7 @@ void draw_project_view() {
     gui::separator();
 
 
-    widths = calculate_column_widths({ widths2[0], -1, -1, gui::SEPARATOR_WIDTH, widths[2] });
+    widths = calculate_column_widths({ widths2[0], -1, -1, gui::SEPARATOR_WIDTH, -1 });
 
     gui::min_item_size({ widths2[0], 88 });
     gui::align(gui::LEFT);

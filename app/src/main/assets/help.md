@@ -112,14 +112,14 @@ The main area of the screen shows the wavetable.
 The wavetable defines how the SID control register and the pulse-width are updated over time.
 Each row responds to one frame.
 Add and remove rows by respectively pressing the buttons labeled *`+`* and *`-`* below the table.
-When an instrument is triggered, the wavetable is played, beginning at the top
-and progressing to the next row after each frame.
+When an instrument is triggered, its wavetable is played, beginning at the top
+and progressing to the next row with each frame.
 Set the loop point by pressing the corresponding row index.
 
 The first four buttons of a wavetable row configure the waveform.
 The next three buttons stand for ring modulation, hardsync, and gate.
 Fake SID performs a binary and-operation on the signals of all selected waveforms.
-(Note that the correct behavior of the SID chip is not emulated correctly.)
+(Note that the SID chip is not emulated correctly in this regard.)
 
 The next button describes the pulse-width command, which can be toggled between *`=`* and *`+`*.
 The slider on the right let's you adjust the command parameter.
@@ -129,16 +129,23 @@ The *`+`* command increases the pulse-with by the specified amount (scaled down 
 
 ## 5.2 Filter
 
-The original SID had only one global filter, so Fake SID also only has one.
-The filter parameter are controlled via the filter table.
-An instrument's non-empty filter table gets activated any time the instrument triggered,
+Just like the original, Fake SID has one global filter.
+Filter parameters are controlled via filter tables.
+An instrument's non-empty filter table gets activated any time the instrument is triggered,
 replacing the previously active filter table.
 
-The voice buttons indicate, which voices are routed though the filter.
-
+The four buttons above the filter table toggle filter routing.
+The filter routing configuration is applied with the filter table,
+meaning they only have an effect if there's at least one row in the table.
 Add and remove rows by respectively pressing the buttons labeled *`+`* and *`-`* below the table.
 
 TODO
+
++ filter type
+
++ resonance
+
++ frequence, *`=`*, *`-`*, *`-`*
 
 
 # 6. Effect
