@@ -110,10 +110,11 @@ effectively creating a short pause between notes.
 
 The main area of the screen shows the wavetable.
 The wavetable defines how the SID control register and the pulse-width are updated over time.
-Each row responds to one frame.
 Add and remove rows by respectively pressing the buttons labeled *`+`* and *`-`* below the table.
+
 When an instrument is triggered, its wavetable is played, beginning at the top
 and progressing to the next row with each frame.
+Playback loops after the last row.
 Set the loop point by pressing the corresponding row index.
 
 The first four buttons of a wavetable row configure the waveform.
@@ -137,7 +138,9 @@ replacing the previously active filter table.
 The four buttons above the filter table toggle filter routing.
 The filter routing configuration is applied with the filter table,
 meaning they only have an effect if there's at least one row in the table.
-Add and remove rows by respectively pressing the buttons labeled *`+`* and *`-`* below the table.
+
+As with wavetables, one row represents one frame.
+Setting the loop point and adding and removing rows works the same.
 
 TODO
 
@@ -145,12 +148,14 @@ TODO
 
 + resonance
 
-+ frequence, *`=`*, *`-`*, *`-`*
++ frequence, *`+`*, *`=`*, *`-`*
 
 
 # 6. Effect
 
 Effects modify the pitch of a voice.
+
+Add and remove rows by respectively pressing the buttons labeled *`+`* and *`-`* below the table.
 
 + arpeggio
 
@@ -158,6 +163,11 @@ Effects modify the pitch of a voice.
 
 + percussion in combination with instrument
 
-Add and remove rows by respectively pressing the buttons labeled *`+`* and *`-`* below the table.
++ *`=`*, *`+`*, *`~`*
+
+TODO
+
+
+# 7. Jam
 
 TODO
