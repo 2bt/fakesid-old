@@ -5,7 +5,7 @@
 void init_song(Song& song) {
     memset(&song, 0, sizeof(song));
 
-    song.tempo = 6;
+    song.tempo = 8;
     song.track_length = 32;
     song.table_length = 1;
 
@@ -15,6 +15,19 @@ void init_song(Song& song) {
         GLIDE_UP = 46,
         VIBRATO  = 47,
     };
+
+    // lead
+    {
+        Instrument& i = song.instruments[0];
+        strcpy(i.name.data(), "lead");
+        i.adsr = { 0, 8, 12, 3 };
+        i.rows[0] = { Instrument::F_GATE | Instrument::F_PULSE, Instrument::OP_SET, 7 };
+        i.rows[1] = { Instrument::F_GATE | Instrument::F_PULSE, Instrument::OP_INC, 3 };
+        i.length = 2;
+        i.loop = 1;
+        i.hard_restart = true;
+    }
+
 
     // glide up
     {
