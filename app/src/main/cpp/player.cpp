@@ -288,7 +288,7 @@ void mix(short* buffer, int length) {
 
             // sync
             if (prev_chan.phase < prev_chan.freq) {
-                if (chan.flags & SYNC) {
+                if (chan.flags & Instrument::F_SYNC) {
                     chan.phase = prev_chan.phase * chan.freq / prev_chan.freq;
                 }
             }
@@ -296,7 +296,7 @@ void mix(short* buffer, int length) {
             if (!chan.active) continue;
 
             // envelope
-            bool gate = chan.gate && (chan.flags & GATE);
+            bool gate = chan.gate && (chan.flags & Instrument::F_GATE);
             if (gate && chan.state == RELEASE) chan.state = ATTACK;
             if (!gate) chan.state = RELEASE;
 
@@ -350,13 +350,15 @@ void mix(short* buffer, int length) {
             uint8_t noise = chan.noise;
 
             // ringmod
-            if (chan.flags & RING && prev_chan.phase < 0x8000000) tri = ~tri;
+            if (chan.flags & Instrument::F_RING && prev_chan.phase < 0x8000000) {
+                tri = ~tri;
+            }
 
             int v = 0xff;
-            if (chan.flags & TRI)   v &= tri;
-            if (chan.flags & SAW)   v &= saw;
-            if (chan.flags & PULSE) v &= pulse;
-            if (chan.flags & NOISE) v &= noise;
+            if (chan.flags & Instrument::F_TRI)   v &= tri;
+            if (chan.flags & Instrument::F_SAW)   v &= saw;
+            if (chan.flags & Instrument::F_PULSE) v &= pulse;
+            if (chan.flags & Instrument::F_NOISE) v &= noise;
 
             v = ((v - 0x80) * chan.level) >> 18;
 

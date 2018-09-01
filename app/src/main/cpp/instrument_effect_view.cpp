@@ -203,13 +203,13 @@ void draw_instrument_view() {
 
             // flags
             constexpr std::pair<uint8_t, char const*> flags[] = {
-                { NOISE, "\x14" },
-                { PULSE, "\x15" },
-                { SAW,   "\x16" },
-                { TRI,   "\x17" },
-                { RING,  "R" },
-                { SYNC,  "S" },
-                { GATE,  "G" },
+                { Instrument::F_NOISE, "\x14" },
+                { Instrument::F_PULSE, "\x15" },
+                { Instrument::F_SAW,   "\x16" },
+                { Instrument::F_TRI,   "\x17" },
+                { Instrument::F_RING,  "R" },
+                { Instrument::F_SYNC,  "S" },
+                { Instrument::F_GATE,  "G" },
             };
             for (auto p : flags) {
                 gui::same_line();
@@ -244,7 +244,7 @@ void draw_instrument_view() {
         gui::same_line();
         gui::min_item_size({ 88, 88 });
         if (gui::button("+") && inst.length < MAX_INSTRUMENT_LENGTH) {
-            inst.rows[inst.length] = { GATE, Instrument::OP_INC, 0 };
+            inst.rows[inst.length] = { Instrument::F_GATE, Instrument::OP_INC, 0 };
             ++inst.length;
         }
     }

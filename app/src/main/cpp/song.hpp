@@ -27,18 +27,6 @@ struct Track {
 
 
 enum {
-    GATE  = 0x01,
-    SYNC  = 0x02,
-    RING  = 0x04,
-    TRI   = 0x10,
-    SAW   = 0x20,
-    PULSE = 0x40,
-    NOISE = 0x80,
-};
-
-
-
-enum {
     FILTER_LOW  = 1,
     FILTER_BAND = 2,
     FILTER_HIGH = 4,
@@ -66,6 +54,15 @@ struct Filter {
 
 
 struct Instrument {
+    enum {
+        F_GATE  = 0x01,
+        F_SYNC  = 0x02,
+        F_RING  = 0x04,
+        F_TRI   = 0x10,
+        F_SAW   = 0x20,
+        F_PULSE = 0x40,
+        F_NOISE = 0x80,
+    };
     enum {
         OP_INC,
         OP_SET,
