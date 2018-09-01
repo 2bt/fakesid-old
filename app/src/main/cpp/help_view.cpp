@@ -81,7 +81,6 @@ void init() {
                 width = 0;
                 continue;
             }
-            if (m_lines.back().spans.back().text.empty()) continue;
             c = ' ';
         }
 
@@ -146,7 +145,7 @@ void init() {
     }
 
 
-    m_text_height = 0;
+    m_text_height = 30;
     for (Line& line : m_lines) {
         if (line.spans.empty() || (line.spans.size() == 1 && line.spans.front().text.empty())) {
             line.height = PARAGRAPH_PADDING;
@@ -194,7 +193,7 @@ void draw_help_view() {
     gui::align(gui::LEFT);
 
 
-    Vec offset = { 0, -m_scroll + 10 };
+    Vec offset = { 0, -m_scroll + 20 };
 
     gfx::clip_rectangle(pos, { m_width, height });
     for (Line const& line : m_lines) {
