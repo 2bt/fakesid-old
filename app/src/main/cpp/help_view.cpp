@@ -24,7 +24,7 @@ struct Line {
 
 enum {
     LINE_HEIGHT       = 60,
-    HEADLINE_HEIGHT   = 75,
+    HEADLINE_HEIGHT   = 90,
     PARAGRAPH_PADDING = 30,
 };
 

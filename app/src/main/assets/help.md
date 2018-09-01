@@ -121,7 +121,7 @@ The next button specifies the pulse width command, which can be toggled between 
 The slider on the right sets the command parameter.
 The *`=`* command sets the pulse width to the specified value.
 The *`+`* command increases the pulse width by the specified amount (scaled down by some factor).
-Note that only the pulse wave is affected by pulse width.
+Note that only the pulse wave is affected by the pulse width.
 
 
 ## 5.2 Filter
@@ -143,7 +143,7 @@ They stand for low-pass, band-pass, and high-pass.
 The slider next the them sets the resonance.
 The next button specifies the cut-off frequency command, which can be toggled between *`+`*, *`=`*, and *`-`*.
 The slider on the right sets the command parameter.
-The *`=`* command sets the cut-off frequency with to the specified value.
+The *`=`* command sets the cut-off frequency to the specified value.
 The *`-`* and *`+`* commands respectively decrease and increase the cut-off frequency
 by the specified amount (scaled down by some factor).
 
@@ -162,17 +162,17 @@ As with wavetables, one row represents one frame.
 Setting the loop point and adding and removing rows works the same.
 
 Each effect table row has a button that specifies the pitch command,
-as well as slider for the command parameter.
+as well as a slider for the command parameter.
 The command button can be toggled between *`+`*, *`~`*, and *`=`*.
-The *`+`* command sets a voice's the pitch offset in semitones.
-The actual pitch of a voice is the sum of the pitch of the most recent track note and this offset value.
-The *`~`* command works similarly except the unit is 1/4 of a semitone.
-The *`=`* command sets the absolute pitch, ignoring the pitch of the track note.
+The *`+`* command sets a voice's pitch offset in semitones.
+The actual pitch of a voice is the sum of this offset and the pitch of the most recent track note.
+The *`~`* command works similarly except that the unit is 1/4 of a semitone.
+The *`=`* command sets the absolute pitch, ignoring the note pitch.
 
 
 # 7. Jam
 
-Selecting instruments and effects works just like in the track view.
 Play notes live by touching the note matrix.
+Selecting instruments and effects works just like in the track view.
 Jamming uses the fourth voice,
 so expect collisions when there are track notes playing on the fourth voice.
