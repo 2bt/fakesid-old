@@ -24,7 +24,7 @@ Now press *Load*.
 Press *Save* to save the current song under the name in the input field.
 Press *Delete* to delete the selected song.
 You may render the current song to *WAV* or *OGG* by first selecting the desired file format and then pressing *Export*.
-Song files and exported songs are stored in the directories `fakesid/songs/` and `fakesid/exports/`
+Song files and exported songs are stored in the directories `fakesid/songs` and `fakesid/exports`
 of your phone's internal shared storage.
 
 
@@ -75,11 +75,11 @@ The main area of the screen shows the track table and the note matrix.
 Use the scrollbars to navigate.
 Insert notes by touching the respective cell in the note matrix.
 This will also assign the selected instrument and effect to the track row.
-Changing notes works the same, except that the row's instrument and effect are unaffected.
+Changing notes works the same, except that the rows' instrument and effect references are unaffected.
 To clear a row, press the note button.
 Press it again to insert a note-off event.
-Assign and remove an instrument or effect from a track row by pressing the relevant button.
-To pick up an instrument or effect, press and hold the instrument/effect button.
+Assign and remove an instrument or effect reference from a track row by pressing the relevant button.
+To pick up an instrument or effect, press and hold the instrument/effect reference button.
 
 
 # 5. Instrument
@@ -88,11 +88,7 @@ Instruments control the volume and waveform of a voice.
 They may also control the filter.
 
 The row of buttons on the top lists references to the most recently used instruments.
-Press the corresponding button to select an instrument.
-There are 48 slots for instruments.
-Press and hold the *Instrument* tab to open up the instrument select screen,
-which allows you to select an instrument from among all available instruments.
-
+Selecting instruments works just like in the track view.
 Below, there is the instrument name input field.
 Right next to it are buttons for copying and pasting instruments.
 
@@ -109,65 +105,74 @@ the voice's gate is cleared and sustain and release are set to zero,
 effectively creating a short pause between notes.
 
 The main area of the screen shows the wavetable.
-The wavetable defines how the SID control register and the pulse-width are updated over time.
+The wavetable defines how the SID control register and the pulse width are updated over time.
 Add and remove rows by respectively pressing the buttons labeled *`+`* and *`-`* below the table.
-
 When an instrument is triggered, its wavetable is played, beginning at the top
 and progressing to the next row with each frame.
 Playback loops after the last row.
 Set the loop point by pressing the corresponding row index.
 
 The first four buttons of a wavetable row configure the waveform.
+They stand for noise, pulse, sawtooth, and triangle.
+Fake SID combines multiple waveforms by binary AND-ing them.
+Note that the SID chip is not emulated correctly in this regard.
 The next three buttons stand for ring modulation, hardsync, and gate.
-Fake SID performs a binary and-operation on the signals of all selected waveforms.
-(Note that the SID chip is not emulated correctly in this regard.)
-
-The next button describes the pulse-width command, which can be toggled between *`=`* and *`+`*.
-The slider on the right let's you adjust the command parameter.
-The *`=`* command sets the pulse-with to the specified value.
-The *`+`* command increases the pulse-with by the specified amount (scaled down by some factor).
+The next button specifies the pulse width command, which can be toggled between *`=`* and *`+`*.
+The slider on the right sets the command parameter.
+The *`=`* command sets the pulse width to the specified value.
+The *`+`* command increases the pulse width by the specified amount (scaled down by some factor).
+Note that only the pulse wave is affected by pulse width.
 
 
 ## 5.2 Filter
 
-Just like the original, Fake SID has one global filter.
+Just like the original SID chip, Fake SID has one global filter.
 Filter parameters are controlled via filter tables.
 An instrument's non-empty filter table gets activated any time the instrument is triggered,
 replacing the previously active filter table.
 
 The four buttons above the filter table toggle filter routing.
 The filter routing configuration is applied with the filter table,
-meaning they only have an effect if there's at least one row in the table.
+meaning it only takes effect if there's at least one row in the table.
 
 As with wavetables, one row represents one frame.
 Setting the loop point and adding and removing rows works the same.
 
-TODO
-
-+ filter type
-
-+ resonance
-
-+ frequence, *`+`*, *`=`*, *`-`*
+The first three buttons of a filter table row configure the filter type.
+They stand for low-pass, band-pass, and high-pass.
+The slider next the them sets the resonance.
+The next button specifies the cut-off frequency command, which can be toggled between *`+`*, *`=`*, and *`-`*.
+The slider on the right sets the command parameter.
+The *`=`* command sets the cut-off frequency with to the specified value.
+The *`-`* and *`+`* commands respectively decrease and increase the cut-off frequency
+by the specified amount (scaled down by some factor).
 
 
 # 6. Effect
 
 Effects modify the pitch of a voice.
+They are useful to create arpeggios, vibrato, and percussion sounds.
 
-Add and remove rows by respectively pressing the buttons labeled *`+`* and *`-`* below the table.
+The row of buttons on the top lists references to the most recently used effects.
+Selecting effects works just like in the track view.
+Below, there is the effect name input field.
+Right next to it are buttons for copying and pasting effects.
 
-+ arpeggio
+As with wavetables, one row represents one frame.
+Setting the loop point and adding and removing rows works the same.
 
-+ vibrato
-
-+ percussion in combination with instrument
-
-+ *`=`*, *`+`*, *`~`*
-
-TODO
+Each effect table row has a button that specifies the pitch command,
+as well as slider for the command parameter.
+The command button can be toggled between *`+`*, *`~`*, and *`=`*.
+The *`+`* command sets a voice's the pitch offset in semitones.
+The actual pitch of a voice is the sum of the pitch of the most recent track note and this offset value.
+The *`~`* command works similarly except the unit is 1/4 of a semitone.
+The *`=`* command sets the absolute pitch, ignoring the pitch of the track note.
 
 
 # 7. Jam
 
-TODO
+Selecting instruments and effects works just like in the track view.
+Play notes live by touching the note matrix.
+Jamming uses the fourth voice,
+so expect collisions when there are track notes playing on the fourth voice.
