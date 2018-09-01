@@ -69,7 +69,7 @@ void draw_song_view() {
         if (highlight) gui::highlight();
         if (gui::button(str, block_nr == m_block)) {
             m_block = block_nr;
-            if (!edit::is_playing()) player::block(m_block);
+            if (!player::is_playing()) player::block(m_block);
         }
         gui::same_line();
         gui::separator();

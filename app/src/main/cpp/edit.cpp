@@ -17,20 +17,11 @@ void audio_callback(void* userdata, Uint8* stream, int len) {
 }
 
 EView m_view;
-bool  m_is_playing;
 void (*m_popup_func)(void);
 
 
 } // namespace
 
-
-bool is_playing() { return m_is_playing; }
-
-void set_playing(bool p) {
-    if (p == m_is_playing) return;
-    SDL_PauseAudio(!p);
-    m_is_playing = p;
-}
 
 void set_view(EView v) {
     m_view = v;
@@ -50,6 +41,7 @@ bool init() {
 
     SDL_AudioSpec spec = { MIXRATE, AUDIO_S16, 1, 0, 1024, 0, 0, audio_callback };
     SDL_OpenAudio(&spec, nullptr);
+    SDL_PauseAudio(0);
     return true;
 }
 
@@ -126,7 +118,7 @@ void draw() {
         gui::same_line();
         gui::min_item_size({ widths[1], 88 });
         if (gui::button("\x11")) {
-            set_playing(false);
+            player::set_playing(false);
             player::reset();
             player::block(get_selected_block());
         }
@@ -134,8 +126,8 @@ void draw() {
         // play/pause
         gui::same_line();
         gui::min_item_size({ widths[2], 88 });
-        if (gui::button("\x10\x12", is_playing())) {
-            set_playing(!is_playing());
+        if (gui::button("\x10\x12", player::is_playing())) {
+            player::set_playing(!player::is_playing());
         }
 
     }

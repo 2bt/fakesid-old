@@ -55,7 +55,7 @@ void draw_jam_view() {
             }
             if (m_jam_touch && box.contains(m_jam_touch->pos)) {
                 m_jam_note = note;
-                gfx::color(gui::color::make(0x94e089));
+                gfx::color(gui::color::make(0x55a049));
                 gfx::rectangle(box.pos, box.size, 2);
             }
         }

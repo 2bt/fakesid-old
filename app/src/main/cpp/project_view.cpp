@@ -173,6 +173,7 @@ void draw_export_progress() {
         int ret;
         SDL_WaitThread(m_export_thread, &ret);
         edit::set_popup(nullptr);
+        SDL_PauseAudio(0);
         if (m_export_canceled) status("Song export was canceled");
         else status("Song was exported");
     }
@@ -220,14 +221,6 @@ bool open_export_file(std::string const& name) {
 
 void init_export() {
 
-    // stop
-    edit::set_playing(false);
-    //TODO: ensure that the callback has exited
-
-    player::reset();
-    player::block(0);
-    player::block_loop(false);
-
     std::string name = m_file_name.data();
 
     if (name.empty()) {
@@ -250,6 +243,15 @@ void init_export() {
     m_export_done     = false;
     m_export_progress = 0;
     m_export_thread   = SDL_CreateThread(export_thread_func, "song export", nullptr);
+
+
+    // stop
+    //TODO: ensure that the callback has exited
+    SDL_PauseAudio(1);
+
+    player::set_playing(false);
+    player::reset();
+    player::block_loop(false);
 
     // popup
     edit::set_popup(draw_export_progress);

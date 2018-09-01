@@ -70,6 +70,7 @@ struct {
 
 
 Song m_song;
+bool m_is_playing;
 int  m_sample;
 int  m_frame;
 int  m_row;
@@ -77,7 +78,6 @@ int  m_block;
 bool m_block_loop;
 std::array<Channel, CHANNEL_COUNT> m_channels;
 Track::Row m_jam_row;
-
 
 void apply_track_row(Channel& chan, Track::Row const& row) {
     // instrument
@@ -128,7 +128,7 @@ void tick() {
     m_jam_row = {};
 
     // row_update
-    if (m_frame == 0) {
+    if (m_is_playing && m_frame == 0) {
         int block_nr = m_block;
         if (block_nr >= m_song.table_length) block_nr = 0;
         Song::Block const& block = m_song.table[block_nr];
@@ -219,6 +219,9 @@ void tick() {
         m_filter.freq = m_filter.freq_acc * (21.5332031 / MIXRATE);
         m_filter.resonance = 1.2 - 0.04 * row.resonance;
     }
+
+
+    if (!m_is_playing) return;
 
 
     int frames_per_row = m_song.tempo;
@@ -407,6 +410,18 @@ void reset() {
 }
 
 
+void  set_playing(bool p) {
+    m_is_playing = p;
+    if (!m_is_playing) {
+        m_filter = {};
+        for (Channel& chan : m_channels) {
+            chan.gate = false;
+            chan.adsr[2] = 0;
+            chan.adsr[3] = release_speeds[0];
+        }
+    }
+}
+
 int   row() { return m_row; }
 int   block() { return m_block; }
 void  block(int b) { m_block = b; }
@@ -416,6 +431,7 @@ bool  is_channel_active(int c) { return m_channels[c].active; }
 void  set_channel_active(int c, bool a) { m_channels[c].active = a; }
 void  jam(Track::Row const& row) { m_jam_row = row; }
 Song& song() { return m_song; }
+bool  is_playing() { return m_is_playing; }
 
 
 } // namespace;
