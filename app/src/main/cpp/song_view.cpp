@@ -1,5 +1,5 @@
-#include "song_edit.hpp"
-#include "track_edit.hpp"
+#include "song_view.hpp"
+#include "track_view.hpp"
 #include "edit.hpp"
 #include "gui.hpp"
 #include "player.hpp"

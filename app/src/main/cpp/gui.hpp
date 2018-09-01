@@ -4,6 +4,21 @@
 enum { CLAVIER_WIDTH = 24 };
 
 namespace gui {
+    namespace color {
+        constexpr SDL_Color make(uint32_t c, uint8_t a = 255) {
+            return { uint8_t(c >> 16), uint8_t(c >> 8), uint8_t(c), a};
+        }
+    }
+
+    struct Box {
+        Vec pos;
+        Vec size;
+        bool contains(Vec const& p) const {
+            return p.x >= pos.x && p.y >= pos.y &&
+                   p.x < pos.x + size.x && p.y < pos.y + size.y;
+        }
+    };
+
     enum {
         PADDING = 2,
         SEPARATOR_WIDTH = 6,
@@ -19,7 +34,7 @@ namespace gui {
     void next_line();
     void align(Align a);
     void min_item_size(Vec const& s);
-    void padding(Vec const& size);
+    Box  padding(Vec const& size);
     void separator();
     void text(char const* fmt, ...);
     void highlight();
@@ -43,8 +58,8 @@ namespace gui {
 
 
 #include <vector>
-inline std::vector<int> calculate_column_widths(std::vector<int> weights) {
-    int absolute = gfx::screensize().x - gui::PADDING;
+inline std::vector<int> calculate_column_widths(std::vector<int> weights, int absolute = 0) {
+    absolute = absolute ?: gfx::screensize().x - gui::PADDING;
     int relative = 0;
     for (int w : weights) {
         if (w > 0) {

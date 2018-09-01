@@ -3,13 +3,7 @@
 
 
 namespace gui {
-namespace {
-
-
 namespace color {
-    constexpr SDL_Color make(uint32_t c, uint8_t a = 255) {
-        return { uint8_t(c >> 16), uint8_t(c >> 8), uint8_t(c), a};
-    }
     SDL_Color mix(SDL_Color a, SDL_Color b, float x) {
         float w = (1 - x);
         return {
@@ -20,43 +14,30 @@ namespace color {
         };
     }
 
+    constexpr SDL_Color button_normal     = make(0x505050);
+    constexpr SDL_Color button_active     = make(0x55a049);
+    constexpr SDL_Color button_hover      = make(0x94e089);
 
-    const SDL_Color button_normal = make(0x505050);
-    const SDL_Color button_active = make(0x55a049);
-    const SDL_Color button_hover = make(0x94e089);
+    constexpr SDL_Color input_text_normal = make(0x222222);
+    constexpr SDL_Color input_text_hover  = button_hover;
+    constexpr SDL_Color input_text_active = button_active;
 
-    const SDL_Color input_text_normal = make(0x222222);
-    const SDL_Color input_text_hover  = button_hover;
-    const SDL_Color input_text_active = button_active;
+    constexpr SDL_Color drag              = make(0x222222);
+    constexpr SDL_Color handle_normal     = button_active;
+    constexpr SDL_Color handle_active     = button_hover;
 
-    const SDL_Color drag          = make(0x222222);
-    const SDL_Color handle_normal = button_active;
-    const SDL_Color handle_active = button_hover;
+    constexpr SDL_Color separator         = make(0x111111);
 
-    const SDL_Color separator     = make(0x111111);
+    constexpr SDL_Color highlight         = make(0x787878);
 
-    const SDL_Color highlight     = make(0x787878);
+    constexpr SDL_Color note_normal       = handle_normal;
+    constexpr SDL_Color note_active       = handle_active;
 
-    const SDL_Color note_normal   = handle_normal;
-    const SDL_Color note_active   = handle_active;
+    constexpr SDL_Color text              = make(0xffffff);
 
-    const SDL_Color text          = make(0xffffff);
-}
+} // namespace
 
-
-struct Box {
-    Vec pos;
-    Vec size;
-    bool contains(Vec const& p) const {
-        return p.x >= pos.x && p.y >= pos.y &&
-               p.x < pos.x + size.x && p.y < pos.y + size.y;
-    }
-
-    bool touched() const {
-        return !input::released() && contains(input::touch(0).pos);
-    }
-};
-
+namespace {
 
 Vec         m_cursor_min;
 Vec         m_cursor_max;
@@ -76,6 +57,11 @@ int         m_input_cursor_blink = 0;
 Align       m_align = CENTER;
 
 std::array<char, 1024> m_text_buffer;
+
+
+bool box_touched(Box const& box) {
+    return !input::released() && box.contains(input::touch(0).pos);
+}
 
 
 void const* get_id(void const* addr) {
@@ -192,8 +178,8 @@ void begin_frame() {
 }
 
 
-void padding(Vec const& size) {
-    item_box(size);
+Box padding(Vec const& size) {
+    return item_box(size);
 }
 
 void separator() {
@@ -232,7 +218,7 @@ bool button(char const* label, bool active) {
     Box box = item_box(s + Vec(30, 10));
     SDL_Color color = color::button_normal;
     bool clicked = false;
-    if (m_active_item == nullptr && box.touched()) {
+    if (m_active_item == nullptr && box_touched(box)) {
         color = color::button_hover;
         if (box.contains(m_prev_touch_pos)) {
             if (++m_hold_count > HOLD_TIME) m_hold = true;
@@ -300,7 +286,7 @@ void input_text(char* str, int len) {
     Box box = item_box(s + Vec(30, 10));
 
     SDL_Color color = color::input_text_normal;
-    if (m_active_item == nullptr && box.touched()) {
+    if (m_active_item == nullptr && box_touched(box)) {
         color = color::input_text_hover;
         if (input::just_released()) {
             // start keyboard
@@ -344,7 +330,7 @@ bool drag_int(char const* label, char const* fmt, int& value, int min, int max, 
     int handle_x = range == 0 ? 0 : (value - min) * (box.size.x - handle_w) / range;
 
     void const* id = get_id(&value);
-    if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
+    if (m_active_item == nullptr && box_touched(box) && input::just_pressed()) {
         m_active_item = id;
     }
     int old_value = value;
@@ -380,7 +366,7 @@ bool vertical_drag_int(int& value, int min, int max, int page) {
     int handle_y = range == 0 ? 0 : (value - min) * (box.size.y - handle_h) / range;
 
     void const* id = get_id(&value);
-    if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
+    if (m_active_item == nullptr && box_touched(box) && input::just_pressed()) {
         m_active_item = id;
     }
     int old_value = value;
@@ -401,12 +387,11 @@ bool vertical_drag_int(int& value, int min, int max, int page) {
 }
 
 
-
 bool clavier(uint8_t& n, int offset, bool highlight) {
     Box box = item_box({ 100, 65 });
 
     void const* id = get_id(&n);
-    if (m_active_item == nullptr && box.touched() && input::just_pressed()) {
+    if (m_active_item == nullptr && box_touched(box) && input::just_pressed()) {
         m_active_item = id;
     }
 
@@ -435,12 +420,12 @@ bool clavier(uint8_t& n, int offset, bool highlight) {
         if ((1 << (i + offset) % 12) & 0b010101001010) color = color::make(0x111111);
         if (highlight) color = color::mix(color, color::highlight, 0.2);
         gfx::color(color);
-        gfx::rectangle( b.pos, b.size, 0);
+        gfx::rectangle(b.pos, b.size, 0);
 
         if (n == nn) {
             if (m_active_item == id && touch) gfx::color(color::note_active);
             else gfx::color(color::note_normal);
-            gfx::rectangle( b.pos, b.size, 2);
+            gfx::rectangle(b.pos, b.size, 2);
         }
 
         x0 = x1;

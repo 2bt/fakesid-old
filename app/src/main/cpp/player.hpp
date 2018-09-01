@@ -20,5 +20,6 @@ namespace player {
     void  block_loop(bool b);
     bool  is_channel_active(int c);
     void  set_channel_active(int c, bool a);
+    void  jam(Track::Row const& row);
     Song& song();
 }

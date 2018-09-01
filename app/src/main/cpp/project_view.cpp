@@ -1,4 +1,4 @@
-#include "project_edit.hpp"
+#include "project_view.hpp"
 #include "edit.hpp"
 #include "gui.hpp"
 #include "player.hpp"

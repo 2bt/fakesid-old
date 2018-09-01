@@ -1,5 +1,5 @@
 #include "edit.hpp"
-#include "track_edit.hpp"
+#include "track_view.hpp"
 #include "gui.hpp"
 #include "player.hpp"
 #include <algorithm>

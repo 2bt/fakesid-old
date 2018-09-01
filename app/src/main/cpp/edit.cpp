@@ -1,9 +1,10 @@
 #include "edit.hpp"
-#include "project_edit.hpp"
-#include "song_edit.hpp"
-#include "track_edit.hpp"
-#include "help.hpp"
-#include "instrument_effect_edit.hpp"
+#include "project_view.hpp"
+#include "song_view.hpp"
+#include "track_view.hpp"
+#include "jam_view.hpp"
+#include "instrument_effect_view.hpp"
+#include "help_view.hpp"
 #include "gui.hpp"
 #include "player.hpp"
 
@@ -65,16 +66,17 @@ void draw() {
         char const* name;
         void (*draw)(void);
     };
-    constexpr std::array<View, 6> views = {
+    constexpr std::array<View, 7> views = {
         View{ "Project", draw_project_view },
         View{ "Song", draw_song_view },
         View{ "Track", draw_track_view },
-        View{ "Instrum.", draw_instrument_view },
+        View{ "Instr.", draw_instrument_view },
         View{ "Effect", draw_effect_view },
+        View{ "Jam", draw_jam_view },
         View{ "?", draw_help_view },
     };
     std::vector<int> weights = std::vector<int>(views.size() - 1, -1);
-    weights.push_back(88);
+    weights.push_back(65);
     auto widths = calculate_column_widths(weights);
 
     if (m_popup_func) m_popup_func();

@@ -68,6 +68,7 @@ struct {
 
 } m_filter;
 
+
 Song m_song;
 int  m_sample;
 int  m_frame;
@@ -75,9 +76,57 @@ int  m_row;
 int  m_block;
 bool m_block_loop;
 std::array<Channel, CHANNEL_COUNT> m_channels;
+Track::Row m_jam_row;
+
+
+void apply_track_row(Channel& chan, Track::Row const& row) {
+    // instrument
+    if (row.instrument > 0) {
+        chan.inst = &m_song.instruments[row.instrument - 1];
+        Instrument const& inst = *chan.inst;
+        chan.adsr[0] = attack_speeds[inst.adsr[0]];
+        chan.adsr[1] = release_speeds[inst.adsr[1]];
+        chan.adsr[2] = inst.adsr[2] * 0x111111;
+        chan.adsr[3] = release_speeds[inst.adsr[3]];
+        chan.inst_row = 0;
+        chan.gate = true;
+
+        // cause envelop restart
+        // XXX: do we want that?
+        //chan.state = RELEASE;
+
+        // filter
+        if (inst.filter.length > 0) {
+            m_filter.filter = &inst.filter;
+            m_filter.row = 0;
+            for (int i = 0; i < CHANNEL_COUNT; ++i) {
+                m_channels[i].filter = (inst.filter.routing & (1 << i)) != 0;
+            }
+        }
+    }
+
+    // effect
+    if (row.effect > 0) {
+        chan.effect = &m_song.effects[row.effect - 1];
+        chan.effect_row = 0;
+    }
+
+    // note
+    if (row.note == 255) {
+        chan.gate = false;
+    }
+    else if (row.note > 0) {
+        chan.note = row.note;
+        chan.freq = exp2f((chan.note - 58) / 12.0f) * (1 << 28) * 440 / MIXRATE;
+    }
+}
 
 
 void tick() {
+    // jam
+    apply_track_row(m_channels.back(), m_jam_row);
+    m_jam_row = {};
+
     // row_update
     if (m_frame == 0) {
         int block_nr = m_block;
@@ -89,47 +138,7 @@ void tick() {
             int track_nr = block[c];
             if (track_nr == 0) continue;
             Track const& track = m_song.tracks[track_nr - 1];
-            Track::Row const& row = track.rows[m_row];
-
-            // instrument
-            if (row.instrument > 0) {
-                chan.inst = &m_song.instruments[row.instrument - 1];
-                Instrument const& inst = *chan.inst;
-                chan.adsr[0] = attack_speeds[inst.adsr[0]];
-                chan.adsr[1] = release_speeds[inst.adsr[1]];
-                chan.adsr[2] = inst.adsr[2] * 0x111111;
-                chan.adsr[3] = release_speeds[inst.adsr[3]];
-                chan.inst_row = 0;
-                chan.gate = true;
-
-                // cause envelop restart
-                // XXX: do we want that?
-                //chan.state = RELEASE;
-
-                // filter
-                if (inst.filter.length > 0) {
-                    m_filter.filter = &inst.filter;
-                    m_filter.row = 0;
-                    for (int i = 0; i < CHANNEL_COUNT; ++i) {
-                        m_channels[i].filter = (inst.filter.routing & (1 << i)) != 0;
-                    }
-                }
-            }
-
-            // effect
-            if (row.effect > 0) {
-                chan.effect = &m_song.effects[row.effect - 1];
-                chan.effect_row = 0;
-            }
-
-            // note
-            if (row.note == 255) {
-                chan.gate = false;
-            }
-            else if (row.note > 0) {
-                chan.note = row.note;
-                chan.freq = exp2f((chan.note - 58) / 12.0f) * (1 << 28) * 440 / MIXRATE;
-            }
+            apply_track_row(chan, track.rows[m_row]);
         }
     }
 
@@ -270,6 +279,20 @@ void mix(short* buffer, int length) {
             Channel& chan = m_channels[c];
             Channel& prev_chan = m_channels[c == 0 ? CHANNEL_COUNT - 1 : c - 1];
 
+            // osc
+            chan.phase += chan.freq;
+            chan.phase &= 0xfffffff;
+
+            // sync
+            if (prev_chan.phase < prev_chan.freq) {
+                if (chan.flags & SYNC) {
+                    chan.phase = prev_chan.phase * chan.freq / prev_chan.freq;
+                }
+            }
+
+            if (!chan.active) continue;
+
+            // envelope
             bool gate = chan.gate && (chan.flags & GATE);
             if (gate && chan.state == RELEASE) chan.state = ATTACK;
             if (!gate) chan.state = RELEASE;
@@ -298,22 +321,11 @@ void mix(short* buffer, int length) {
                 break;
             }
 
-            chan.phase += chan.freq;
-            chan.phase &= 0xfffffff;
 
             // smooth pulsewith change
             if (chan.phase < chan.freq) {
                 chan.pulsewidth = chan.next_pulsewidth;
             }
-
-            // sync
-            if (prev_chan.phase < prev_chan.freq) {
-                if (chan.flags & SYNC) {
-                    chan.phase = prev_chan.phase * chan.freq / prev_chan.freq;
-                }
-            }
-
-            if (!chan.active) continue;
 
             // waveforms
             uint8_t tri   = ((chan.phase < 0x8000000 ? chan.phase : ~chan.phase) >> 19) & 0xff;
@@ -402,6 +414,7 @@ bool  block_loop() { return m_block_loop; }
 void  block_loop(bool b) { m_block_loop = b; }
 bool  is_channel_active(int c) { return m_channels[c].active; }
 void  set_channel_active(int c, bool a) { m_channels[c].active = a; }
+void  jam(Track::Row const& row) { m_jam_row = row; }
 Song& song() { return m_song; }
 
 

@@ -28,6 +28,7 @@ int main(int argc, char** args) {
                 if (e.key.keysym.scancode == SDL_SCANCODE_ESCAPE) running = false;
                 break;
 
+#ifndef __ANDROID__
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP: {
                     if (e.button.button != SDL_BUTTON_LEFT) break;
@@ -43,16 +44,20 @@ int main(int argc, char** args) {
                     break;
                 }
 
-//            case SDL_FINGERDOWN:
-//            case SDL_FINGERUP:
-//            case SDL_FINGERMOTION: {
-//                    glm::ivec2 s = gfx::screensize();
-//                    glm::ivec2 p = { e.tfinger.x * s.x, e.tfinger.y * s.y };
-//                    if (e.type == SDL_FINGERDOWN)   input::finger_down(e.tfinger.fingerId, p);
-//                    if (e.type == SDL_FINGERUP)     input::finger_up(e.tfinger.fingerId, p);
-//                    if (e.type == SDL_FINGERMOTION) input::finger_motion(e.tfinger.fingerId, p);
-//                    break;
-//                }
+#else
+            case SDL_FINGERDOWN:
+            case SDL_FINGERUP:
+            case SDL_FINGERMOTION: {
+                    glm::ivec2 s = gfx::screensize();
+                    glm::ivec2 p = { e.tfinger.x * s.x, e.tfinger.y * s.y };
+                    if (e.type == SDL_FINGERDOWN)   input::finger_down(e.tfinger.fingerId, p);
+                    if (e.type == SDL_FINGERUP)     input::finger_up(e.tfinger.fingerId, p);
+                    if (e.type == SDL_FINGERMOTION) input::finger_motion(e.tfinger.fingerId, p);
+                    break;
+                }
+
+#endif
+
             default: break;
             }
         }
