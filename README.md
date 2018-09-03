@@ -12,17 +12,3 @@ Listen to the demo songs on [SoundCloud](https://soundcloud.com/daniel-langner-1
 
 Read the poor [Documentation](app/src/main/assets/help.md).
 
-
-### Screeshots
-
-![image](screenshots/0.png)
-![image](screenshots/1.png)
-![image](screenshots/2.png)
-![image](screenshots/3.png)
-![image](screenshots/4.png)
-![image](screenshots/5.png)
-
-
-### TODO
-
-+ documentation
