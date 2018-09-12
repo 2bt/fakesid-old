@@ -8,6 +8,6 @@ The tracker is highly inspired by [lft's Blackbird](https://csdb.dk/release/?id=
 
 Check it out on [Google Play Store](https://play.google.com/store/apps/details?id=com.twobit.fakesid)!
 
-Listen to the demo songs on [SoundCloud](https://soundcloud.com/daniel-langner-150098802/sets/fake-sid-demo-songs)!
+Listen to the demo songs on [SoundCloud](https://soundcloud.com/dnllngnr/sets/fake-sid-demo-songs)!
 
 Read the [Documentation](app/src/main/assets/help.md)!
