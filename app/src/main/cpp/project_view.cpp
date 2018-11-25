@@ -138,6 +138,10 @@ int export_thread_func(void*) {
     const int samples = frames * SAMPLES_PER_FRAME;
     int samples_left = samples;
 
+    player::block_loop(false);
+    player::set_playing(true);
+    player::reset();
+
     while (samples_left > 0 && !m_export_canceled) {
         int len = std::min<int>(samples_left, buffer.size());
         samples_left -= len;
@@ -151,6 +155,7 @@ int export_thread_func(void*) {
     m_export_sndfile = nullptr;
     m_export_file    = nullptr;
 
+    player::set_playing(false);
     player::reset();
 
     m_export_done = true;
@@ -233,6 +238,10 @@ void init_export() {
         return;
     }
 
+    // stop
+    //TODO: ensure that the callback has exited
+    SDL_PauseAudio(1);
+
     // set meta info
     Song& song = player::song();
     sf_set_string(m_export_sndfile, SF_STR_TITLE, song.title.data());
@@ -244,14 +253,6 @@ void init_export() {
     m_export_progress = 0;
     m_export_thread   = SDL_CreateThread(export_thread_func, "song export", nullptr);
 
-
-    // stop
-    //TODO: ensure that the callback has exited
-    SDL_PauseAudio(1);
-
-    player::set_playing(false);
-    player::reset();
-    player::block_loop(false);
 
     // popup
     edit::set_popup(draw_export_progress);
