@@ -1,12 +1,11 @@
-#include "android.hpp"
-
-namespace android {
+#include <string>
 
 #ifdef __ANDROID__
-
 #include <SDL.h>
 #include <sys/stat.h>
 #include <jni.h>
+
+namespace android {
 
 std::string get_storage_dir() {
 
@@ -29,10 +28,12 @@ std::string get_storage_dir() {
     return root_dir + "/fakesid";
 }
 
+} // namespace
+
 #else
 
-std::string get_storage_dir() { return "."; }
+namespace android {
+    std::string get_storage_dir() { return "."; }
+} // namespace
 
 #endif
-
-}
