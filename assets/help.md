@@ -2,7 +2,7 @@
 
 Fake SID is a chiptune tracker that let's you create Commodore 64 music.
 
-At the top of the screen you find certain tabs which let you switch to different views.
+At the top of the screen you find certain tabs, which let you switch to different views.
 Let's go through each view and discuss them in more detail.
 
 
@@ -166,7 +166,7 @@ as well as a slider for the command parameter.
 The command button can be toggled between *`+`*, *`~`*, and *`=`*.
 The *`+`* command sets a voice's pitch offset in semitones.
 The actual pitch of a voice is the sum of this offset and the pitch of the most recent track note.
-The *`~`* command works similarly except that the unit is 1/4 of a semitone.
+The *`~`* command works similarly except that the unit is 1/4 of a semitone, which is useful for vibrato and pitch slides.
 The *`=`* command sets the absolute pitch, ignoring the note pitch.
 
 
