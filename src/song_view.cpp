@@ -29,8 +29,8 @@ void draw_song_view() {
 
 
     // mute buttons
-    auto widths = calculate_column_widths({ 88, gui::SEPARATOR_WIDTH, -1, -1, -1, -1, gui::SEPARATOR_WIDTH, 65 });
-    gui::padding({ widths[0], 65 });
+    auto widths = calculate_column_widths({ BUTTON_BIG, gui::SEPARATOR_WIDTH, -1, -1, -1, -1, gui::SEPARATOR_WIDTH, BUTTON_SMALL });
+    gui::padding({ widths[0], BUTTON_SMALL });
     gui::same_line();
     gui::separator();
     gui::same_line();
@@ -38,7 +38,7 @@ void draw_song_view() {
     char str[] = "Voice .";
     for (int c = 0; c < CHANNEL_COUNT; ++c) {
         str[6] = '1' + c;
-        gui::min_item_size({ widths[c + 2], 65 });
+        gui::min_item_size({ widths[c + 2], BUTTON_SMALL });
         bool a = player::is_channel_active(c);
         if (gui::button(str, a)) {
             player::set_channel_active(c, !a);
@@ -51,9 +51,9 @@ void draw_song_view() {
     // prepare scrollbar
     int max_scroll = std::max<int>(0, song.table_length + 1 - PAGE_LENGTH);
     if (m_song_scroll > max_scroll) m_song_scroll = max_scroll;
-    Vec c1 = gui::cursor() + Vec(0, 65 + gui::PADDING * 2 + gui::SEPARATOR_WIDTH);
+    Vec c1 = gui::cursor() + Vec(0, BUTTON_SMALL + gui::PADDING * 2 + gui::SEPARATOR_WIDTH);
 
-    gui::padding({ 65, 0 });
+    gui::padding({ BUTTON_SMALL, 0 });
     gui::separator();
 
     auto& table = song.table;
@@ -65,7 +65,7 @@ void draw_song_view() {
         bool highlight = block_nr == player_block;
 
         sprintf(str, "%02X", block_nr);
-        gui::min_item_size({ widths[0], 65 });
+        gui::min_item_size({ widths[0], BUTTON_SMALL });
         if (highlight) gui::highlight();
         if (gui::button(str, block_nr == m_block)) {
             m_block = block_nr;
@@ -76,7 +76,7 @@ void draw_song_view() {
         if (block_nr >= song.table_length) {
             for (int c = 0; c < CHANNEL_COUNT; ++c) {
                 gui::same_line();
-                gui::min_item_size({ widths[c + 2], 65 });
+                gui::min_item_size({ widths[c + 2], BUTTON_SMALL });
                 gui::padding({});
             }
         }
@@ -87,7 +87,7 @@ void draw_song_view() {
                 gui::same_line();
                 char str[3];
                 sprint_track_id(str, block[c]);
-                gui::min_item_size({ widths[c + 2], 65 });
+                gui::min_item_size({ widths[c + 2], BUTTON_SMALL });
                 if (highlight) gui::highlight();
                 if (gui::button(str)) {
                     enter_track_select(block[c]);
@@ -108,7 +108,7 @@ void draw_song_view() {
     // song scrollbar
     Vec c2 = gui::cursor();
     gui::cursor(c1);
-    gui::min_item_size({ 65, c2.y - c1.y - gui::PADDING });
+    gui::min_item_size({ BUTTON_SMALL, c2.y - c1.y - gui::PADDING });
     gui::vertical_drag_int(m_song_scroll, 0, max_scroll, PAGE_LENGTH);
     gui::cursor(c2);
 
@@ -118,7 +118,7 @@ void draw_song_view() {
 
     // buttons
     gfx::font(FONT_MONO);
-    gui::min_item_size({ 88, 88 });
+    gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
     if (gui::button("-")) {
         if (m_block < song.table_length && song.table_length > 1) {
             table[m_block] = {};
@@ -130,7 +130,7 @@ void draw_song_view() {
         }
     }
     gui::same_line();
-    gui::min_item_size({ 88, 88 });
+    gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
     if (gui::button("+")) {
         if (m_block <= song.table_length && song.table_length < MAX_SONG_LENGTH) {
             std::rotate(

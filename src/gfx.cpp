@@ -1,9 +1,7 @@
 #include "gfx.hpp"
 #include <cstdarg>
 
-//#ifndef __ANDROID__
 #define DOWNSCALE
-//#endif
 
 
 namespace gfx {
@@ -12,7 +10,8 @@ namespace {
 
 SDL_Window*   m_window     = nullptr;
 SDL_Renderer* m_renderer   = nullptr;
-Vec           m_screensize = { 1080, 1920 - 115 };
+//Vec           m_screensize = { 1080, 1920 - 115 };
+Vec           m_screensize = { 1080, 1920 };
 FontID        m_font       = FONT_DEFAULT;
 
 
@@ -37,8 +36,7 @@ bool init() {
                                 SDL_WINDOW_RESIZABLE);
     if (!m_window) return false;
 
-    m_renderer = SDL_CreateRenderer(m_window, -1,
-                                    SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!m_renderer) return false;
 
 #ifdef DOWNSCALE
@@ -179,6 +177,13 @@ void rectangle(Vec const& pos, Vec const& size) {
 void rectangle(Vec const& pos, Vec const& size, int style) {
     if (style == 0) rectangle(pos, size);
 
+    // tab style 8 - 16
+    int style_bottom = style;
+    if (style >= 8) {
+        style -= 8;
+        style_bottom = style / 4 * 4;
+    }
+
     // size must be >= { 64, 64 }
     Vec t = glm::min(Vec(32), size / 2);
     FontSpec const& spec = resource::font_spec(m_font);
@@ -189,6 +194,7 @@ void rectangle(Vec const& pos, Vec const& size, int style) {
     dst.x = pos.x + size.x - t.x;
     render(spec.texture, src, dst, SDL_FLIP_HORIZONTAL);
     dst.y = pos.y + size.y - t.y;
+    src.x = 36 * style_bottom;
     render(spec.texture, src, dst, SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL);
     dst.x = pos.x;
     render(spec.texture, src, dst, SDL_FLIP_VERTICAL);

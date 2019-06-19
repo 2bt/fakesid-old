@@ -39,7 +39,7 @@ bool init() {
 
     init_song(player::song());
 
-    SDL_AudioSpec spec = { MIXRATE, AUDIO_S16, 1, 0, 1024, 0, 0, audio_callback };
+    SDL_AudioSpec spec = { MIXRATE, AUDIO_S16, 1, 0, SAMPLES_PER_FRAME, 0, 0, audio_callback };
     SDL_OpenAudio(&spec, nullptr);
     SDL_PauseAudio(0);
     return true;
@@ -68,17 +68,18 @@ void draw() {
         View{ "?", draw_help_view },
     };
     std::vector<int> weights = std::vector<int>(views.size() - 1, -1);
-    weights.push_back(65);
+    weights.push_back(BUTTON_SMALL);
     auto widths = calculate_column_widths(weights);
 
     if (m_popup_func) m_popup_func();
     else {
 
+        // top bar
         gfx::font(FONT_DEFAULT);
         for (int i = 0; i < (int) views.size(); ++i) {
             if (i) gui::same_line();
-            gui::min_item_size({ widths[i], 88 });
-            bool button = gui::button(views[i].name, m_view == i);
+            gui::min_item_size({ widths[i], BUTTON_BAR });
+            bool button = gui::tab_button(views[i].name, m_view == i);
             bool hold   = m_view != i && (i == VIEW_INSTRUMENT || i == VIEW_EFFECT) && gui::hold();
             if (button && m_view != i) {
                 // switch view
@@ -102,21 +103,24 @@ void draw() {
         }
 
         gui::separator();
-
         views[m_view].draw();
 
-        gui::cursor({ 0, gfx::screensize().y  - gui::PADDING * 2 - 88 });
+
+
+        // bottom bar
+        gui::cursor({ 0, gfx::screensize().y  - gui::PADDING * 2 - BUTTON_BAR });
         gfx::font(FONT_DEFAULT);
+        gfx::font(FONT_MONO);
         bool block_loop = player::block_loop();
         widths = calculate_column_widths({ -1, -1, -1 });
 
         // loop
-        gui::min_item_size({ widths[0], 88 });
+        gui::min_item_size({ widths[0], BUTTON_BAR });
         if (gui::button("\x13", block_loop)) player::block_loop(!block_loop);
 
         // stop
         gui::same_line();
-        gui::min_item_size({ widths[1], 88 });
+        gui::min_item_size({ widths[1], BUTTON_BAR });
         if (gui::button("\x11")) {
             player::set_playing(false);
             player::reset();
@@ -125,7 +129,7 @@ void draw() {
 
         // play/pause
         gui::same_line();
-        gui::min_item_size({ widths[2], 88 });
+        gui::min_item_size({ widths[2], BUTTON_BAR });
         if (gui::button("\x10\x12", player::is_playing())) {
             player::set_playing(!player::is_playing());
         }

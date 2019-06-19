@@ -47,7 +47,7 @@ void draw_cache(Cache& cache, int& data) {
         auto const& e = cache.entries[i];
         char str[2];
         sprint_inst_effect_id(str, e.data);
-        gui::min_item_size({ widths[i], 88 });
+        gui::min_item_size({ widths[i], BUTTON_BIG });
         if (gui::button(str, e.data == data)) {
             data = e.data;
             cache.insert(data);
@@ -78,13 +78,13 @@ void draw_track_select() {
 
     gfx::font(FONT_DEFAULT);
     auto widths = m_track_select_allow_nil ? calculate_column_widths({ -1, -1 }) : calculate_column_widths({ -1 });
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     if (gui::button("Cancel")) {
         edit::set_popup(nullptr);
     }
     gui::same_line();
     if (m_track_select_allow_nil) {
-        gui::min_item_size({ widths[1], 88 });
+        gui::min_item_size({ widths[1], BUTTON_BIG });
         if (gui::button("Clear")) {
             edit::set_popup(nullptr);
             *m_track_select_value = 0;
@@ -105,7 +105,7 @@ void draw_track_select() {
             if (x > 0) gui::same_line();
             int n = x * 21 + y + 1;
 
-            gui::min_item_size({ widths[x], 65 });
+            gui::min_item_size({ widths[x], BUTTON_SMALL });
             char str[3] = "  ";
             sprint_track_id(str, n);
 
@@ -196,18 +196,18 @@ void draw_effect_cache() {
 
 void draw_track_view() {
 
-    auto widths = calculate_column_widths({ 88, 88, 88, -1, 88, 88 });
+    auto widths = calculate_column_widths({ BUTTON_BIG, BUTTON_BIG, BUTTON_BIG, -1, BUTTON_BIG, BUTTON_BIG });
 
     // track select
     gfx::font(FONT_MONO);
-    gui::min_item_size({ 88, 88 });
+    gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
     if (gui::button("\x1b")) m_track = std::max(1, m_track - 1);
     char str[3];
     sprint_track_id(str, m_track);
-    gui::min_item_size({ 88, 88 });
+    gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
     gui::same_line();
     if (gui::button(str)) enter_track_select();
-    gui::min_item_size({ 88, 88 });
+    gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
     gui::same_line();
     if (gui::button("\x1c")) m_track = std::min<int>(TRACK_COUNT, m_track + 1);
 
@@ -222,10 +222,10 @@ void draw_track_view() {
     // copy & paste
     gfx::font(FONT_MONO);
     gui::same_line();
-    gui::min_item_size({ 88, 88 });
+    gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
     if (gui::button("\x1d")) m_copy_track = track;
     gui::same_line();
-    gui::min_item_size({ 88, 88 });
+    gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
     if (gui::button("\x1e")) track = m_copy_track;
     gui::separator();
 
@@ -238,11 +238,11 @@ void draw_track_view() {
 
     // clavier slider
     gfx::font(FONT_DEFAULT);
-    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, 65 });
+    gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2, BUTTON_SMALL });
     gui::drag_int("", "", m_clavier_offset, 0, 96 - CLAVIER_WIDTH, CLAVIER_WIDTH);
 
     gui::same_line();
-    Vec c1 = gui::cursor() + Vec(-65 - gui::PADDING, 65 + gui::PADDING * 2 + gui::SEPARATOR_WIDTH);
+    Vec c1 = gui::cursor() + Vec(-BUTTON_SMALL - gui::PADDING, BUTTON_SMALL + gui::PADDING * 2 + gui::SEPARATOR_WIDTH);
     gui::next_line();
 
     enum {
@@ -256,7 +256,7 @@ void draw_track_view() {
 
         int row_nr = m_track_page * PAGE_LENGTH + i;
         if (row_nr >= song.track_length) {
-            gui::padding({ 0, 65 });
+            gui::padding({ 0, BUTTON_SMALL });
             continue;
         }
 
@@ -267,7 +267,7 @@ void draw_track_view() {
 
         // instrument
         sprint_inst_effect_id(str, row.instrument);
-        gui::min_item_size({ 65, 65 });
+        gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
         if (highlight) gui::highlight();
         if (gui::button(str)) {
             if (row.instrument > 0) row.instrument = 0;
@@ -280,7 +280,7 @@ void draw_track_view() {
         // effect
         sprint_inst_effect_id(str, row.effect);
         gui::same_line();
-        gui::min_item_size({ 65, 65 });
+        gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
         if (highlight) gui::highlight();
         if (gui::button(str)) {
             if (row.effect > 0) row.effect = 0;
@@ -302,7 +302,7 @@ void draw_track_view() {
             str[2] = '0' + (row.note - 1) / 12;
         }
         str[3] = '\0';
-        gui::min_item_size({ 0, 65 });
+        gui::min_item_size({ 0, BUTTON_SMALL });
         gui::same_line();
         if (highlight) gui::highlight();
         if (gui::button(str)) {
@@ -315,8 +315,8 @@ void draw_track_view() {
         // clavier
         gui::same_line();
         gui::separator();
-        int w = gfx::screensize().x - gui::cursor().x - gui::PADDING * 4 - 65 - gui::SEPARATOR_WIDTH;
-        gui::min_item_size({ w, 65 });
+        int w = gfx::screensize().x - gui::cursor().x - gui::PADDING * 4 - BUTTON_SMALL - gui::SEPARATOR_WIDTH;
+        gui::min_item_size({ w, BUTTON_SMALL });
         uint8_t old_note = row.note;
         if (gui::clavier(row.note, m_clavier_offset, highlight)) {
             if (row.note == 0) row = {};
@@ -334,7 +334,7 @@ void draw_track_view() {
     // track pages
     Vec c2 = gui::cursor();
     gui::cursor(c1);
-    gui::min_item_size({ 65, c2.y - c1.y - gui::PADDING });
+    gui::min_item_size({ BUTTON_SMALL, c2.y - c1.y - gui::PADDING });
     gui::vertical_drag_int(m_track_page, 0, (song.track_length + PAGE_LENGTH - 1) / PAGE_LENGTH - 1);
     gui::cursor(c2);
     gui::separator();

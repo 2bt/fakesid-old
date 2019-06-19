@@ -1,6 +1,7 @@
-#include <string>
+#include "android.hpp"
 
 #ifdef __ANDROID__
+
 #include <SDL.h>
 #include <sys/stat.h>
 #include <jni.h>

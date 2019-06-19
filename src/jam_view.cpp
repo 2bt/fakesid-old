@@ -21,7 +21,7 @@ void draw_jam_view() {
     gui::separator();
 
     int y1 = gui::cursor().y;
-    int y2 = gfx::screensize().y  - gui::PADDING * 4 - 88 - gui::SEPARATOR_WIDTH;
+    int y2 = gfx::screensize().y  - gui::PADDING * 4 - BUTTON_BIG - gui::SEPARATOR_WIDTH;
     auto widths  = calculate_column_widths(std::vector<int>(12, -1));
     auto heights = calculate_column_widths(std::vector<int>(8, -1), y2 - y1);
 

@@ -165,11 +165,11 @@ int export_thread_func(void*) {
 void draw_export_progress() {
     gfx::font(FONT_DEFAULT);
     auto widths = calculate_column_widths({ -1 });
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     if (gui::button("Cancel")) m_export_canceled = true;
 
     gfx::font(FONT_MONO);
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     gui::text("%3d %%", int(m_export_progress * 100));
 
     if (m_export_done) {
@@ -294,11 +294,11 @@ void draw_confirmation() {
         text = "Lose changes to the current song?";
         break;
     }
-    gui::min_item_size({calculate_column_widths({ -1 })[0], 88 });
+    gui::min_item_size({calculate_column_widths({ -1 })[0], BUTTON_BIG });
     gui::text(text);
 
     auto widths = calculate_column_widths({ -1, -1 });
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     if (gui::button("OK")) {
         std::string path = m_songs_dir + m_file_name.data() + FILE_SUFFIX;
         switch (m_confirmation_type) {
@@ -322,7 +322,7 @@ void draw_confirmation() {
         edit::set_popup(nullptr);
     }
     gui::same_line();
-    gui::min_item_size({ widths[1], 88 });
+    gui::min_item_size({ widths[1], BUTTON_BIG });
     if (gui::button("Cancel")) edit::set_popup(nullptr);
 }
 
@@ -392,52 +392,52 @@ void draw_project_view() {
     // title and author
     auto widths = calculate_column_widths({ 270, -1 });
     gui::align(gui::LEFT);
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     gui::text("Title");
     gui::same_line();
-    gui::min_item_size({ widths[1], 88 });
+    gui::min_item_size({ widths[1], BUTTON_BIG });
     gui::input_text(song.title.data(), song.title.size() - 1);
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     gui::text("Author");
     gui::same_line();
-    gui::min_item_size({ widths[1], 88 });
+    gui::min_item_size({ widths[1], BUTTON_BIG });
     gui::input_text(song.author.data(), song.author.size() - 1);
 
     // track length
     auto widths2 = calculate_column_widths({ widths[0], -1, -1, -1 });
     gfx::font(FONT_DEFAULT);
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     gui::text("Track length");
     gfx::font(FONT_MONO);
     gui::same_line();
     gui::align(gui::CENTER);
-    gui::min_item_size({ widths2[1], 88 });
+    gui::min_item_size({ widths2[1], BUTTON_BIG });
     if (gui::button("16", song.track_length == 16)) song.track_length = 16;
     gui::same_line();
-    gui::min_item_size({ widths2[2], 88 });
+    gui::min_item_size({ widths2[2], BUTTON_BIG });
     if (gui::button("24", song.track_length == 24)) song.track_length = 24;
     gui::same_line();
-    gui::min_item_size({ widths2[3], 88 });
+    gui::min_item_size({ widths2[3], BUTTON_BIG });
     if (gui::button("32", song.track_length == 32)) song.track_length = 32;
     gui::align(gui::LEFT);
 
     // length
     gfx::font(FONT_DEFAULT);
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     gui::text("Song length");
     gui::same_line();
     gfx::font(FONT_MONO);
-    gui::min_item_size({ widths[1], 88 });
+    gui::min_item_size({ widths[1], BUTTON_BIG });
     int frames = (song.track_length * song.tempo + song.track_length / 2 * song.swing) * song.table_length;
     int seconds = frames / FRAMES_PER_SECOND;
     gui::text("%d:%02d", seconds / 60, seconds % 60);
 
     // tempo and swing
     widths = calculate_column_widths({ -13, -9 });
-    gui::min_item_size({ widths[0], 65 });
+    gui::min_item_size({ widths[0], BUTTON_SMALL });
     gui::drag_int("Tempo", "%d", song.tempo, 4, 16);
     gui::same_line();
-    gui::min_item_size({ widths[1], 65 });
+    gui::min_item_size({ widths[1], BUTTON_SMALL });
     gui::drag_int("Swing", "%d", song.swing, 0, 8);
     gui::separator();
 
@@ -445,7 +445,7 @@ void draw_project_view() {
     // name
     widths = calculate_column_widths({ -1 });
     gfx::font(FONT_DEFAULT);
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     gui::input_text(m_file_name.data(), m_file_name.size() - 1);
     gui::separator();
 
@@ -454,13 +454,13 @@ void draw_project_view() {
     int max_scroll = std::max<int>(0, m_file_names.size() - PAGE_LENGTH);
     if (m_file_scroll > max_scroll) m_file_scroll = max_scroll;
     gui::same_line();
-    Vec c1 = gui::cursor() + Vec(-65 - gui::PADDING, + gui::PADDING + gui::SEPARATOR_WIDTH);
+    Vec c1 = gui::cursor() + Vec(-BUTTON_SMALL - gui::PADDING, + gui::PADDING + gui::SEPARATOR_WIDTH);
     gui::next_line();
     gfx::font(FONT_DEFAULT);
-    widths = calculate_column_widths({ -1, gui::SEPARATOR_WIDTH, 65 });
+    widths = calculate_column_widths({ -1, gui::SEPARATOR_WIDTH, BUTTON_SMALL });
     for (int i = 0; i < PAGE_LENGTH; ++i) {
         int nr = i + m_file_scroll;
-        gui::min_item_size({ widths[0], 65 });
+        gui::min_item_size({ widths[0], BUTTON_SMALL });
         if (nr < (int) m_file_names.size()) {
             bool select = strcmp(m_file_names[nr].c_str(), m_file_name.data()) == 0;
             if (gui::button(m_file_names[nr].c_str(), select)) {
@@ -479,7 +479,7 @@ void draw_project_view() {
     // scrollbar
     Vec c2 = gui::cursor();
     gui::cursor(c1);
-    gui::min_item_size({ 65, c2.y - c1.y - gui::PADDING });
+    gui::min_item_size({ BUTTON_SMALL, c2.y - c1.y - gui::PADDING });
     gui::vertical_drag_int(m_file_scroll, 0, max_scroll, PAGE_LENGTH);
     gui::cursor(c2);
     gui::separator();
@@ -487,43 +487,43 @@ void draw_project_view() {
 
     // file buttons
     widths = calculate_column_widths({ -1, -1, -1, -1 });
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     if (gui::button("New")) init_confirmation(CT_NEW);
     gui::same_line();
-    gui::min_item_size({ widths[1], 88 });
+    gui::min_item_size({ widths[1], BUTTON_BIG });
     if (gui::button("Load")) init_confirmation(CT_LOAD);
     gui::same_line();
-    gui::min_item_size({ widths[2], 88 });
+    gui::min_item_size({ widths[2], BUTTON_BIG });
     if (gui::button("Save")) init_confirmation(CT_SAVE);
     gui::same_line();
-    gui::min_item_size({ widths[3], 88 });
+    gui::min_item_size({ widths[3], BUTTON_BIG });
     if (gui::button("Delete")) init_confirmation(CT_DELETE);
     gui::separator();
 
 
     widths = calculate_column_widths({ widths2[0], -1, -1, gui::SEPARATOR_WIDTH, -1 });
 
-    gui::min_item_size({ widths2[0], 88 });
+    gui::min_item_size({ widths2[0], BUTTON_BIG });
     gui::align(gui::LEFT);
     gui::text("Format");
     gui::align(gui::CENTER);
     gui::same_line();
 
-    gui::min_item_size({ widths[1], 88 });
+    gui::min_item_size({ widths[1], BUTTON_BIG });
     if (gui::button("OGG", m_export_format == EF_OGG)) m_export_format = EF_OGG;
     gui::same_line();
-    gui::min_item_size({ widths[2], 88 });
+    gui::min_item_size({ widths[2], BUTTON_BIG });
     if (gui::button("WAV", m_export_format == EF_WAV)) m_export_format = EF_WAV;
     gui::same_line();
     gui::separator();
 
-    gui::min_item_size({ widths[4], 88 });
+    gui::min_item_size({ widths[4], BUTTON_BIG });
     if (gui::button("Export")) init_export();
     gui::separator();
 
     // status
     widths = calculate_column_widths({ -1 });
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     gui::align(gui::LEFT);
     gui::text(m_status_msg.c_str());
     gui::align(gui::CENTER);

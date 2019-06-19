@@ -58,7 +58,7 @@ void init() {
     std::vector<char> buffer = read_help();
 
 
-    m_width = calculate_column_widths({ -1, gui::SEPARATOR_WIDTH, 65 })[0];
+    m_width = calculate_column_widths({ -1, gui::SEPARATOR_WIDTH, BUTTON_SMALL })[0];
 
 
     int style = 0;
@@ -179,7 +179,7 @@ void draw_help_view() {
 
     // prepare scrollbar
     Vec pos = gui::cursor() + Vec(gui::PADDING) + Vec(20, 0);
-    int height = gfx::screensize().y - gui::SEPARATOR_WIDTH - gui::PADDING * 3 - 88 - pos.y;
+    int height = gfx::screensize().y - gui::SEPARATOR_WIDTH - gui::PADDING * 3 - BUTTON_BIG - pos.y;
 
     int max_scroll = std::max<int>(0, m_text_height) - height;
     if (m_scroll > max_scroll) m_scroll = max_scroll;
@@ -188,7 +188,7 @@ void draw_help_view() {
     gui::padding({ m_width, height });
     gui::same_line();
     gui::separator();
-    gui::min_item_size({ 65, height });
+    gui::min_item_size({ BUTTON_SMALL, height });
     gui::vertical_drag_int(m_scroll, 0, max_scroll, height);
 
     gui::separator();

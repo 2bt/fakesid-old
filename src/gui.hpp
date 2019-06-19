@@ -38,7 +38,10 @@ namespace gui {
     void separator();
     void text(char const* fmt, ...);
     void highlight();
-    bool button(char const* label, bool active = false);
+    bool button(char const* label, bool active = false, bool is_tab = false);
+    inline bool tab_button(char const* label, bool active) {
+        return button(label, active, true);
+    }
     bool hold();
     void block_touch();
     void input_text(char* str, int len);
@@ -56,6 +59,8 @@ namespace gui {
     }
 }
 
+
+// until stuff here
 
 #include <vector>
 inline std::vector<int> calculate_column_widths(std::vector<int> weights, int absolute = 0) {
@@ -85,3 +90,9 @@ inline std::vector<int> calculate_column_widths(std::vector<int> weights, int ab
     }
     return widths;
 }
+
+enum {
+    BUTTON_BAR   = 110,
+    BUTTON_BIG   = 88,
+    BUTTON_SMALL = 65,
+};

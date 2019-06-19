@@ -14,7 +14,7 @@ void draw_instrument_select() {
 
     gfx::font(FONT_DEFAULT);
     auto widths = calculate_column_widths({ -1 });
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     if (gui::button("Cancel")) edit::set_popup(nullptr);
     gui::separator();
 
@@ -27,7 +27,7 @@ void draw_instrument_select() {
             Instrument const& inst = song.instruments[nr - 1];
 
             Vec c1 = gui::cursor();
-            gui::min_item_size({ widths[x], 65 });
+            gui::min_item_size({ widths[x], BUTTON_SMALL });
             if (inst.length > 0) gui::highlight();
             if (gui::button("", nr == selected_instrument())) {
                 edit::set_popup(nullptr);
@@ -37,14 +37,14 @@ void draw_instrument_select() {
             gui::same_line();
             Vec c2 = gui::cursor();
             gui::cursor(c1);
-            gui::min_item_size({ 65, 65 });
+            gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
             char str[2];
             sprint_inst_effect_id(str, nr);
             gfx::font(FONT_MONO);
             gui::text(str);
             gfx::font(FONT_DEFAULT);
             gui::same_line();
-            gui::min_item_size({ widths[x] - 65 - gui::PADDING, 65 });
+            gui::min_item_size({ widths[x] - BUTTON_SMALL - gui::PADDING, BUTTON_SMALL });
             gui::align(gui::LEFT);
             gui::text(inst.name.data());
             gui::align(gui::CENTER);
@@ -59,7 +59,7 @@ void draw_effect_select() {
 
     gfx::font(FONT_DEFAULT);
     auto widths = calculate_column_widths({ -1 });
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     if (gui::button("Cancel")) edit::set_popup(nullptr);
     gui::separator();
 
@@ -72,7 +72,7 @@ void draw_effect_select() {
             Effect const& effect = song.effects[nr - 1];
 
             Vec c1 = gui::cursor();
-            gui::min_item_size({ widths[x], 65 });
+            gui::min_item_size({ widths[x], BUTTON_SMALL });
             if (effect.length > 0) gui::highlight();
             if (gui::button("", nr == selected_effect())) {
                 edit::set_popup(nullptr);
@@ -82,14 +82,14 @@ void draw_effect_select() {
             gui::same_line();
             Vec c2 = gui::cursor();
             gui::cursor(c1);
-            gui::min_item_size({ 65, 65 });
+            gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
             char str[2];
             sprint_inst_effect_id(str, nr);
             gfx::font(FONT_MONO);
             gui::text(str);
             gfx::font(FONT_DEFAULT);
             gui::same_line();
-            gui::min_item_size({ widths[x] - 65 - gui::PADDING, 65 });
+            gui::min_item_size({ widths[x] - BUTTON_SMALL - gui::PADDING, BUTTON_SMALL });
             gui::align(gui::LEFT);
             gui::text(effect.name.data());
             gui::align(gui::CENTER);
@@ -128,9 +128,9 @@ void draw_instrument_view() {
     Instrument& inst = song.instruments[selected_instrument() - 1];
 
     // name
-    auto widths = calculate_column_widths({ -1, 88, 88 });
+    auto widths = calculate_column_widths({ -1, BUTTON_BIG, BUTTON_BIG });
     gfx::font(FONT_DEFAULT);
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     gui::align(gui::LEFT);
     gui::input_text(inst.name.data(), inst.name.size() - 1);
     gui::align(gui::CENTER);
@@ -138,10 +138,10 @@ void draw_instrument_view() {
     // copy & paste
     gfx::font(FONT_MONO);
     gui::same_line();
-    gui::min_item_size({ 88, 88 });
+    gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
     if (gui::button("\x1d")) m_copy_inst = inst;
     gui::same_line();
-    gui::min_item_size({ 88, 88 });
+    gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
     if (gui::button("\x1e")) inst = m_copy_inst;
     gui::separator();
 
@@ -149,11 +149,11 @@ void draw_instrument_view() {
     // wave/filter switch
     gfx::font(FONT_DEFAULT);
     widths = calculate_column_widths({ -1, -1 });
-    gui::min_item_size({ widths[0], 88 });
-    if (gui::button("Wave", !m_filter_mode)) m_filter_mode = false;
+    gui::min_item_size({ widths[0], BUTTON_BIG });
+    if (gui::tab_button("Wave", !m_filter_mode)) m_filter_mode = false;
     gui::same_line();
-    gui::min_item_size({ widths[1], 88 });
-    if (gui::button("Filter", m_filter_mode)) m_filter_mode = true;
+    gui::min_item_size({ widths[1], BUTTON_BIG });
+    if (gui::tab_button("Filter", m_filter_mode)) m_filter_mode = true;
     gui::separator();
 
 
@@ -161,20 +161,20 @@ void draw_instrument_view() {
 
         // adsr
         constexpr char const* labels[] = { "Attack", "Decay", "Sustain", "Release" };
-        widths = calculate_column_widths({ -1, -1, 88 });
+        widths = calculate_column_widths({ -1, -1, BUTTON_BIG });
         for (int i = 0; i < 2; ++i) {
             if (i > 0) gui::same_line();
-            gui::min_item_size({ widths[i], 65 });
+            gui::min_item_size({ widths[i], BUTTON_SMALL });
             gui::drag_int(labels[i], "%X", inst.adsr[i], 0, 15);
         };
         Vec c = gui::cursor();
         gui::same_line();
-        gui::min_item_size({ 88, 65 * 2 + gui::PADDING });
+        gui::min_item_size({ BUTTON_BIG, BUTTON_SMALL * 2 + gui::PADDING });
         if (gui::button("\x11", inst.hard_restart)) inst.hard_restart ^= 1;
         gui::cursor(c);
         for (int i = 0; i < 2; ++i) {
             if (i > 0) gui::same_line();
-            gui::min_item_size({ widths[i], 65 });
+            gui::min_item_size({ widths[i], BUTTON_SMALL });
             gui::drag_int(labels[i + 2], "%X", inst.adsr[i + 2], 0, 15);
         };
 
@@ -186,8 +186,8 @@ void draw_instrument_view() {
         for (int i = 0; i < MAX_INSTRUMENT_LENGTH; ++i) {
 
             char str[2];
-            sprintf(str, "%X", i);
-            gui::min_item_size({ 65, 65 });
+            snprintf(str, 1, "%X", i);
+            gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
 
             if (gui::button(str, i == inst.loop)) inst.loop = i;
             gui::same_line();
@@ -213,7 +213,7 @@ void draw_instrument_view() {
             };
             for (auto p : flags) {
                 gui::same_line();
-                gui::min_item_size({ 65, 65 });
+                gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
                 if (gui::button(p.second, row.flags & p.first)) {
                     row.flags ^= p.first;
                 }
@@ -223,10 +223,10 @@ void draw_instrument_view() {
             gui::separator();
             str[0] = "+=-"[row.operation];
             str[1] = '\0';
-            gui::min_item_size({ 65, 65 });
+            gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
             if (gui::button(str)) row.operation = !row.operation;
             gui::same_line();
-            gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
+            gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, BUTTON_SMALL });
             gui::drag_int("", "%02X", row.value, 0, 31);
         }
 
@@ -235,14 +235,14 @@ void draw_instrument_view() {
 
 
         gfx::font(FONT_MONO);
-        gui::min_item_size({ 88, 88 });
+        gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
         if (gui::button("-")) {
             if (inst.length > 0) {
                 --inst.length;
             }
         }
         gui::same_line();
-        gui::min_item_size({ 88, 88 });
+        gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
         if (gui::button("+") && inst.length < MAX_INSTRUMENT_LENGTH) {
             inst.rows[inst.length] = { Instrument::F_GATE, Instrument::OP_INC, 0 };
             ++inst.length;
@@ -257,7 +257,7 @@ void draw_instrument_view() {
         for (int c = 0; c < CHANNEL_COUNT; ++c) {
             str[6] = '1' + c;
             if (c) gui::same_line();
-            gui::min_item_size({ widths[c], 65 });
+            gui::min_item_size({ widths[c], BUTTON_SMALL });
             if (gui::button(str, filter.routing & (1 << c))) filter.routing ^= 1 << c;
         }
         gui::separator();
@@ -265,8 +265,8 @@ void draw_instrument_view() {
         gfx::font(FONT_MONO);
         for (int i = 0; i < MAX_FILTER_LENGTH; ++i) {
 
-            sprintf(str, "%X", i);
-            gui::min_item_size({ 65, 65 });
+            snprintf(str, 1, "%X", i);
+            gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
 
             if (gui::button(str, i == filter.loop)) filter.loop = i;
             gui::same_line();
@@ -286,20 +286,20 @@ void draw_instrument_view() {
 
             // type
             gui::same_line();
-            gui::min_item_size({ 65, 65 });
+            gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
             if (gui::button("\x18", row.type & FILTER_LOW)) row.type ^= FILTER_LOW;
             gui::same_line();
-            gui::min_item_size({ 65, 65 });
+            gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
             if (gui::button("\x19", row.type & FILTER_BAND)) row.type ^= FILTER_BAND;
             gui::same_line();
-            gui::min_item_size({ 65, 65 });
+            gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
             if (gui::button("\x1a", row.type & FILTER_HIGH)) row.type ^= FILTER_HIGH;
 
             // resonance
             gui::same_line();
             gui::separator();
 
-            gui::min_item_size({ 240, 65 });
+            gui::min_item_size({ 240, BUTTON_SMALL });
             gui::drag_int("", "%X", row.resonance, 0, 15);
 
 
@@ -308,12 +308,12 @@ void draw_instrument_view() {
             gui::separator();
             str[0] = "+=-"[row.operation];
             str[1] = '\0';
-            gui::min_item_size({ 65, 65 });
+            gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
             if (gui::button(str)) row.operation = (row.operation + 1) % 3;
 
             // cutoff
             gui::same_line();
-            gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, 65 });
+            gui::min_item_size({ gfx::screensize().x - gui::PADDING * 2 - gui::cursor().x, BUTTON_SMALL });
             gui::drag_int("", "%02X", row.value, 0, 31);
         }
 
@@ -322,14 +322,14 @@ void draw_instrument_view() {
 
 
         gfx::font(FONT_MONO);
-        gui::min_item_size({ 88, 88 });
+        gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
         if (gui::button("-")) {
             if (filter.length > 0) {
                 --filter.length;
             }
         }
         gui::same_line();
-        gui::min_item_size({ 88, 88 });
+        gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
         if (gui::button("+") && filter.length < MAX_FILTER_LENGTH) {
             filter.rows[filter.length] = { 0, 0xf, Filter::OP_SET, 0 };
             ++filter.length;
@@ -351,9 +351,9 @@ void draw_effect_view() {
     Effect& effect = song.effects[selected_effect() - 1];
 
     // name
-    auto widths = calculate_column_widths({ -1, 88, 88 });
+    auto widths = calculate_column_widths({ -1, BUTTON_BIG, BUTTON_BIG });
     gfx::font(FONT_DEFAULT);
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     gui::align(gui::LEFT);
     gui::input_text(effect.name.data(), effect.name.size() - 1);
     gui::align(gui::CENTER);
@@ -361,22 +361,22 @@ void draw_effect_view() {
     // copy & paste
     gfx::font(FONT_MONO);
     gui::same_line();
-    gui::min_item_size({ 88, 88 });
+    gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
     if (gui::button("\x1d")) m_copy_effect = effect;
     gui::same_line();
-    gui::min_item_size({ 88, 88 });
+    gui::min_item_size({ BUTTON_BIG, BUTTON_BIG });
     if (gui::button("\x1e")) effect = m_copy_effect;
 
     gui::separator();
 
-    widths = calculate_column_widths({ 65, gui::SEPARATOR_WIDTH, 65, -1, 65, 65 });
+    widths = calculate_column_widths({ BUTTON_SMALL, gui::SEPARATOR_WIDTH, BUTTON_SMALL, -1, BUTTON_SMALL, BUTTON_SMALL });
 
     // rows
     gfx::font(FONT_MONO);
     for (int i = 0; i < MAX_EFFECT_LENGTH; ++i) {
         char str[2];
-        sprintf(str, "%X", i);
-        gui::min_item_size({ 65, 65 });
+        snprintf(str, 1, "%X", i);
+        gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
 
         if (gui::button(str, i == effect.loop)) effect.loop = i;
         gui::same_line();
@@ -389,7 +389,7 @@ void draw_effect_view() {
         auto& row = effect.rows[i];
 
         str[0] = "+=~"[row.operation];
-        gui::min_item_size({ 65, 65 });
+        gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
         if (gui::button(str)) {
             row.operation = (row.operation + 1) % 3;
             row.value = 0x30;
@@ -399,7 +399,7 @@ void draw_effect_view() {
         int max_value;
 
         gui::same_line();
-        gui::min_item_size({ widths[3], 65 });
+        gui::min_item_size({ widths[3], BUTTON_SMALL });
         if (row.operation == Effect::OP_RELATIVE || row.operation == Effect::OP_DETUNE) {
             int v = row.value - 0x30;
             gui::id(&row.value);
@@ -414,10 +414,10 @@ void draw_effect_view() {
         }
 
         gui::same_line();
-        gui::min_item_size({ 65, 65 });
+        gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
         if (gui::button("\x1b")) row.value = std::max(row.value - 1, min_value);
         gui::same_line();
-        gui::min_item_size({ 65, 65 });
+        gui::min_item_size({ BUTTON_SMALL, BUTTON_SMALL });
         if (gui::button("\x1c")) row.value = std::min(row.value + 1, max_value);
 
 
@@ -427,16 +427,16 @@ void draw_effect_view() {
     gui::separator();
 
 
-    widths = calculate_column_widths({ 88, 88, -1, -1 });
+    widths = calculate_column_widths({ BUTTON_BIG, BUTTON_BIG, -1, -1 });
     gfx::font(FONT_MONO);
-    gui::min_item_size({ widths[0], 88 });
+    gui::min_item_size({ widths[0], BUTTON_BIG });
     if (gui::button("-")) {
         if (effect.length > 0) {
             --effect.length;
         }
     }
     gui::same_line();
-    gui::min_item_size({ widths[1], 88 });
+    gui::min_item_size({ widths[1], BUTTON_BIG });
     if (gui::button("+") && effect.length < MAX_EFFECT_LENGTH) {
         effect.rows[effect.length] = { Effect::OP_RELATIVE, 0x30 };
         ++effect.length;

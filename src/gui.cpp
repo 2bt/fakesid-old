@@ -211,7 +211,7 @@ void text(char const* fmt, ...) {
 void highlight() { m_highlight = true; }
 
 
-bool button(char const* label, bool active) {
+bool button(char const* label, bool active, bool is_tab) {
     enum { HOLD_TIME = 10 };
     m_hold = false;
     Vec s = gfx::text_size(label);
@@ -232,7 +232,7 @@ bool button(char const* label, bool active) {
     }
     m_highlight = false;
     gfx::color(color);
-    gfx::rectangle(box.pos, box.size, 2);
+    gfx::rectangle(box.pos, box.size, is_tab ? 10 : 2);
     gfx::color(color::text);
     gfx::print(print_pos(box, s), label);
     return clicked;
@@ -388,7 +388,7 @@ bool vertical_drag_int(int& value, int min, int max, int page) {
 
 
 bool clavier(uint8_t& n, int offset, bool highlight) {
-    Box box = item_box({ 100, 65 });
+    Box box = item_box({ 100, BUTTON_SMALL });
 
     void const* id = get_id(&n);
     if (m_active_item == nullptr && box_touched(box) && input::just_pressed()) {
