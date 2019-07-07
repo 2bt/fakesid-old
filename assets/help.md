@@ -17,7 +17,7 @@ As is common with most C64 trackers, time is split into slices of 1/50 of a seco
 *Tempo* is the number of frames spent per track row.
 *Swing* is the number additional frames for even-numbered track rows.
 
-Pres *New* to reset the current song.
+Press *New* to reset the current song.
 To load a previously saved song, simply select a song from the song list.
 This will enter the song name in the song name input field.
 Now press *Load*.
