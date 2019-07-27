@@ -8,7 +8,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/../SDL2/include\
                     $(LOCAL_PATH)/../libsndfile\
 					/home/twobit/Programming/c++/android-sdl/android-ndk-r16/sources/third_party/vulkan/src/libs/glm
 
-LOCAL_CPPFLAGS += -std=c++14
+LOCAL_CPPFLAGS += -std=c++17
 LOCAL_CFLAGS += -O3
 LOCAL_LDFLAGS += -s
 

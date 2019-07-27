@@ -1,3 +1,5 @@
+This project is deprecated. Check out the new project [here](https://github.com/2bt/fakesid).
+
 # Fake SID
 
 This is a chiptune tracker for android that's trying to sound a lot like the MOS Technology SID.

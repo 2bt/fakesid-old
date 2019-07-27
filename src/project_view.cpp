@@ -294,6 +294,7 @@ void draw_confirmation() {
         text = "Lose changes to the current song?";
         break;
     }
+    gfx::font(FONT_DEFAULT);
     gui::min_item_size({calculate_column_widths({ -1 })[0], BUTTON_BIG });
     gui::text(text);
 
